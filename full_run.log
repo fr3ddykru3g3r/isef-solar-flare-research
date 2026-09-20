@@ -188,3 +188,196 @@ Traceback (most recent call last):
 ValueError: Columns must be same length as key
 
 chunk 2016-05-01..2016-06-01 FAILED -- fix and re-run, completed chunks will be skipped
+176 monthly chunks from 2010-05-01 to 2025-01-01
+
+[1/176] 2010-05-01 -> 2010-06-01  SKIP (already on disk)
+[2/176] 2010-06-01 -> 2010-07-01  SKIP (already on disk)
+[3/176] 2010-07-01 -> 2010-08-01  SKIP (already on disk)
+[4/176] 2010-08-01 -> 2010-09-01  SKIP (already on disk)
+[5/176] 2010-09-01 -> 2010-10-01  SKIP (already on disk)
+[6/176] 2010-10-01 -> 2010-11-01  SKIP (already on disk)
+[7/176] 2010-11-01 -> 2010-12-01  SKIP (already on disk)
+[8/176] 2010-12-01 -> 2011-01-01  SKIP (already on disk)
+[9/176] 2011-01-01 -> 2011-02-01  SKIP (already on disk)
+[10/176] 2011-02-01 -> 2011-03-01  SKIP (already on disk)
+[11/176] 2011-03-01 -> 2011-04-01  SKIP (already on disk)
+[12/176] 2011-04-01 -> 2011-05-01  SKIP (already on disk)
+[13/176] 2011-05-01 -> 2011-06-01  SKIP (already on disk)
+[14/176] 2011-06-01 -> 2011-07-01  SKIP (already on disk)
+[15/176] 2011-07-01 -> 2011-08-01  SKIP (already on disk)
+[16/176] 2011-08-01 -> 2011-09-01  SKIP (already on disk)
+[17/176] 2011-09-01 -> 2011-10-01  SKIP (already on disk)
+[18/176] 2011-10-01 -> 2011-11-01  SKIP (already on disk)
+[19/176] 2011-11-01 -> 2011-12-01  SKIP (already on disk)
+[20/176] 2011-12-01 -> 2012-01-01  SKIP (already on disk)
+[21/176] 2012-01-01 -> 2012-02-01  SKIP (already on disk)
+[22/176] 2012-02-01 -> 2012-03-01  SKIP (already on disk)
+[23/176] 2012-03-01 -> 2012-04-01  SKIP (already on disk)
+[24/176] 2012-04-01 -> 2012-05-01  SKIP (already on disk)
+[25/176] 2012-05-01 -> 2012-06-01  SKIP (already on disk)
+[26/176] 2012-06-01 -> 2012-07-01  SKIP (already on disk)
+[27/176] 2012-07-01 -> 2012-08-01  SKIP (already on disk)
+[28/176] 2012-08-01 -> 2012-09-01  SKIP (already on disk)
+[29/176] 2012-09-01 -> 2012-10-01  SKIP (already on disk)
+[30/176] 2012-10-01 -> 2012-11-01  SKIP (already on disk)
+[31/176] 2012-11-01 -> 2012-12-01  SKIP (already on disk)
+[32/176] 2012-12-01 -> 2013-01-01  SKIP (already on disk)
+[33/176] 2013-01-01 -> 2013-02-01  SKIP (already on disk)
+[34/176] 2013-02-01 -> 2013-03-01  SKIP (already on disk)
+[35/176] 2013-03-01 -> 2013-04-01  SKIP (already on disk)
+[36/176] 2013-04-01 -> 2013-05-01  SKIP (already on disk)
+[37/176] 2013-05-01 -> 2013-06-01  SKIP (already on disk)
+[38/176] 2013-06-01 -> 2013-07-01  SKIP (already on disk)
+[39/176] 2013-07-01 -> 2013-08-01  SKIP (already on disk)
+[40/176] 2013-08-01 -> 2013-09-01  SKIP (already on disk)
+[41/176] 2013-09-01 -> 2013-10-01  SKIP (already on disk)
+[42/176] 2013-10-01 -> 2013-11-01  SKIP (already on disk)
+[43/176] 2013-11-01 -> 2013-12-01  SKIP (already on disk)
+[44/176] 2013-12-01 -> 2014-01-01  SKIP (already on disk)
+[45/176] 2014-01-01 -> 2014-02-01  SKIP (already on disk)
+[46/176] 2014-02-01 -> 2014-03-01  SKIP (already on disk)
+[47/176] 2014-03-01 -> 2014-04-01  SKIP (already on disk)
+[48/176] 2014-04-01 -> 2014-05-01  SKIP (already on disk)
+[49/176] 2014-05-01 -> 2014-06-01  SKIP (already on disk)
+[50/176] 2014-06-01 -> 2014-07-01  SKIP (already on disk)
+[51/176] 2014-07-01 -> 2014-08-01  SKIP (already on disk)
+[52/176] 2014-08-01 -> 2014-09-01  SKIP (already on disk)
+[53/176] 2014-09-01 -> 2014-10-01  SKIP (already on disk)
+[54/176] 2014-10-01 -> 2014-11-01  SKIP (already on disk)
+[55/176] 2014-11-01 -> 2014-12-01  SKIP (already on disk)
+[56/176] 2014-12-01 -> 2015-01-01  SKIP (already on disk)
+[57/176] 2015-01-01 -> 2015-02-01  SKIP (already on disk)
+[58/176] 2015-02-01 -> 2015-03-01  SKIP (already on disk)
+[59/176] 2015-03-01 -> 2015-04-01  SKIP (already on disk)
+[60/176] 2015-04-01 -> 2015-05-01  SKIP (already on disk)
+[61/176] 2015-05-01 -> 2015-06-01  SKIP (already on disk)
+[62/176] 2015-06-01 -> 2015-07-01  SKIP (already on disk)
+[63/176] 2015-07-01 -> 2015-08-01  SKIP (already on disk)
+[64/176] 2015-08-01 -> 2015-09-01  SKIP (already on disk)
+[65/176] 2015-09-01 -> 2015-10-01  SKIP (already on disk)
+[66/176] 2015-10-01 -> 2015-11-01  SKIP (already on disk)
+[67/176] 2015-11-01 -> 2015-12-01  SKIP (already on disk)
+[68/176] 2015-12-01 -> 2016-01-01  SKIP (already on disk)
+[69/176] 2016-01-01 -> 2016-02-01  SKIP (already on disk)
+[70/176] 2016-02-01 -> 2016-03-01  SKIP (already on disk)
+[71/176] 2016-03-01 -> 2016-04-01  SKIP (already on disk)
+[72/176] 2016-04-01 -> 2016-05-01  SKIP (already on disk)
+[73/176] 2016-05-01 -> 2016-06-01  SKIP (already on disk)
+[74/176] 2016-06-01 -> 2016-07-01  running...
+          SHARP rows retrieved: 4784 | positives: 0 / 21  (0.00%)
+[75/176] 2016-07-01 -> 2016-08-01  running...
+          SHARP rows retrieved: 3668 | positives: 0 / 0  (0.00%)
+[76/176] 2016-08-01 -> 2016-09-01  running...
+          SHARP rows retrieved: 2957 | positives: 0 / 0  (0.00%)
+[77/176] 2016-09-01 -> 2016-10-01  running...
+          SHARP rows retrieved: 3408 | positives: 0 / 0  (0.00%)
+[78/176] 2016-10-01 -> 2016-11-01  running...
+          SHARP rows retrieved: 3342 | positives: 0 / 0  (0.00%)
+[79/176] 2016-11-01 -> 2016-12-01  running...
+          SHARP rows retrieved: 3599 | positives: 0 / 0  (0.00%)
+[80/176] 2016-12-01 -> 2017-01-01  running...
+          SHARP rows retrieved: 2419 | positives: 0 / 0  (0.00%)
+[81/176] 2017-01-01 -> 2017-02-01  running...
+          SHARP rows retrieved: 2294 | positives: 0 / 0  (0.00%)
+[82/176] 2017-02-01 -> 2017-03-01  running...
+          SHARP rows retrieved: 1847 | positives: 0 / 0  (0.00%)
+[83/176] 2017-03-01 -> 2017-04-01  running...
+          SHARP rows retrieved: 1593 | positives: 3 / 451  (0.67%)
+[84/176] 2017-04-01 -> 2017-05-01  running...
+          SHARP rows retrieved: 1896 | positives: 13 / 812  (1.60%)
+[85/176] 2017-05-01 -> 2017-06-01  running...
+          SHARP rows retrieved: 2180 | positives: 0 / 805  (0.00%)
+[86/176] 2017-06-01 -> 2017-07-01  running...
+          SHARP rows retrieved: 2229 | positives: 0 / 542  (0.00%)
+[87/176] 2017-07-01 -> 2017-08-01  running...
+          SHARP rows retrieved: 1987 | positives: 34 / 408  (8.33%)
+[88/176] 2017-08-01 -> 2017-09-01  running...
+          SHARP rows retrieved: 1390 | positives: 0 / 89  (0.00%)
+[89/176] 2017-09-01 -> 2017-10-01  running...
+          SHARP rows retrieved: 3144 | positives: 74 / 1011  (7.32%)
+[90/176] 2017-10-01 -> 2017-11-01  running...
+          SHARP rows retrieved: 2386 | positives: 0 / 467  (0.00%)
+[91/176] 2017-11-01 -> 2017-12-01  running...
+          SHARP rows retrieved: 1696 | positives: 0 / 363  (0.00%)
+[92/176] 2017-12-01 -> 2018-01-01  running...
+          SHARP rows retrieved: 1657 | positives: 0 / 285  (0.00%)
+[93/176] 2018-01-01 -> 2018-02-01  running...
+          SHARP rows retrieved: 1001 | positives: 0 / 307  (0.00%)
+[94/176] 2018-02-01 -> 2018-03-01  running...
+          SHARP rows retrieved: 694 | positives: 0 / 370  (0.00%)
+[95/176] 2018-03-01 -> 2018-04-01  running...
+          SHARP rows retrieved: 636 | positives: 0 / 21  (0.00%)
+[96/176] 2018-04-01 -> 2018-05-01  running...
+          SHARP rows retrieved: 901 | positives: 0 / 430  (0.00%)
+[97/176] 2018-05-01 -> 2018-06-01  running...
+          SHARP rows retrieved: 1613 | positives: 0 / 600  (0.00%)
+[98/176] 2018-06-01 -> 2018-07-01  running...
+          SHARP rows retrieved: 1638 | positives: 0 / 349  (0.00%)
+[99/176] 2018-07-01 -> 2018-08-01  running...
+          SHARP rows retrieved: 672 | positives: 0 / 116  (0.00%)
+[100/176] 2018-08-01 -> 2018-09-01  running...
+          SHARP rows retrieved: 1316 | positives: 0 / 316  (0.00%)
+[101/176] 2018-09-01 -> 2018-10-01  running...
+          SHARP rows retrieved: 1104 | positives: 0 / 191  (0.00%)
+[102/176] 2018-10-01 -> 2018-11-01  running...
+          SHARP rows retrieved: 750 | positives: 0 / 233  (0.00%)
+[103/176] 2018-11-01 -> 2018-12-01  running...
+          SHARP rows retrieved: 454 | positives: 0 / 232  (0.00%)
+[104/176] 2018-12-01 -> 2019-01-01  running...
+          SHARP rows retrieved: 754 | positives: 0 / 306  (0.00%)
+[105/176] 2019-01-01 -> 2019-02-01  running...
+          SHARP rows retrieved: 715 | positives: 0 / 195  (0.00%)
+[106/176] 2019-02-01 -> 2019-03-01  running...
+          SHARP rows retrieved: 572 | positives: 0 / 0  (0.00%)
+[107/176] 2019-03-01 -> 2019-04-01  running...
+          SHARP rows retrieved: 967 | positives: 0 / 400  (0.00%)
+[108/176] 2019-04-01 -> 2019-05-01  running...
+          SHARP rows retrieved: 623 | positives: 0 / 331  (0.00%)
+[109/176] 2019-05-01 -> 2019-06-01  running...
+          SHARP rows retrieved: 1056 | positives: 0 / 284  (0.00%)
+[110/176] 2019-06-01 -> 2019-07-01  running...
+          SHARP rows retrieved: 978 | positives: 0 / 2  (0.00%)
+[111/176] 2019-07-01 -> 2019-08-01  running...
+          SHARP rows retrieved: 488 | positives: 0 / 176  (0.00%)
+[112/176] 2019-08-01 -> 2019-09-01  running...
+          SHARP rows retrieved: 202 | positives: 0 / 80  (0.00%)
+[113/176] 2019-09-01 -> 2019-10-01  running...
+          SHARP rows retrieved: 141 | positives: 0 / 94  (0.00%)
+[114/176] 2019-10-01 -> 2019-11-01  running...
+          SHARP rows retrieved: 219 | positives: 0 / 123  (0.00%)
+[115/176] 2019-11-01 -> 2019-12-01  running...
+==============================================================
+  argv          : ['2019-11-01', '2019-12-01']
+  START (CLI)   : 2019-11-01      END (CLI, exclusive): 2019-12-01
+  START (JSOC)  : 2019.11.01_TAI   END (JSOC): 2019.12.01_TAI
+  JSOC record set: hmi.sharp_cea_720s[][2019.11.01_TAI-2019.12.01_TAI@1h]
+==============================================================
+
+=== STEP 1  SHARP keywords ===
+query: hmi.sharp_cea_720s[][2019.11.01_TAI-2019.12.01_TAI@1h]
+SHARP rows retrieved: 501
+saved data/raw_sharp_20191101_20191201.csv
+expected hourly records (per-HARP span): 511; present: 501; missing: 10
+
+=== STEP 3  time handling (TAI -> UTC) ===
+example: 2019.11.01_00:00:00_TAI -> 2019-10-31 23:59:23 UTC
+
+=== STEP 2  flare catalogue (HEK / SWPC) ===
+padded window: 2019-10-29 23:59:23 .. 2019-11-21 16:59:23
+
+Traceback (most recent call last):
+  File "/Users/93i5/isef new/build_dataset.py", line 77, in <module>
+    fl, m1 = flares.fetch(lo, hi)
+             ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/93i5/isef new/flares.py", line 20, in fetch
+    st = res["event_starttime"]
+         ~~~^^^^^^^^^^^^^^^^^^^
+  File "/Users/93i5/isef new/.venv/lib/python3.12/site-packages/astropy/table/table.py", line 2104, in __getitem__
+    return self.columns[item]
+           ~~~~~~~~~~~~^^^^^^
+  File "/Users/93i5/isef new/.venv/lib/python3.12/site-packages/astropy/table/table.py", line 266, in __getitem__
+    return OrderedDict.__getitem__(self, item)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'event_starttime'
+
+chunk 2019-11-01..2019-12-01 FAILED -- fix and re-run, completed chunks will be skipped

@@ -17,6 +17,12 @@ def parse_goes(s):
 def fetch(lo, hi, verbose=True):
     """SWPC flares with start time in [lo, hi]. Returns (all_flares, m1_plus)."""
     res = Fido.search(a.Time(lo, hi), a.hek.EventType("FL"), a.hek.FRM.Name == "SWPC")["hek"]
+    if len(res) == 0 or "event_starttime" not in res.colnames:
+        # solar minimum: HEK can legitimately return no SWPC flares for a whole month
+        empty = pd.DataFrame(columns=["start", "noaa_ar", "goes_class", "cls", "flux"])
+        if verbose:
+            print("flares retrieved: 0  (no SWPC events in window)")
+        return empty, empty
     st = res["event_starttime"]
     fl = pd.DataFrame({
         "start": pd.to_datetime(np.asarray(st.to_datetime() if hasattr(st, "to_datetime") else st)),

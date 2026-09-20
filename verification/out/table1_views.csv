@@ -1,0 +1,13 @@
+model,view,POD,FPR,TSS
+xgb_joint,mapped,0.8885,0.0809,0.8075
+xgb_joint,episode,0.87,0.0809,0.7891
+xgb_joint,first,0.8611,0.0809,0.7802
+xgb_nohist,mapped,0.9327,0.1033,0.8294
+xgb_nohist,episode,0.9187,0.1033,0.8154
+xgb_nohist,first,0.9306,0.1033,0.8273
+proxy_pastflare,mapped,0.5231,0.0282,0.4949
+proxy_pastflare,episode,0.4596,0.0282,0.4314
+proxy_pastflare,first,0.4306,0.0282,0.4023
+climatology,mapped,1.0,1.0,0.0
+climatology,episode,1.0,1.0,0.0
+climatology,first,1.0,1.0,0.0

@@ -1,0 +1,13 @@
+model,contrast,median,lo95,hi95,excl_zero
+xgb_joint,episode - mapped,-0.0172,-0.0585,0.0166,NO
+xgb_joint,first - episode,-0.0084,-0.0415,0.0201,NO
+xgb_joint,first - mapped,-0.0269,-0.078,0.0197,NO
+xgb_nohist,episode - mapped,-0.0129,-0.048,0.0142,NO
+xgb_nohist,first - episode,0.0119,0.0,0.0357,NO
+xgb_nohist,first - mapped,-0.0018,-0.0411,0.037,NO
+proxy_pastflare,episode - mapped,-0.0625,-0.1161,-0.0052,yes
+proxy_pastflare,first - episode,-0.0278,-0.0631,-0.0038,yes
+proxy_pastflare,first - mapped,-0.0911,-0.1538,-0.0268,yes
+climatology,episode - mapped,0.0,0.0,0.0,NO
+climatology,first - episode,0.0,0.0,0.0,NO
+climatology,first - mapped,0.0,0.0,0.0,NO
