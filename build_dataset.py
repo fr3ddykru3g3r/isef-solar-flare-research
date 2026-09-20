@@ -8,7 +8,7 @@ from datetime import datetime
 import numpy as np, pandas as pd, drms
 from astropy.time import Time
 import astropy.units as u
-from sunpy.net import Fido, attrs as a
+import flares
 
 if len(sys.argv) not in (1, 3):
     sys.exit("usage: python build_dataset.py [START END]   dates as YYYY-MM-DD, START inclusive, END exclusive")
@@ -74,30 +74,7 @@ step("STEP 2  flare catalogue (HEK / SWPC)")
 lo = (df["t_rec_utc"].min() - pd.Timedelta(hours=48)).to_pydatetime()
 hi = (df["t_rec_utc"].max() + pd.Timedelta(hours=24)).to_pydatetime()
 print(f"padded window: {lo} .. {hi}")
-res = Fido.search(a.Time(lo, hi), a.hek.EventType("FL"), a.hek.FRM.Name == "SWPC")["hek"]
-fl = pd.DataFrame({
-    "start": pd.to_datetime(np.asarray(res["event_starttime"].to_datetime() if hasattr(res["event_starttime"], "to_datetime") else res["event_starttime"])),
-    "noaa_ar": pd.to_numeric(pd.Series(np.asarray(res["ar_noaanum"])), errors="coerce"),
-    "goes_class": pd.Series(np.asarray(res["fl_goescls"])).astype(str).str.strip(),
-})
-print(f"flares retrieved: {len(fl)}")
-n0 = len(fl)
-fl = fl.drop_duplicates(subset=["start", "noaa_ar", "goes_class"])
-print(f"duplicates removed: {n0 - len(fl)}  -> {len(fl)}")
-
-# numeric GOES magnitude, e.g. "M1.5" -> 1e-5*1.5 ; keep letter too
-def parse(s):
-    m = re.match(r"^([ABCMX])([\d.]*)$", s)
-    if not m: return None, np.nan
-    mult = float(m.group(2)) if m.group(2) else 1.0
-    return m.group(1), {"A": 1e-8, "B": 1e-7, "C": 1e-6, "M": 1e-5, "X": 1e-4}[m.group(1)] * mult
-
-fl[["cls", "flux"]] = fl["goes_class"].apply(lambda s: pd.Series(parse(s)))
-fl = fl.dropna(subset=["noaa_ar", "flux"])
-fl["noaa_ar"] = fl["noaa_ar"].astype(int)
-m1 = fl[fl["flux"] >= 1e-5]
-print(f"parsed & AR-matched: {len(fl)};  M1+ retained: {len(m1)}")
-print("class counts:", fl["cls"].value_counts().to_dict())
+fl, m1 = flares.fetch(lo, hi)
 
 # ---------------------------------------------------------------- STEP 4
 step("STEP 4  NOAA mapping")
