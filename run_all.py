@@ -32,16 +32,18 @@ for i, (a, b) in enumerate(chunks, 1):
         print(f"[{i}/{len(chunks)}] {a} -> {b}  SKIP (already on disk)")
         continue
     print(f"[{i}/{len(chunks)}] {a} -> {b}  running...", flush=True)
-    for attempt in range(1, 4):        # JSOC/HEK time out occasionally; retry before giving up
+    for attempt in range(1, 6):        # JSOC/HEK time out occasionally; retry before giving up
         r = subprocess.run([PY, "build_dataset.py", a, b], capture_output=True, text=True)
         if r.returncode == 0:
             break
-        transient = "timed out" in r.stderr or "TimeoutError" in r.stderr or "URLError" in r.stderr
+        transient = any(k in r.stderr for k in ("timed out", "TimeoutError", "URLError",
+                        "ConnectionResetError", "RemoteDisconnected", "IncompleteRead",
+                        "Connection aborted", "ProtocolError", "503", "502"))
         print(f"          attempt {attempt} failed ({'transient' if transient else 'hard error'})", flush=True)
-        if not transient or attempt == 3:
+        if not transient or attempt == 5:
             print(r.stdout[-2000:]); print(r.stderr[-2000:])
             sys.exit(f"chunk {a}..{b} FAILED -- fix and re-run, completed chunks will be skipped")
-        time.sleep(30 * attempt)
+        time.sleep(60 * attempt)
     tail = [l for l in r.stdout.splitlines() if "SHARP rows retrieved" in l or "positives:" in l]
     print("          " + " | ".join(t.strip() for t in tail), flush=True)
 

@@ -562,3 +562,175 @@ sions/3.12/lib/python3.12/urllib/request.py", line 515, in open
 TimeoutError: timed out
 
 chunk 2020-12-01..2021-01-01 FAILED -- fix and re-run, completed chunks will be skipped
+176 monthly chunks from 2010-05-01 to 2025-01-01
+
+[1/176] 2010-05-01 -> 2010-06-01  SKIP (already on disk)
+[2/176] 2010-06-01 -> 2010-07-01  SKIP (already on disk)
+[3/176] 2010-07-01 -> 2010-08-01  SKIP (already on disk)
+[4/176] 2010-08-01 -> 2010-09-01  SKIP (already on disk)
+[5/176] 2010-09-01 -> 2010-10-01  SKIP (already on disk)
+[6/176] 2010-10-01 -> 2010-11-01  SKIP (already on disk)
+[7/176] 2010-11-01 -> 2010-12-01  SKIP (already on disk)
+[8/176] 2010-12-01 -> 2011-01-01  SKIP (already on disk)
+[9/176] 2011-01-01 -> 2011-02-01  SKIP (already on disk)
+[10/176] 2011-02-01 -> 2011-03-01  SKIP (already on disk)
+[11/176] 2011-03-01 -> 2011-04-01  SKIP (already on disk)
+[12/176] 2011-04-01 -> 2011-05-01  SKIP (already on disk)
+[13/176] 2011-05-01 -> 2011-06-01  SKIP (already on disk)
+[14/176] 2011-06-01 -> 2011-07-01  SKIP (already on disk)
+[15/176] 2011-07-01 -> 2011-08-01  SKIP (already on disk)
+[16/176] 2011-08-01 -> 2011-09-01  SKIP (already on disk)
+[17/176] 2011-09-01 -> 2011-10-01  SKIP (already on disk)
+[18/176] 2011-10-01 -> 2011-11-01  SKIP (already on disk)
+[19/176] 2011-11-01 -> 2011-12-01  SKIP (already on disk)
+[20/176] 2011-12-01 -> 2012-01-01  SKIP (already on disk)
+[21/176] 2012-01-01 -> 2012-02-01  SKIP (already on disk)
+[22/176] 2012-02-01 -> 2012-03-01  SKIP (already on disk)
+[23/176] 2012-03-01 -> 2012-04-01  SKIP (already on disk)
+[24/176] 2012-04-01 -> 2012-05-01  SKIP (already on disk)
+[25/176] 2012-05-01 -> 2012-06-01  SKIP (already on disk)
+[26/176] 2012-06-01 -> 2012-07-01  SKIP (already on disk)
+[27/176] 2012-07-01 -> 2012-08-01  SKIP (already on disk)
+[28/176] 2012-08-01 -> 2012-09-01  SKIP (already on disk)
+[29/176] 2012-09-01 -> 2012-10-01  SKIP (already on disk)
+[30/176] 2012-10-01 -> 2012-11-01  SKIP (already on disk)
+[31/176] 2012-11-01 -> 2012-12-01  SKIP (already on disk)
+[32/176] 2012-12-01 -> 2013-01-01  SKIP (already on disk)
+[33/176] 2013-01-01 -> 2013-02-01  SKIP (already on disk)
+[34/176] 2013-02-01 -> 2013-03-01  SKIP (already on disk)
+[35/176] 2013-03-01 -> 2013-04-01  SKIP (already on disk)
+[36/176] 2013-04-01 -> 2013-05-01  SKIP (already on disk)
+[37/176] 2013-05-01 -> 2013-06-01  SKIP (already on disk)
+[38/176] 2013-06-01 -> 2013-07-01  SKIP (already on disk)
+[39/176] 2013-07-01 -> 2013-08-01  SKIP (already on disk)
+[40/176] 2013-08-01 -> 2013-09-01  SKIP (already on disk)
+[41/176] 2013-09-01 -> 2013-10-01  SKIP (already on disk)
+[42/176] 2013-10-01 -> 2013-11-01  SKIP (already on disk)
+[43/176] 2013-11-01 -> 2013-12-01  SKIP (already on disk)
+[44/176] 2013-12-01 -> 2014-01-01  SKIP (already on disk)
+[45/176] 2014-01-01 -> 2014-02-01  SKIP (already on disk)
+[46/176] 2014-02-01 -> 2014-03-01  SKIP (already on disk)
+[47/176] 2014-03-01 -> 2014-04-01  SKIP (already on disk)
+[48/176] 2014-04-01 -> 2014-05-01  SKIP (already on disk)
+[49/176] 2014-05-01 -> 2014-06-01  SKIP (already on disk)
+[50/176] 2014-06-01 -> 2014-07-01  SKIP (already on disk)
+[51/176] 2014-07-01 -> 2014-08-01  SKIP (already on disk)
+[52/176] 2014-08-01 -> 2014-09-01  SKIP (already on disk)
+[53/176] 2014-09-01 -> 2014-10-01  SKIP (already on disk)
+[54/176] 2014-10-01 -> 2014-11-01  SKIP (already on disk)
+[55/176] 2014-11-01 -> 2014-12-01  SKIP (already on disk)
+[56/176] 2014-12-01 -> 2015-01-01  SKIP (already on disk)
+[57/176] 2015-01-01 -> 2015-02-01  SKIP (already on disk)
+[58/176] 2015-02-01 -> 2015-03-01  SKIP (already on disk)
+[59/176] 2015-03-01 -> 2015-04-01  SKIP (already on disk)
+[60/176] 2015-04-01 -> 2015-05-01  SKIP (already on disk)
+[61/176] 2015-05-01 -> 2015-06-01  SKIP (already on disk)
+[62/176] 2015-06-01 -> 2015-07-01  SKIP (already on disk)
+[63/176] 2015-07-01 -> 2015-08-01  SKIP (already on disk)
+[64/176] 2015-08-01 -> 2015-09-01  SKIP (already on disk)
+[65/176] 2015-09-01 -> 2015-10-01  SKIP (already on disk)
+[66/176] 2015-10-01 -> 2015-11-01  SKIP (already on disk)
+[67/176] 2015-11-01 -> 2015-12-01  SKIP (already on disk)
+[68/176] 2015-12-01 -> 2016-01-01  SKIP (already on disk)
+[69/176] 2016-01-01 -> 2016-02-01  SKIP (already on disk)
+[70/176] 2016-02-01 -> 2016-03-01  SKIP (already on disk)
+[71/176] 2016-03-01 -> 2016-04-01  SKIP (already on disk)
+[72/176] 2016-04-01 -> 2016-05-01  SKIP (already on disk)
+[73/176] 2016-05-01 -> 2016-06-01  SKIP (already on disk)
+[74/176] 2016-06-01 -> 2016-07-01  SKIP (already on disk)
+[75/176] 2016-07-01 -> 2016-08-01  SKIP (already on disk)
+[76/176] 2016-08-01 -> 2016-09-01  SKIP (already on disk)
+[77/176] 2016-09-01 -> 2016-10-01  SKIP (already on disk)
+[78/176] 2016-10-01 -> 2016-11-01  SKIP (already on disk)
+[79/176] 2016-11-01 -> 2016-12-01  SKIP (already on disk)
+[80/176] 2016-12-01 -> 2017-01-01  SKIP (already on disk)
+[81/176] 2017-01-01 -> 2017-02-01  SKIP (already on disk)
+[82/176] 2017-02-01 -> 2017-03-01  SKIP (already on disk)
+[83/176] 2017-03-01 -> 2017-04-01  SKIP (already on disk)
+[84/176] 2017-04-01 -> 2017-05-01  SKIP (already on disk)
+[85/176] 2017-05-01 -> 2017-06-01  SKIP (already on disk)
+[86/176] 2017-06-01 -> 2017-07-01  SKIP (already on disk)
+[87/176] 2017-07-01 -> 2017-08-01  SKIP (already on disk)
+[88/176] 2017-08-01 -> 2017-09-01  SKIP (already on disk)
+[89/176] 2017-09-01 -> 2017-10-01  SKIP (already on disk)
+[90/176] 2017-10-01 -> 2017-11-01  SKIP (already on disk)
+[91/176] 2017-11-01 -> 2017-12-01  SKIP (already on disk)
+[92/176] 2017-12-01 -> 2018-01-01  SKIP (already on disk)
+[93/176] 2018-01-01 -> 2018-02-01  SKIP (already on disk)
+[94/176] 2018-02-01 -> 2018-03-01  SKIP (already on disk)
+[95/176] 2018-03-01 -> 2018-04-01  SKIP (already on disk)
+[96/176] 2018-04-01 -> 2018-05-01  SKIP (already on disk)
+[97/176] 2018-05-01 -> 2018-06-01  SKIP (already on disk)
+[98/176] 2018-06-01 -> 2018-07-01  SKIP (already on disk)
+[99/176] 2018-07-01 -> 2018-08-01  SKIP (already on disk)
+[100/176] 2018-08-01 -> 2018-09-01  SKIP (already on disk)
+[101/176] 2018-09-01 -> 2018-10-01  SKIP (already on disk)
+[102/176] 2018-10-01 -> 2018-11-01  SKIP (already on disk)
+[103/176] 2018-11-01 -> 2018-12-01  SKIP (already on disk)
+[104/176] 2018-12-01 -> 2019-01-01  SKIP (already on disk)
+[105/176] 2019-01-01 -> 2019-02-01  SKIP (already on disk)
+[106/176] 2019-02-01 -> 2019-03-01  SKIP (already on disk)
+[107/176] 2019-03-01 -> 2019-04-01  SKIP (already on disk)
+[108/176] 2019-04-01 -> 2019-05-01  SKIP (already on disk)
+[109/176] 2019-05-01 -> 2019-06-01  SKIP (already on disk)
+[110/176] 2019-06-01 -> 2019-07-01  SKIP (already on disk)
+[111/176] 2019-07-01 -> 2019-08-01  SKIP (already on disk)
+[112/176] 2019-08-01 -> 2019-09-01  SKIP (already on disk)
+[113/176] 2019-09-01 -> 2019-10-01  SKIP (already on disk)
+[114/176] 2019-10-01 -> 2019-11-01  SKIP (already on disk)
+[115/176] 2019-11-01 -> 2019-12-01  SKIP (already on disk)
+[116/176] 2019-12-01 -> 2020-01-01  SKIP (already on disk)
+[117/176] 2020-01-01 -> 2020-02-01  SKIP (already on disk)
+[118/176] 2020-02-01 -> 2020-03-01  SKIP (already on disk)
+[119/176] 2020-03-01 -> 2020-04-01  SKIP (already on disk)
+[120/176] 2020-04-01 -> 2020-05-01  SKIP (already on disk)
+[121/176] 2020-05-01 -> 2020-06-01  SKIP (already on disk)
+[122/176] 2020-06-01 -> 2020-07-01  SKIP (already on disk)
+[123/176] 2020-07-01 -> 2020-08-01  SKIP (already on disk)
+[124/176] 2020-08-01 -> 2020-09-01  SKIP (already on disk)
+[125/176] 2020-09-01 -> 2020-10-01  SKIP (already on disk)
+[126/176] 2020-10-01 -> 2020-11-01  SKIP (already on disk)
+[127/176] 2020-11-01 -> 2020-12-01  SKIP (already on disk)
+[128/176] 2020-12-01 -> 2021-01-01  running...
+          attempt 1 failed (hard error)
+==============================================================
+  argv          : ['2020-12-01', '2021-01-01']
+  START (CLI)   : 2020-12-01      END (CLI, exclusive): 2021-01-01
+  START (JSOC)  : 2020.12.01_TAI   END (JSOC): 2021.01.01_TAI
+  JSOC record set: hmi.sharp_cea_720s[][2020.12.01_TAI-2021.01.01_TAI@1h]
+==============================================================
+
+=== STEP 1  SHARP keywords ===
+query: hmi.sharp_cea_720s[][2020.12.01_TAI-2021.01.01_TAI@1h]
+
+Traceback (most recent call last):
+  File "/Users/93i5/isef new/build_dataset.py", line 50, in <module>
+    raw = c.query(qs, key=",".join(KEYS))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/93i5/isef new/.venv/lib/python3.12/site-packages/drms/client.py", line 1020, in query
+    lres = self._json.rs_list(ds, key=key, seg=seg, link=link, recinfo=rec_index, n=n)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/93i5/isef new/.venv/lib/python3.12/site-packages/drms/json.py", line 233, in rs_list
+    return req.data
+           ^^^^^^^^
+  File "/Users/93i5/isef new/.venv/lib/python3.12/site-packages/drms/json.py", line 67, in data
+    self._data = _json.loads(self.raw_data.decode(self._encoding))
+                             ^^^^^^^^^^^^^
+  File "/Users/93i5/isef new/.venv/lib/python3.12/site-packages/drms/json.py", line 61, in raw_data
+    self._data_str = self._http.read()
+                     ^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_4/Frameworks/Python.framework/Versions/3.12/lib/python3.12/http/client.py", line 478, in read
+    return self._read_chunked(amt)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_4/Frameworks/Python.framework/Versions/3.12/lib/python3.12/http/client.py", line 608, in _read_chunked
+    value.append(self._safe_read(chunk_left))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_4/Frameworks/Python.framework/Versions/3.12/lib/python3.12/http/client.py", line 648, in _safe_read
+    data = self.fp.read(cursize)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_4/Frameworks/Python.framework/Versions/3.12/lib/python3.12/socket.py", line 720, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [Errno 54] Connection reset by peer
+
+chunk 2020-12-01..2021-01-01 FAILED -- fix and re-run, completed chunks will be skipped
