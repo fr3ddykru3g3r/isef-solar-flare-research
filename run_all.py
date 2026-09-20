@@ -3,7 +3,7 @@
 Usage: python run_all.py [START END]      default 2010-05-01 2025-01-01
 A chunk is skipped if its labelled CSV already exists, so re-running resumes.
 """
-import sys, subprocess
+import sys, subprocess, time, os
 from datetime import date
 import numpy as np, pandas as pd
 
@@ -28,15 +28,20 @@ print(f"{len(chunks)} monthly chunks from {START} to {END}\n")
 for i, (a, b) in enumerate(chunks, 1):
     tag = f"{a}_{b}".replace("-", "")
     done = f"data/labelled_{tag}.csv"
-    import os
     if os.path.exists(done):
         print(f"[{i}/{len(chunks)}] {a} -> {b}  SKIP (already on disk)")
         continue
     print(f"[{i}/{len(chunks)}] {a} -> {b}  running...", flush=True)
-    r = subprocess.run([PY, "build_dataset.py", a, b], capture_output=True, text=True)
-    if r.returncode != 0:
-        print(r.stdout[-2000:]); print(r.stderr[-2000:])
-        sys.exit(f"chunk {a}..{b} FAILED -- fix and re-run, completed chunks will be skipped")
+    for attempt in range(1, 4):        # JSOC/HEK time out occasionally; retry before giving up
+        r = subprocess.run([PY, "build_dataset.py", a, b], capture_output=True, text=True)
+        if r.returncode == 0:
+            break
+        transient = "timed out" in r.stderr or "TimeoutError" in r.stderr or "URLError" in r.stderr
+        print(f"          attempt {attempt} failed ({'transient' if transient else 'hard error'})", flush=True)
+        if not transient or attempt == 3:
+            print(r.stdout[-2000:]); print(r.stderr[-2000:])
+            sys.exit(f"chunk {a}..{b} FAILED -- fix and re-run, completed chunks will be skipped")
+        time.sleep(30 * attempt)
     tail = [l for l in r.stdout.splitlines() if "SHARP rows retrieved" in l or "positives:" in l]
     print("          " + " | ".join(t.strip() for t in tail), flush=True)
 
