@@ -120,7 +120,13 @@ def label(row):
     return pd.Series([pos, len(p),
                       (p["cls"] == "C").sum(), (p["cls"] == "M").sum(), (p["cls"] == "X").sum()])
 
-df[["flared_M1_next_24h", "n_flares_prev_48h", "n_C_prev_48h", "n_M_prev_48h", "n_X_prev_48h"]] = df.apply(label, axis=1)
+LABEL_COLS = ["flared_M1_next_24h", "n_flares_prev_48h", "n_C_prev_48h", "n_M_prev_48h", "n_X_prev_48h"]
+if len(df):
+    df[LABEL_COLS] = df.apply(label, axis=1)
+else:
+    # a chunk can be legitimately empty (e.g. May 2016: every record carries QUALITY bit 0x80)
+    for c in LABEL_COLS:
+        df[c] = pd.Series(dtype=int)
 npos = int(df["flared_M1_next_24h"].sum())
 print(f"positives: {npos} / {len(df)}  ({npos/max(len(df),1):.2%})")
 
