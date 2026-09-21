@@ -18,29 +18,53 @@ BASE_FOLDS = {int(k): v for k, v in json.load(open("data/stage2/stage2_result.js
 S = "/private/tmp/claude-501/-Users-93i5-isef-new/c3c5d7da-b067-40d9-ba69-ef9888cd9350/scratchpad"
 
 
-def load(path):
+def load(path, primary_only=True):
     d = pd.read_csv(path, low_memory=False, parse_dates=["t_rec_utc"])
     d = d[(d["t_rec_utc"].dt.year <= 2019) & ~d["harpnum"].isin(TEST)]
     d = d.drop_duplicates(["harpnum", "t_rec_tai"])
-    d = d[d["noaa_ar_count"] == 1]                                   # primary subset throughout
+    if primary_only:
+        d = d[d["noaa_ar_count"] == 1]                               # primary subset throughout
     d = d[~d[F].isna().any(axis=1)]                                  # unscorable rows (user rule)
     assert not set(d["harpnum"]) & TEST
     return d.reset_index(drop=True)
 
 
-def harp_folds(d):
+_fold_cache = {}
+
+
+def base_folds(seed):
+    """Stage 2 fold procedure (3 HARP strata from K2 labels, shuffled per stratum, dealt round-robin) with a given
+    seed.  seed == SEED reproduces the Stage 2 folds exactly (asserted)."""
+    if seed not in _fold_cache:
+        d = load("data/labelled_20100501_20250101.csv", primary_only=False)
+        y, prim = d["flared_M1_next_24h"].to_numpy(), (d["noaa_ar_count"] == 1).to_numpy()
+        ps, pa = set(d.loc[prim & (y == 1), "harpnum"]), set(d.loc[y == 1, "harpnum"])
+        harps = np.sort(d["harpnum"].unique())
+        st = {h: "positive_single" if h in ps else ("positive_multi_only" if h in pa else "negative") for h in harps}
+        rng, out = np.random.RandomState(seed), {}
+        for name in ["positive_single", "positive_multi_only", "negative"]:
+            for i, h in enumerate(rng.permutation(np.sort([h for h in harps if st[h] == name]))):
+                out[int(h)] = i % K
+        if seed == SEED:
+            assert out == BASE_FOLDS, "fold procedure does not reproduce Stage 2"
+        _fold_cache[seed] = out
+    return _fold_cache[seed]
+
+
+def harp_folds(d, seed=SEED):
     """Baseline fold for known HARPs; unknown HARPs (only in +-68 variants) dealt stratified, seeded."""
-    new = sorted(set(d["harpnum"]) - set(BASE_FOLDS))
+    base = base_folds(seed)
+    new = sorted(set(d["harpnum"]) - set(base))
     pos = set(d.loc[d["flared_M1_next_24h"] == 1, "harpnum"])
-    rng, extra = np.random.RandomState(SEED), {}
+    rng, extra = np.random.RandomState(seed), {}
     for grp in [[h for h in new if h in pos], [h for h in new if h not in pos]]:
         for i, h in enumerate(rng.permutation(grp)):
             extra[h] = i % K
-    return d["harpnum"].map({**BASE_FOLDS, **extra}).to_numpy()
+    return d["harpnum"].map({**base, **extra}).to_numpy()
 
 
-def row_folds(n):
-    return np.random.RandomState(SEED).permutation(n) % K           # random row-level split (D5)
+def row_folds(n, seed=SEED):
+    return np.random.RandomState(seed).permutation(n) % K           # random row-level split (D5)
 
 
 def bc_samples(d, scale):
@@ -98,31 +122,34 @@ def run(d, folds, train_mask, thr_rule):
 
 
 thin = lambda d: d["t_rec_tai"].str[11:13].astype(int).isin([4, 10, 16, 22]).to_numpy()
-rows = []
 
-# baseline + D1 (same scores, different threshold)
-base = load("data/labelled_20100501_20250101.csv")
-r, s = run(base, harp_folds(base), thin(base), "maxTSS"); rows.append(("baseline (Stage 2)", r))
-yb = base["flared_M1_next_24h"].to_numpy(); a = s >= 0.0
-tpr, fpr = (a & (yb == 1)).sum() / (yb == 1).sum(), (a & (yb == 0)).sum() / (yb == 0).sum()
-rows.append(("D1 threshold = decision value 0", {**r, "TSS": tpr - fpr, "TPR": tpr, "FPR": fpr, "threshold": 0.0}))
 
-d2 = load(f"{S}/labelled_K.csv")                                          # file 85b88518...
-rows.append(("D2 K labels (old scale)", run(d2, harp_folds(d2), thin(d2), "maxTSS")[0]))
+if __name__ == "__main__":
+    rows = []
 
-d3 = load("data/diag_K2_lon68/labelled_dev.csv")
-rows.append(("D3 longitude +-68 deg", run(d3, harp_folds(d3), thin(d3), "maxTSS")[0]))
+    # baseline + D1 (same scores, different threshold)
+    base = load("data/labelled_20100501_20250101.csv")
+    r, s = run(base, harp_folds(base), thin(base), "maxTSS"); rows.append(("baseline (Stage 2)", r))
+    yb = base["flared_M1_next_24h"].to_numpy(); a = s >= 0.0
+    tpr, fpr = (a & (yb == 1)).sum() / (yb == 1).sum(), (a & (yb == 0)).sum() / (yb == 0).sum()
+    rows.append(("D1 threshold = decision value 0", {**r, "TSS": tpr - fpr, "TPR": tpr, "FPR": fpr, "threshold": 0.0}))
 
-d4, info4 = bc_samples(base.copy(), "K2")
-r4 = run(d4, harp_folds(d4), np.ones(len(d4), bool), "maxTSS")[0]; rows.append(("D4 B&C samples (flare-24h + random neg, N/P 16.5)", r4))
+    d2 = load(f"{S}/labelled_K.csv")                                          # file 85b88518...
+    rows.append(("D2 K labels (old scale)", run(d2, harp_folds(d2), thin(d2), "maxTSS")[0]))
 
-rows.append(("D5 random row-level split", run(base, row_folds(len(base)), thin(base), "maxTSS")[0]))
+    d3 = load("data/diag_K2_lon68/labelled_dev.csv")
+    rows.append(("D3 longitude +-68 deg", run(d3, harp_folds(d3), thin(d3), "maxTSS")[0]))
 
-d6src = load("data/diag_K_lon68/labelled_dev.csv")
-d6, info6 = bc_samples(d6src.copy(), "K")
-rows.append(("D6 all of D1-D5", run(d6, row_folds(len(d6)), np.ones(len(d6), bool), "zero")[0]))
+    d4, info4 = bc_samples(base.copy(), "K2")
+    r4 = run(d4, harp_folds(d4), np.ones(len(d4), bool), "maxTSS")[0]; rows.append(("D4 B&C samples (flare-24h + random neg, N/P 16.5)", r4))
 
-t = pd.DataFrame([{"run": n, **r} for n, r in rows])
-t.to_csv("data/diag/ablation.csv", index=False)
-print("D4 samples:", info4); print("D6 samples:", info6)
-print(t.to_string(index=False, float_format=lambda v: f"{v:.4f}"))
+    rows.append(("D5 random row-level split", run(base, row_folds(len(base)), thin(base), "maxTSS")[0]))
+
+    d6src = load("data/diag_K_lon68/labelled_dev.csv")
+    d6, info6 = bc_samples(d6src.copy(), "K")
+    rows.append(("D6 all of D1-D5", run(d6, row_folds(len(d6)), np.ones(len(d6), bool), "zero")[0]))
+
+    t = pd.DataFrame([{"run": n, **r} for n, r in rows])
+    t.to_csv("data/diag/ablation.csv", index=False)
+    print("D4 samples:", info4); print("D6 samples:", info6)
+    print(t.to_string(index=False, float_format=lambda v: f"{v:.4f}"))

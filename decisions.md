@@ -1272,3 +1272,51 @@ Notes (me, factual only):
 3. Baseline and D6: region-level bootstrap 95% CI on TSS (1,000 resamples of HARPs) at fixed fold assignment.
 4. D2 vs baseline: besides TSS, how many rows, positive HARPs and alarm episodes differ.
 Table only, no interpretation. Test years untouched.
+
+### RESULTS — ablation uncertainty (dev only; diagnostic; test years untouched)
+
+**1. Comparator (B&C 2015, verified in the paper).**
+- **What the ± is:** the mean and standard deviation over **1,000 repetitions** of training and testing (p.28:
+  they "repeat the training and testing phases 1000 times"). **What varied:** the random 70/30 split of
+  *examples* (ratio held fixed) and the SVM's random initialisation (p.28). Examples, not regions, were split.
+- **Table 2 = C1/C2 = 2.0** (p.21), parameters "selected to achieve the highest HSS2" (Table 2 caption, p.34);
+  operational TSS 0.610 ± 0.048. Table 3 (C1/C2 = 15.0, selected for highest TSS) gives 0.76 operational.
+- **Threshold rule: not stated.** No threshold selection is described; classification by the default decision
+  boundary of scikit-learn's `SVC` is an inference, not a statement in the paper. **Unclear.**
+- **Also unclear:** whether the "selected to achieve the highest HSS2" parameter choice was made on data separate
+  from the reported test splits. Not stated.
+- Consequence for D6 (fact, not interpretation): B&C's ± is a spread over random example-level splits, so the
+  closest analogue here is the seed spread of D5/D6, which also use random row-level splits (5-fold, 20 seeds,
+  versus 70/30, 1,000 repetitions).
+
+**2. TSS over 20 fold seeds** (seeds 20260921 + 0…19; seed 0 = the Stage 2 folds and reproduces the ablation
+table exactly). Region-grouped folds except D5 and D6 (random row split; D6 includes D5's split by definition).
+D4/D6 samples fixed; only folds vary.
+
+| run | seed 0 | mean | sd | min | max |
+|---|---:|---:|---:|---:|---:|
+| baseline | 0.6793 | 0.6760 | 0.0101 | 0.6554 | 0.6923 |
+| D1 threshold 0 | 0.3354 | 0.3993 | 0.0325 | 0.3354 | 0.4435 |
+| D2 K labels | 0.6773 | 0.6890 | 0.0166 | 0.6542 | 0.7112 |
+| D3 ±68° | 0.6456 | 0.6658 | 0.0092 | 0.6456 | 0.6797 |
+| D4 B&C samples | 0.8119 | 0.8120 | 0.0075 | 0.7945 | 0.8266 |
+| D5 random row split | 0.7901 | 0.7912 | 0.0023 | 0.7869 | 0.7953 |
+| D6 all of D1–D5 | 0.6865 | 0.6929 | 0.0056 | 0.6839 | 0.7057 |
+
+**3. Region-level bootstrap** (1,000 resamples of HARPs, seed-0 folds, fixed threshold; 0 resamples lacked a class):
+
+| run | TSS | 95% CI | threshold | HARPs |
+|---|---:|---|---:|---:|
+| baseline | 0.6793 | [0.5863, 0.7484] | −0.9925 | 986 |
+| D6 | 0.6865 | [0.5624, 0.7827] | 0 | 942 |
+
+**4. D2 (K labels) vs baseline (K2 labels), seed-0 folds**
+
+| quantity | baseline (K2) | D2 (K) | difference |
+|---|---:|---:|---|
+| evaluation rows | 114,952 | 114,952 | identical row keys |
+| rows with a different label | | | **728** (all positive under K2 only; 0 positive under K only) |
+| positive HARPs | 86 | 64 | 64 in both; **22 baseline only**; 0 D2 only |
+| alarm episodes (T1 rule, each run's own threshold) | 697 | 918 | **146 identical**; 551 baseline only; 772 D2 only |
+| threshold | −0.9925 | −0.9999 | |
+| TSS | 0.6793 | 0.6773 | |
