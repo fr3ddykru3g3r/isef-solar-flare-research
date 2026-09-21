@@ -3,10 +3,10 @@
   alarm      gate score >= frozen threshold, primary subset (single-region rows), scorable rows only
   episode    decision T1: alarm hours of one HARP, merged across up to 3 consecutive missing/unscorable hours;
              ends only at a scored hour below threshold or a gap of > 3 missing hours
-  t          episode onset (first alarm hour)
-  eligible   onset row labelled (label-missing rows are absent from the labelled file by construction),
-             history_incomplete == False, and >= 18 of 24 hourly points in (t-24h, t] with both USFLUX and
-             TOTUSJH present.  Decision T2: EVERY eligible episode is kept, weighted 1 / (eligible episodes in
+  t          decision T4: the first alarm hour of the episode whose (t-24h, t] trend window is evaluable
+             (>= 18 of 24 points); labels, history and trends are all measured from this t
+  eligible   the episode has an evaluable hour (T4) and history_incomplete == False at t (label-missing rows are
+             absent from the labelled file by construction).  Decision T2: EVERY eligible episode is kept, weighted 1 / (eligible episodes in
              its HARP); first_eligible marks the per-region sensitivity cohort.
   true       M1+ in (t, t+24h]  (= flared_M1_next_24h of the onset row); false = none
   history    n_C, n_M, n_X in [t-48h, t) -- identical to (t-48h, t] here: t is always hh:59:2x UTC and
@@ -65,23 +65,33 @@ def build(scored, lab, thr, missing_days):
     m1 = fl[fl["flux"] >= 1e-5]
     missing = [pd.Timestamp(d) for d in missing_days]
     rows, excl = [], []
+    alarm_rows = scored[scored["score"] >= thr].sort_values("t_rec_utc").groupby("harpnum")["t_rec_utc"]
+    alarm_rows = {h: v.to_numpy() for h, v in alarm_rows}
     for _, e in eps.iterrows():
-        h, t = e["harpnum"], e["t"]
+        h, onset = e["harpnum"], e["t"]
         g = by_harp[h]
+        # T4: t = the first alarm hour of the episode whose (t-24h, t] window has >= MIN_POINTS usable points
+        t, su, sj = None, np.nan, np.nan
+        hours = alarm_rows[h]
+        for tc in hours[(hours >= np.datetime64(onset)) & (hours <= np.datetime64(e["end"]))]:
+            tc = pd.Timestamp(tc)
+            w = g[(g["t_rec_utc"] > tc - pd.Timedelta(hours=24)) & (g["t_rec_utc"] <= tc)]
+            su, sj = rel_slope(w["t_rec_utc"], w["usflux"], tc), rel_slope(w["t_rec_utc"], w["totusjh"], tc)
+            if not (np.isnan(su) or np.isnan(sj)):
+                t = tc; break
+        if t is None:
+            excl.append((h, onset, f"no evaluable hour (trend window < {MIN_POINTS} points at every alarm hour)")); continue
         on = g[g["t_rec_utc"] == t].iloc[0]
         if bool(on["history_incomplete"]):
-            excl.append((h, t, "history_incomplete")); continue
-        w = g[(g["t_rec_utc"] > t - pd.Timedelta(hours=24)) & (g["t_rec_utc"] <= t)]
-        su, sj = rel_slope(w["t_rec_utc"], w["usflux"], t), rel_slope(w["t_rec_utc"], w["totusjh"], t)
-        if np.isnan(su) or np.isnan(sj):
-            excl.append((h, t, f"trend window < {MIN_POINTS} points")); continue
+            excl.append((h, t, "history_incomplete at t")); continue
         ars = {int(x) for x in str(on["noaa_ars"]).split(",") if x.strip().isdigit()}
         later = m1[m1["noaa_ar"].isin(ars) & (m1["start"] > t + pd.Timedelta(hours=24))
                    & (m1["start"] <= t + pd.Timedelta(hours=48))]
         follow_ok = not any((D < t + pd.Timedelta(hours=48)) and (D + pd.Timedelta(days=1) > t + pd.Timedelta(hours=24))
                             for D in missing)
         true = int(on["flared_M1_next_24h"])
-        rows.append({"harpnum": h, "t": t, "episode_end": e["end"], "alarm_hours": int(e["alarm_hours"]),
+        rows.append({"harpnum": h, "t": t, "episode_onset": onset, "episode_end": e["end"],
+                     "hours_onset_to_t": (t - onset) / pd.Timedelta(hours=1), "alarm_hours": int(e["alarm_hours"]),
                      "score": float(score_at[(h, t)]), "true_alarm": true,
                      "n_C": int(on["n_C_prev_48h"]), "n_M": int(on["n_M_prev_48h"]), "n_X": int(on["n_X_prev_48h"]),
                      "rel_slope_usflux": su, "rel_slope_totusjh": sj,

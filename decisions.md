@@ -1345,3 +1345,22 @@ whole episodes whose later hours were evaluable. **T1, T2, T3 unchanged.**
 Implementation (me): candidate hours for t are the episode's alarm hours in time order (missing hours inside an
 episode have no row and cannot be t). The `history_incomplete` rule (D) is then applied at that t: if it is
 True the episode is excluded (reason "history_incomplete at t"); t is not moved further.
+
+## 2026-09-21 — STAGE 3b RESULTS: dev cohort under T1–T4 — CHECKPOINT 3b
+Same OOF scores and threshold (−0.992496). 697 episodes (T1) in 220 HARPs; 6,836 alarm hours.
+- **Exclusions:** **150 episodes** "no evaluable hour" (trend window < 18 points at every alarm hour of the episode);
+  0 `history_incomplete at t`; 0 label-missing. **40 HARPs** alarmed with no eligible episode.
+- **T4 shift:** t equals the episode onset for 500 of 547 eligible episodes (median shift 0 h) — these are the 500
+  episodes of the T1–T3 cohort; the other **47 are recovered** by T4.
+
+| cohort | episodes | true | false | delayed | regions | regions with >= 1 true | region-weighted true / false / delayed |
+|---|---:|---:|---:|---:|---:|---:|---|
+| **PRIMARY (T1–T4, all eligible episodes, weight 1/episodes-in-HARP)** | **547** | **98** | **449** | **47** | **180** | **41** | **24.13 / 155.87 / 13.04** (sum 180) |
+| SENSITIVITY: first eligible episode per region | 180 | 25 | 155 | 16 | 180 | 25 | 25 / 155 / 16 |
+
+- **The 55 previously listed flaring regions:** **41 contribute >= 1 true-alarm episode**; 14 only false; 0 missing
+  from the cohort.
+- **All 86 dev positive HARPs (primary subset):** **41 contribute >= 1 true-alarm episode**; 21 are in the cohort
+  with only false episodes; 24 are not in the cohort — **16 never alarmed**, 8 alarmed but had no eligible episode.
+Artefacts replaced: `data/stage3/cohort_dev.csv` (adds `episode_onset`, `hours_onset_to_t`), `exclusions_dev.csv`,
+`episodes_dev.csv`. **No trend comparison computed or viewed; no model fitted. Test years untouched.**

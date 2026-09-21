@@ -43,9 +43,18 @@ c.to_csv("data/stage3/cohort_dev.csv", index=False)
 x.to_csv("data/stage3/exclusions_dev.csv", index=False)
 eps.to_csv("data/stage3/episodes_dev.csv", index=False)
 
-# the flaring regions: HARPs with >= 1 detected positive hour (out-of-fold, primary subset)
+# regions of interest
+S = "/private/tmp/claude-501/-Users-93i5-isef-new/c3c5d7da-b067-40d9-ba69-ef9888cd9350/scratchpad"
 o = scored
 flaring = set(o.loc[(o["flared_M1_next_24h"] == 1) & (o["score"] >= thr), "harpnum"])
+the55 = flaring & set(pd.read_csv(f"{S}/stage3_v1/cohort_dev.csv")["harpnum"])     # listed at checkpoint 3
+all_pos = set(o.loc[o["flared_M1_next_24h"] == 1, "harpnum"])                      # all dev positive HARPs
 true_regions = set(c.loc[c["true_alarm"] == 1, "harpnum"])
-print(f"\nregions with >= 1 detected positive hour: {len(flaring)}; in the cohort: {len(flaring & set(c['harpnum']))}; "
-      f"contributing >= 1 TRUE-alarm episode: {len(flaring & true_regions)}")
+print(f"\nthe {len(the55)} previously listed flaring regions: {len(the55 & true_regions)} contribute >= 1 true-alarm "
+      f"episode; {len((the55 & set(c['harpnum'])) - true_regions)} only false; {len(the55 - set(c['harpnum']))} not in cohort")
+print(f"all {len(all_pos)} dev positive HARPs (primary subset): {len(all_pos & true_regions)} contribute >= 1 true-alarm "
+      f"episode; {len((all_pos & set(c['harpnum'])) - true_regions)} in cohort with only false; "
+      f"{len(all_pos - set(c['harpnum']))} not in cohort "
+      f"(of which never alarmed: {len(all_pos - set(eps['harpnum']))})")
+print(f"T4 shift from episode onset to t: median {c['hours_onset_to_t'].median():.0f} h, "
+      f"t == onset for {int((c['hours_onset_to_t'] == 0).sum())} of {len(c)} episodes")
