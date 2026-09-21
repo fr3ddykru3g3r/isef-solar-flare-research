@@ -8,6 +8,7 @@ from astropy.time import Time
 from joblib import Parallel, delayed
 from sklearn.svm import SVC
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_curve
 import swpc
 from chunks import months
 
@@ -104,14 +105,20 @@ X = cat[F].to_numpy(float); y = cat["y"].to_numpy()
 X = (X - np.median(X, axis=0)) / X.std(axis=0)                 # assumption: scaling on the whole catalogue
 
 
-def one(i):
+def one(i, thr_rule="zero"):
+    """thr_rule 'zero' = D7 (SVC default boundary, assumption); 'train_maxTSS' = D7t (max TSS on the training 70%,
+    in-sample decision values, applied to the 30% test)."""
     Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.30, stratify=y, random_state=SEED + i)
-    pred = SVC(**SVM).fit(Xtr, ytr).decision_function(Xte) >= 0     # assumption: SVC default boundary
+    m = SVC(**SVM).fit(Xtr, ytr)
+    thr = 0.0
+    if thr_rule == "train_maxTSS":
+        fpr_, tpr_, th = roc_curve(ytr, m.decision_function(Xtr)); thr = float(th[np.argmax(tpr_ - fpr_)])
+    pred = m.decision_function(Xte) >= thr
     tpr = (pred & (yte == 1)).sum() / (yte == 1).sum(); fpr = (pred & (yte == 0)).sum() / (yte == 0).sum()
-    return tpr - fpr, tpr, fpr
+    return tpr - fpr, tpr, fpr, thr
 
 
-res = np.array(Parallel(n_jobs=3)(delayed(one)(i) for i in range(REPEATS)))
+res = np.array(Parallel(n_jobs=3)(delayed(one)(i) for i in range(REPEATS)))[:, :3]
 pd.DataFrame(res, columns=["TSS", "TPR", "FPR"]).to_csv("data/diag/d7_repeats.csv", index=False)
 print(f"\nD7 over {REPEATS} random 70/30 splits: TSS {res[:, 0].mean():.4f} ± {res[:, 0].std(ddof=1):.4f} "
       f"(min {res[:, 0].min():.4f}, max {res[:, 0].max():.4f}); TPR {res[:, 1].mean():.4f} ± {res[:, 1].std(ddof=1):.4f}; "
@@ -119,6 +126,16 @@ print(f"\nD7 over {REPEATS} random 70/30 splits: TSS {res[:, 0].mean():.4f} ± {
       f"{int(round(0.3 * N))} neg")
 print(f"distinct patches among positives: {cat.loc[cat.y == 1, 'harpnum'].nunique()}, among negatives: "
       f"{cat.loc[cat.y == 0, 'harpnum'].nunique()}")
+
+# ---------------------------------------------------------------- D7t: threshold from the training 70%
+rt = np.array(Parallel(n_jobs=3)(delayed(one)(i, "train_maxTSS") for i in range(REPEATS)))
+pd.DataFrame(rt, columns=["TSS", "TPR", "FPR", "threshold"]).to_csv("data/diag/d7t_repeats.csv", index=False)
+print(f"\nD7t over {REPEATS} random 70/30 splits (threshold = max TSS on the training 70%): TSS {rt[:, 0].mean():.4f} ± "
+      f"{rt[:, 0].std(ddof=1):.4f} (min {rt[:, 0].min():.4f}, max {rt[:, 0].max():.4f}); TPR {rt[:, 1].mean():.4f} ± "
+      f"{rt[:, 1].std(ddof=1):.4f}; FPR {rt[:, 2].mean():.4f} ± {rt[:, 2].std(ddof=1):.4f}; threshold mean "
+      f"{rt[:, 3].mean():.4f} (min {rt[:, 3].min():.4f}, max {rt[:, 3].max():.4f})")
+if "--d7t-only" in sys.argv:
+    sys.exit(0)
 
 # ---------------------------------------------------------------- D7b: our baseline, same period
 import diag_ablation as A

@@ -1435,3 +1435,14 @@ Identical to D7, except **the threshold is chosen within each 70/30 split by max
 then applied to the 30% test. Report mean ± sd, min, max TSS over 1,000 repeats. Table only. **Stage 4 stays on hold.**
 Note (me, factual): the training-set decision values used to choose the threshold are in-sample (the SVM is fitted
 on those same examples) — as specified.
+
+### D7t — RESULTS (diagnostic; dev period only; test years untouched)
+Same catalogue (P 272, N 4,488) and the same 1,000 splits as D7 — the rerun reproduces `d7_repeats.csv` byte-for-byte.
+Output: `data/diag/d7t_repeats.csv`.
+
+| run | threshold rule | TSS mean | sd | min | max | TPR | FPR | threshold |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| B&C (2015) Table 2 | not stated | 0.610 | 0.048 | — | — | — | — | — |
+| D7 | decision value 0 (assumed) | 0.5267 | 0.0500 | 0.3562 | 0.6969 | 0.5399 ± 0.0505 | 0.0132 ± 0.0032 | 0 |
+| **D7t** | **max TSS on the training 70% (in-sample), applied to the 30%** | **0.7065** | **0.0401** | **0.5680** | **0.8189** | 0.7843 ± 0.0427 | 0.0778 ± 0.0094 | mean −0.9926 (−1.0241 … −0.8920) |
+**Stage 4 remains on hold.**
