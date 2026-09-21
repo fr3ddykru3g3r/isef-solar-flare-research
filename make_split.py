@@ -15,7 +15,7 @@ import numpy as np, pandas as pd
 SEED = 20260921
 VAL_FRAC = 0.25
 LAB = "data/labelled_20100501_20250101.csv"
-OUT = "data/split.csv"
+OUT = "frozen/split.csv"     # tracked in git; data/ is not
 
 lab = pd.read_csv(LAB, parse_dates=["t_rec_utc"], low_memory=False)
 lab["year"] = lab["t_rec_utc"].dt.year

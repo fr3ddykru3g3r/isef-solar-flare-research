@@ -493,7 +493,7 @@ a peak inside a gap where neither satellite has data is invisible to this check.
 - Written to `data/split.csv` (HARPNUM → train / val / test), SHA-256 recorded below.
 - **No model is trained** — waiting on the signed research plan.
 
-### RESULT: split (decision N) — `make_split.py` → `data/split.csv`
+### RESULT: split (decision N) — `make_split.py` → `data/split.csv` (moved to `frozen/split.csv`, see below)
 **SHA-256 `f3ab4056dd7b123aa8116b5d76650ddd916805139ee262381f9a7ffda728d145`** (rerun reproduces it).
 Seed 20260921. 2020 removed first: 255,292 → 250,811 rows (−4,481); 34 HARPs exist only in 2020 and
 are not in the split. 2,019 HARPs: train 913, val 305, test 801.
@@ -625,3 +625,48 @@ existing record sets (`fetch_extra.py` → `data/raw_sharp_extra_<chunk>.csv`; o
 untouched), merged 1:1 on HARPNUM + T_REC with an assert. Pre-O labelled file SHA-256 (for the
 "labels unchanged" check): `d69ecbc46f3150d149915178a5d533d80156f83372287c56b09e7d280a55f632`.
 PENDING: fetch completion, row-count and label verification.
+
+## 2026-09-21 — Decisions on P, the gate features, QUALITY, and git  (decided by: user)
+
+**1. Decision P.** P was drafted but never sent; its content was superseded by R before adoption.
+**R supersedes an unadopted draft P.** (Replaces my earlier note that P "was not written down here".)
+
+**2. Lorentz-force features: option 2. Decision Q amended.**
+Q now reads: **primary gate = Bobra & Couvidat-style SVM, 10 of 13 features; TOTBSQ, TOTFZ, EPSZ
+unavailable as keywords.** ("Reproduction" is withdrawn as a description.)
+**The gate uses exactly these 10 features and no others** — B&C Table 1 "Included" features that exist
+as SHARP keywords, in Table 1 rank order:
+
+  1. TOTUSJH   2. TOTPOT   3. TOTUSJZ   4. ABSNJZH   5. SAVNCPP
+  6. USFLUX    7. AREA_ACR 8. MEANPOT   9. R_VALUE  10. SHRGT45
+
+(B&C ranks 1, 3, 4, 5, 6, 7, 8, 10, 11, 13; ranks 2 TOTBSQ, 9 TOTFZ, 12 EPSZ unavailable.)
+**Not in the gate:** MEANSHR and every other SHARP parameter, including B&C's 12 "Discarded".
+The gate's test TSS will be reported against B&C's published TSS later, as a check.
+
+**Conflict flagged by me, awaiting confirmation:** the instruction's examples of features to exclude
+("not MEANSHR, R_VALUE, AREA_ACR etc.") include **R_VALUE and AREA_ACR, which are two of the 10**
+(B&C Table 1: "Included", ranks 11 and 8). Recorded as **exactly the 10 above**, following the
+operative rule "exactly the 10 of their 13". If R_VALUE and AREA_ACR are meant to be excluded too,
+the gate would have 8 features — nothing is trained, so this costs nothing to correct.
+
+**3. QUALITY: keep == 0.** Documented as a **stricter-than-B&C difference**: B&C (2015, §5) discard only
+QUALITY > 65536 (0x10000); this dataset keeps QUALITY == 0. The gate is trained on a stricter subset.
+
+**4. Git.**
+- `data/` added to `.gitignore` and **removed from tracking** (`git rm -r --cached data`); **no files
+  deleted on disk** (617 entries in `data/` before and after).
+- **Frozen artefacts are tracked under `frozen/`:** `data/split.csv` → **`frozen/split.csv`**
+  (SHA-256 unchanged: `f3ab4056dd7b123aa8116b5d76650ddd916805139ee262381f9a7ffda728d145`);
+  `make_split.py` writes there. Future `frozen_spec.json` goes in `frozen/` too.
+- **SHA-256 of the combined files at this point (post-relabel, pre-O merge):**
+  - `data/labelled_20100501_20250101.csv`:
+    `d69ecbc46f3150d149915178a5d533d80156f83372287c56b09e7d280a55f632`
+  - `data/raw_sharp_20100501_20250101.csv`:
+    `2a65e05ba070dec1aca9bad546ba4825503eff04deb56774b964b1e542a8b28f`
+  The labelled hash will change when the decision-O keywords are merged (new columns); it will be
+  re-recorded then, alongside the check that labels and row counts are unchanged.
+- Note (me): `git rm --cached` does not remove files from **history**. Past commits still contain
+  `data/`, including the 137 MB raw CSV, so pushing this repository to GitHub would still be rejected
+  (100 MB file limit). Fixing that requires rewriting history (e.g. `git filter-repo`), which is
+  destructive — not done; the user's call.
