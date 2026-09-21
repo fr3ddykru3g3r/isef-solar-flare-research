@@ -1961,3 +1961,9 @@ Also: AR 11429 lies at ~E27 at the start of its window, i.e. inside ±30°.
   magnetogram segment — answered below.
 - **The user's message was cut off** after that sentence; the remaining decisions are not yet received. No EUV download
   until they are.
+- **Answer (me): `hmi.sharp_720s` has a line-of-sight `magnetogram` segment — provisional.** The JSOC metadata call
+  (`drms` `info`) failed server-side on 2026-09-21 ("No space left on device" in JSOC's database). The failed query
+  itself, returned in the error, lists the series' segment columns: `magnetogram` is segment 0 (`magnetogram_bzero`,
+  `magnetogram_bscale`), followed by `bitmap`, `dopplergram`, `continuum` and the inversion segments (`field`,
+  `inclination`, `azimuth`, …). To be confirmed with a clean metadata call once JSOC recovers.
+  **JSOC was returning database disk-full errors at this time** — relevant to export feasibility.
