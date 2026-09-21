@@ -1819,8 +1819,8 @@ Distinct positive HARPs over 2025 + 2026 (single / <= 2 / all): **23 45 68**.
 **\* Overlap with the 2021–2024 test data (flagged for the user; nothing excluded yet).** The frozen start, 2025-01-01
 00:00 TAI, is **2024-12-31 23:59:23 UTC**, and the 2024-12 chunk of the 2010–2024 dataset already contains that slot
 (JSOC ranges include both ends). **15 raw / 6 labelled rows are in both files** — identical in every column. They are the
-"2024" rows above. **6 HARPs** appear in both 2021–2024 and the confirmation set (all 6 via this slot; 6 of 267 HARPs in
-2025 also continue into 2025, 0 in 2026).
+"2024" rows above. **6 HARPs** appear in both 2021–2024 and the confirmation set: all 6 have the overlapping slot, and the same 6 also have
+2025 rows (6 of the 267 HARPs with 2025 rows); none of the 137 HARPs with 2026 rows is in 2021–2024.
 
 **Hashes (SHA-256)**
 - `data/raw_sharp_20250101_20260817.csv` `d6dc70b837fe0716e3ef0d31b735e70bb2a5c2e5a6ec7633c3412c0e05c779c2`
