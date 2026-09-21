@@ -1560,3 +1560,96 @@ Marked in `frozen/frozen_spec.json` (only the `models.test_prediction` field cha
   come from outside the evaluation years.
 - **Dry run completed** (`stage5_test.py dryrun`: dev HARPs, 2013–2014, outputs in /tmp, discarded): every code path
   ran without error. Its numbers are a code check, not results.
+
+## 2026-09-21 — STAGE 5 RESULTS: held-out test, run ONCE — CHECKPOINT 5 (results tables only, no interpretation)
+
+`stage5_test.py test`: single execution, exit 0. **Every hash in `frozen/frozen_spec.json` verified before scoring.** Test HARPs 801; rows 2021–2024: 101,766; **unscorable 34 (0 positive), excluded**. Gate threshold −0.992496 (frozen); gate score = mean of the 5 fold models' decision values; A/B probabilities = mean of the 5 fold models; no refit.
+
+### Gate (hour level = rows; region level = one entry per HARP; TSS CI = HARP bootstrap, 1,000 resamples)
+
+| period | subset | level | threshold | N | positives | TSS | TSS 95% CI | HSS | FAR | TPR | FPR |
+|---|---|---|---|---:|---:|---:|---|---:|---:|---:|---:|
+| primary 2021/2023/2024 | single | hour | frozen −0.9925 | 53,356 | 1,976 | **0.5467** | [0.4120, 0.6598] | 0.3670 | 0.7021 | 0.6012 | 0.0545 |
+| primary 2021/2023/2024 | single | hour | 0 | 53,356 | 1,976 | **0.3227** | [0.1994, 0.4338] | 0.3536 | 0.5832 | 0.3411 | 0.0184 |
+| primary 2021/2023/2024 | single | region | frozen −0.9925 | 450 | 55 | **0.7284** | [0.6301, 0.8198] | 0.5236 | 0.5429 | 0.8727 | 0.1443 |
+| primary 2021/2023/2024 | single | region | 0 | 450 | 55 | **0.4757** | [0.3390, 0.6101] | 0.5746 | 0.1818 | 0.4909 | 0.0152 |
+| primary 2021/2023/2024 | <=2 | hour | frozen −0.9925 | 64,642 | 3,401 | **0.6089** | [0.5150, 0.6945] | 0.4233 | 0.6483 | 0.6783 | 0.0694 |
+| primary 2021/2023/2024 | <=2 | hour | 0 | 64,642 | 3,401 | **0.3966** | [0.2806, 0.4968] | 0.4267 | 0.5057 | 0.4205 | 0.0239 |
+| primary 2021/2023/2024 | <=2 | region | frozen −0.9925 | 528 | 87 | **0.7288** | [0.6591, 0.7950] | 0.5606 | 0.4868 | 0.8966 | 0.1678 |
+| primary 2021/2023/2024 | <=2 | region | 0 | 528 | 87 | **0.4876** | [0.3818, 0.5932] | 0.5815 | 0.1538 | 0.5057 | 0.0181 |
+| primary 2021/2023/2024 | all | hour | frozen −0.9925 | 77,085 | 6,955 | **0.6452** | [0.5829, 0.6986] | 0.4519 | 0.6087 | 0.7629 | 0.1177 |
+| primary 2021/2023/2024 | all | hour | 0 | 77,085 | 6,955 | **0.4936** | [0.4066, 0.5660] | 0.4912 | 0.4657 | 0.5403 | 0.0467 |
+| primary 2021/2023/2024 | all | region | frozen −0.9925 | 605 | 142 | **0.7266** | [0.6743, 0.7800] | 0.6029 | 0.4159 | 0.9296 | 0.2030 |
+| primary 2021/2023/2024 | all | region | 0 | 605 | 142 | **0.6063** | [0.5285, 0.6873] | 0.6629 | 0.1495 | 0.6408 | 0.0346 |
+| sensitivity incl. 2022 | single | hour | frozen −0.9925 | 71,862 | 2,381 | **0.5224** | [0.4115, 0.6256] | 0.3347 | 0.7331 | 0.5766 | 0.0543 |
+| sensitivity incl. 2022 | single | hour | 0 | 71,862 | 2,381 | **0.2753** | [0.1582, 0.3900] | 0.3089 | 0.6233 | 0.2919 | 0.0166 |
+| sensitivity incl. 2022 | single | region | frozen −0.9925 | 605 | 71 | **0.6812** | [0.5841, 0.7621] | 0.4813 | 0.5755 | 0.8310 | 0.1498 |
+| sensitivity incl. 2022 | single | region | 0 | 605 | 71 | **0.4179** | [0.3015, 0.5368] | 0.5116 | 0.2439 | 0.4366 | 0.0187 |
+| sensitivity incl. 2022 | <=2 | hour | frozen −0.9925 | 86,824 | 4,034 | **0.5942** | [0.5091, 0.6642] | 0.3916 | 0.6821 | 0.6636 | 0.0694 |
+| sensitivity incl. 2022 | <=2 | hour | 0 | 86,824 | 4,034 | **0.3667** | [0.2669, 0.4579] | 0.3979 | 0.5347 | 0.3884 | 0.0218 |
+| sensitivity incl. 2022 | <=2 | region | frozen −0.9925 | 709 | 110 | **0.7008** | [0.6330, 0.7669] | 0.5268 | 0.5176 | 0.8727 | 0.1720 |
+| sensitivity incl. 2022 | <=2 | region | 0 | 709 | 110 | **0.4783** | [0.3880, 0.5717] | 0.5666 | 0.1912 | 0.5000 | 0.0217 |
+| sensitivity incl. 2022 | all | hour | frozen −0.9925 | 101,732 | 7,972 | **0.6446** | [0.5875, 0.6994] | 0.4335 | 0.6338 | 0.7559 | 0.1113 |
+| sensitivity incl. 2022 | all | hour | 0 | 101,732 | 7,972 | **0.4828** | [0.4009, 0.5543] | 0.4776 | 0.4871 | 0.5252 | 0.0424 |
+| sensitivity incl. 2022 | all | region | frozen −0.9925 | 801 | 172 | **0.7077** | [0.6555, 0.7581] | 0.5704 | 0.4510 | 0.9128 | 0.2051 |
+| sensitivity incl. 2022 | all | region | 0 | 801 | 172 | **0.5913** | [0.5212, 0.6615] | 0.6474 | 0.1756 | 0.6279 | 0.0366 |
+
+### Test cohort sizes (rules T1–T4)
+
+| period | subset | episodes (T1) | alarm HARPs | excluded (no evaluable hour) | eligible episodes | true | false | delayed | regions | regions with true | region-weighted true |
+|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| primary 2021/2023/2024 | single | 367 | 105 | 54 | 313 | 45 | 268 | 26 | 98 | 28 | 14.46 |
+| primary 2021/2023/2024 | <=2 | 563 | 152 | 87 | 476 | 81 | 395 | 53 | 139 | 43 | 22.46 |
+| primary 2021/2023/2024 | all | 971 | 226 | 126 | 845 | 180 | 665 | 92 | 212 | 86 | 45.89 |
+| sensitivity incl. 2022 | single | 486 | 139 | 72 | 414 | 62 | 352 | 36 | 128 | 37 | 18.51 |
+| sensitivity incl. 2022 | <=2 | 745 | 199 | 117 | 628 | 109 | 519 | 68 | 182 | 56 | 28.86 |
+| sensitivity incl. 2022 | all | 1197 | 286 | 162 | 1035 | 215 | 820 | 113 | 267 | 102 | 54.28 |
+
+All exclusions were "no evaluable hour"; none for `history_incomplete at t` or label-missing.
+
+### Models A vs B (weighted; Δ = log-loss(A) − log-loss(B); CI = HARP bootstrap, 10,000 resamples)
+
+| period | subset | cohort | episodes | true | HARPs | true HARPs | log-loss A | log-loss B | **Δ** | **Δ 95% CI** | AUC A | AUC B |
+|---|---|---|---:|---:|---:|---:|---:|---:|---:|---|---:|---:|
+| primary 2021/2023/2024 | single | all eligible (T2) | 313 | 45 | 98 | 28 | 0.3686 | 0.3737 | **-0.0051** | **[-0.0201, 0.0094]** | 0.8111 | 0.7974 |
+| primary 2021/2023/2024 | single | first episode per region | 98 | 13 | 98 | 13 | 0.4066 | 0.4091 | -0.0025 | [-0.0265, 0.0210] | 0.7593 | 0.7330 |
+| primary 2021/2023/2024 | <=2 | all eligible (T2) | 476 | 81 | 139 | 43 | 0.3747 | 0.3814 | -0.0067 | [-0.0182, 0.0049] | 0.8089 | 0.7829 |
+| primary 2021/2023/2024 | <=2 | first episode per region | 139 | 19 | 139 | 19 | 0.4022 | 0.4044 | -0.0022 | [-0.0200, 0.0152] | 0.7618 | 0.7276 |
+| primary 2021/2023/2024 | all | all eligible (T2) | 845 | 180 | 212 | 86 | 0.4250 | 0.4260 | -0.0010 | [-0.0101, 0.0078] | 0.8083 | 0.8103 |
+| primary 2021/2023/2024 | all | first episode per region | 212 | 45 | 212 | 45 | 0.4841 | 0.4819 | 0.0022 | [-0.0118, 0.0157] | 0.7599 | 0.7561 |
+| sensitivity incl. 2022 | single | all eligible (T2) | 414 | 62 | 128 | 37 | 0.3726 | 0.3741 | -0.0015 | [-0.0159, 0.0133] | 0.7994 | 0.7686 |
+| sensitivity incl. 2022 | single | first episode per region | 128 | 18 | 128 | 18 | 0.4270 | 0.4216 | 0.0054 | [-0.0199, 0.0336] | 0.7247 | 0.6879 |
+| sensitivity incl. 2022 | <=2 | all eligible (T2) | 628 | 109 | 182 | 56 | 0.3864 | 0.3899 | -0.0035 | [-0.0149, 0.0079] | 0.7986 | 0.7664 |
+| sensitivity incl. 2022 | <=2 | first episode per region | 182 | 27 | 182 | 27 | 0.4487 | 0.4462 | 0.0026 | [-0.0174, 0.0244] | 0.7075 | 0.6724 |
+| sensitivity incl. 2022 | all | all eligible (T2) | 1035 | 215 | 267 | 102 | 0.4278 | 0.4277 | 0.0001 | [-0.0085, 0.0088] | 0.7981 | 0.7955 |
+| sensitivity incl. 2022 | all | first episode per region | 267 | 54 | 267 | 54 | 0.4992 | 0.4942 | 0.0050 | [-0.0102, 0.0210] | 0.7267 | 0.7239 |
+
+Primary analysis = first row (primary years, single-region, all eligible episodes).
+
+### Score-matched pairs (primary, single-region; frozen dev caliper 0.0747)
+
+41 pairs from 45 true episodes (4 unmatched); max |score difference| 0.0469; 26 true HARPs.
+
+| slope | mean paired difference (true − false) | median | 95% CI (mean; clustered by true HARP, 1,000) |
+|---|---:|---:|---|
+| rel_slope_usflux | 0.002191 | 0.002213 | [-0.003941, 0.007951] |
+| rel_slope_totusjh | 0.002309 | -0.0006981 | [-0.003397, 0.00864] |
+
+### Delayed vs true (primary, single-region; descriptive only; weighted mean, [median] for slopes)
+
+| group | episodes | HARPs | weight | gate score | n_C | n_M | n_X | rel. slope USFLUX | rel. slope TOTUSJH |
+|---|---:|---:|---:|---:|---:|---:|---:|---|---|
+| true | 45 | 28 | 14.46 | -0.342 | 5.22 | 0.613 | 0.207 | 0.0077 [0.00259] | 0.0114 [0.00205] |
+| delayed | 26 | 20 | 8.11 | -0.661 | 2.47 | 0.452 | 0.0411 | 0.0243 [0.00867] | 0.0283 [0.00666] |
+| other false | 242 | 87 | 75.42 | -0.875 | 1.97 | 0.243 | 0.0155 | 0.0119 [0.00311] | 0.013 [0.00199] |
+
+### Output files (data/stage5/, SHA-256)
+
+- `data/stage5/cohort_sizes.csv` `8ef8337d837f71ac4acfa356beff11ebbcc06b834150438f143fbbd8dde480c5`
+- `data/stage5/cohort_test_primary.csv` `49fe435c24264c291b010a223519ebad4b1237a08d85976b68b3ef945a86c083`
+- `data/stage5/delayed_descriptive.csv` `78bd507ac06a07d86c00a34387cf8f14c75edf4192b725e475aa7665ea60ccfa`
+- `data/stage5/gate_gate.csv` `5e88db8d7075302ebdd55ccb8088485fcd00a1e4893bc92fbaa028cf214c2054`
+- `data/stage5/matched_pairs_test.csv` `15acc54d50bd58cd3eef08091f72ef3c1ffc397a36d96563325487ef364e8aa4`
+- `data/stage5/models_b.csv` `77cd1e0db0f2e7eacf04f785c7c6761e212efd63f055582931a7b72363b52e6b`
+- `data/stage5/pairs_summary.csv` `d0dd9b6c9d1daeadee50866b1c53ea56749ca796ea251653a456962832d00cbf`
+- `stage5_test.log` (console output) is tracked in git.
