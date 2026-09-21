@@ -1320,3 +1320,28 @@ D4/D6 samples fixed; only folds vary.
 | alarm episodes (T1 rule, each run's own threshold) | 697 | 918 | **146 identical**; 551 baseline only; 772 D2 only |
 | threshold | −0.9925 | −0.9999 | |
 | TSS | 0.6793 | 0.6773 | |
+
+## 2026-09-21 — Decisions on the ablation, the replication protocol, and T4  (decided by: user)
+
+**1. Ablation uncertainty — accepted.** Recorded wording (user):
+"B&C Table 2 TSS (0.610) lies within the region-bootstrap 95% CI of our B&C-style reproduction D6 (0.687,
+[0.562, 0.783]). Compatible; not a formal test of agreement. B&C's threshold rule and whether their parameter
+selection used held-out data are not stated. Their ± (sd over 1,000 random example-level splits) is not directly
+comparable to our seed sd. Random example-level splitting (D5) scored higher than region-grouped (baseline) in
+all 20 seeds (0.787–0.795 vs 0.655–0.692); cause not decomposed. K vs K2: similar TSS but different positive
+HARPs (64 vs 86) and alarm episodes."
+**D6 keeps D5's random split — correct; it is the B&C-like combination.**
+(Checked by me: D5 > baseline in every one of the 20 seeds.)
+
+**2. Replication protocol — approved as proposed.** Addition: **in Stage 5, the gate test TSS is reported with a
+region-level bootstrap 95% CI (1,000 resamples), not a seed sd.**
+
+**3. Revised Checkpoint 3 approved, with one change — T4.**
+**T4 — made after seeing cohort sizes, before any trend comparison or model result.**
+The episode alarm time **t = the first hour within the episode whose (t−24h, t] trend window has >= 18 of 24
+points** (first evaluable hour). **Labels, history and trends are all measured relative to this t. Episodes with
+no evaluable hour are excluded.** Reason (user): T1 merging moved onsets before trends are measurable, excluding
+whole episodes whose later hours were evaluable. **T1, T2, T3 unchanged.**
+Implementation (me): candidate hours for t are the episode's alarm hours in time order (missing hours inside an
+episode have no row and cannot be t). The `history_incomplete` rule (D) is then applied at that t: if it is
+True the episode is excluded (reason "history_incomplete at t"); t is not moved further.
