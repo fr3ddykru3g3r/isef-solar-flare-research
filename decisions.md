@@ -1653,3 +1653,32 @@ Primary analysis = first row (primary years, single-region, all eligible episode
 - `data/stage5/models_b.csv` `77cd1e0db0f2e7eacf04f785c7c6761e212efd63f055582931a7b72363b52e6b`
 - `data/stage5/pairs_summary.csv` `d0dd9b6c9d1daeadee50866b1c53ea56749ca796ea251653a456962832d00cbf`
 - `stage5_test.log` (console output) is tracked in git.
+
+## 2026-09-21 — PRIMARY RESULT FINAL; next phase  (decided by: user)
+**The primary result (Stage 5, CHECKPOINT 5) stays unchanged and is recorded as FINAL.**
+**No new analysis is to be run on 2021–2024.**
+
+**Step A (dev only, exploratory):** within the dev cohort, logistic models with (i) gate score only, (ii) C/M/X history
+only, (iii) score + history; same CV, weights and regularisation as Stage 4; weighted log-loss and AUC; table only.
+(Note (me): (iii) has the same inputs as model A, so it reproduces Stage 4's A.)
+
+### Step B — PRE-REGISTERED 2026-09-21, before R has been computed anywhere  (decided by: user; details marked)
+- **Feature R** = hours since the region's most recent **C1+ flare (K2 scale)** before t, **capped at 48 h** (R = 48 if
+  none in the window); used as **log(1 + R)**.
+  Details (me, fixing the literal reading): "region" = the NOAA regions in the HARP's `NOAA_ARS` at t (ANY rule, as for
+  labels and history); flare time = **start time** (as for labels and history); "before t" = start in **(t − 48 h, t)**;
+  R = (t − start of the most recent such flare) in hours, else 48; C1+ = harmonised K2 flux >= 1e-6; SWPC originals.
+- **Hypothesis: model C = A + log(1 + R) beats A.** Model C: same estimator, standardisation, weights, CV and seeds as A.
+  "Beats" = weighted log-loss(A) − log-loss(C) > 0, with a HARP-bootstrap 95% CI (same procedure as the primary).
+- **Operating point, fixed on dev:** report the false-alarm count for A vs C at the dev threshold that gives C the same
+  true-alarm rate as A.
+  **For confirmation (me): A's own operating threshold τ_A is not specified.** Proposed: τ_A = the threshold maximising
+  weighted TSS on A's dev out-of-fold probabilities (the same rule used for the gate); τ_C = the threshold on C's dev
+  out-of-fold probabilities giving the same weighted true-alarm rate (TPR) as A at τ_A; report false alarms (episodes
+  and region-weighted) at τ_A and τ_C. Both thresholds fixed on dev.
+- **Evaluation set:** not yet specified — 2021–2024 is closed (above); the candidate is the fresh confirmation set of
+  Step C. **Nothing in Step B is computed until the user confirms τ_A and the evaluation set.**
+
+**Step C (report only; fetch nothing):** feasibility of a fresh confirmation set 2025-01-01 → latest available: SHARP
+keyword availability, SWPC report coverage, and whether SWPC 4-digit Reg# → +10000 still holds past region 14000
+(verify against SHARP NOAA_ARS).
