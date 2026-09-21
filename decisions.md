@@ -1849,3 +1849,36 @@ No split had zero positive predictions. Per-split counts in `data/diag/d7_counts
 | precision | 0.690 ± 0.049 | 0.717 ± 0.050 | 0.417 ± 0.037 | 0.356 ± 0.022 |
 | FPR | 0.017 ± 0.004 | 0.013 ± 0.003 | 0.071 ± 0.008 | 0.089 ± 0.009 |
 | accuracy | 0.962 ± 0.004 | 0.961 ± 0.004 | 0.924 ± 0.007 | 0.905 ± 0.008 |
+
+## 2026-09-21 — Confirmation set PAUSED; decisions on overlap and subset  (decided by: user)
+- **The 2025+ confirmation work is PAUSED.**
+- **The 6 HARPs that also appear in 2021–2024 are excluded** from the confirmation set (this removes the 6 overlapping
+  labelled rows of the 2025-01-01 00:00 TAI slot along with those HARPs' 2025 rows).
+- **The <= 2-region fallback applies** to the confirmation set (single-region has 23 positive HARPs over 2025–2026,
+  below the fallback's 40).
+- Note (me): not yet applied to any file — the confirmation labelled file (`1f667395…`) is unchanged; the exclusion and
+  subset choice will be applied when the work resumes.
+
+## 2026-09-21 — D8 replication conclusion (me, record-keeping)
+The user's message refers to a "D8 replication conclusion". The D8 results table is recorded above; **no conclusion
+wording for D8 has been provided by the user**, so none is recorded here. To be added verbatim when supplied.
+
+## 2026-09-21 — EUV/UV PILOT — exploratory, dev data only (2010–2019)  (decided by: user)
+**Exploratory.** Dev data only; **2021–2024 and 2025+ data are not touched.**
+- **STEP 1 — BADPIT specification from the paper (arXiv:2604.26036) only; code unavailable.** Extract the algorithm
+  with page references (instrument/channel, cadence, baseline, thresholds (3σ and power-law), spatial rule (> 3 connected
+  pixels), temporal rule (> 5 consecutive frames), saturation flag (> 12,000 DN), PIL mask (±150 G, 16 px dilation), AR
+  mask (30 G), alignment/registration); list every unstated detail with one proposed choice each, marked for user
+  approval; check for an archived official copy of the code (Zenodo, Software Heritage, arXiv ancillary files) and use
+  no unofficial copies; identify BADPIT's 2 active regions and time windows. **CHECKPOINT 1; no downloads.**
+- **STEP 2** (after CHECKPOINT 1 approval): 3 dev alarm episodes from the frozen dev cohort (1 true, 1 false, 1 delayed;
+  gate scores within the caliper; |LON| <= 30° if possible); SHARP CEA Br at t and AIA cutouts over the HARP box for
+  (t−24h, t] in BADPIT's channel at 12-min cadence via JSOC export (cutout mode); report size and wall time; save to
+  `data/euv_pilot/` (untracked) with hashes.
+- **STEP 3:** PIL mask from Br by BADPIT's rule, mapped onto the AIA frame (level 1.5 if needed; time offset/rotation);
+  one overlay PNG per episode.
+- **STEP 4:** per AIA frame, fraction of PIL-mask pixels above a TRAILING 3σ baseline (earlier frames only), and the same
+  for the HARP box; plots vs time; frames during a GOES flare in progress flagged and excluded.
+- **CHECKPOINT 2 (final): GO/NO-GO facts only**; no interpretation of true vs false (n = 3).
+- JSOC export email: the message gives "YOUR_EMAIL" — a placeholder. **A registered JSOC address is needed before
+  Step 2**; none is assumed.
