@@ -79,6 +79,14 @@ def day_max(day):
     """Daily max of good 1-8 A flux: primary minutes, gaps filled with secondary good minutes
     (decisions H, I).  A minute is taken from the secondary only if the primary has no good value
     for it, so no minute is counted twice."""
+    s, used, n_primary = day_minutes(day)
+    return {"day": day, "sats": "/".join(used), "primary_minutes": n_primary,
+            "good_minutes": len(s), "coverage": len(s) / 1440,
+            "xrsb_max": float(s.max()) if len(s) else np.nan}
+
+
+def day_minutes(day):
+    """(combined good 1-minute flux series, satellites used, primary minute count) for one day."""
     parts, used = [], []
     n_primary = 0
     for a, b, prim, sec in segments(day):
@@ -94,10 +102,7 @@ def day_max(day):
                 seg = pd.concat([p, q])
         used.append(f"{prim}+{sec}" if sec else f"{prim}")
         parts.append(seg)
-    s = pd.concat(parts)
-    return {"day": day, "sats": "/".join(used), "primary_minutes": n_primary,
-            "good_minutes": len(s), "coverage": len(s) / 1440,
-            "xrsb_max": float(s.max()) if len(s) else np.nan}
+    return pd.concat(parts).sort_index(), used, n_primary
 
 
 def classify(mx, coverage):

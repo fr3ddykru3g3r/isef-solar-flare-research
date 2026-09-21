@@ -387,3 +387,66 @@ Implementation notes (me):
 - The thresholds are used exactly as given (1.43e-5, 1.43e-6); 1e-5/0.7 = 1.4286e-5, so the given
   value is 0.1% above the exact conversion. Stated for completeness; no effect on any class boundary,
   since SWPC reports one decimal place.
+
+## 2026-09-21 — RESULTS: relabel on SWPC originals, old operational scale (fills PENDING for A, B, C, D, K)
+
+All 176 chunks relabelled from cached raw SHARP (no JSOC re-download). HEK-era labels kept in
+`data/labels_hek/`.
+
+**Scale conversion (decision K), per year** (`data/scale_conversion_report.csv`): 2010–2018 no events
+converted (all GOES-13/14/15). Converted from GOES-16/18 and class changes:
+2019: 3 / 0 · 2020: 550 / 121 · 2021: 2,064 / 470 · 2022: 3,131 / 590 · 2023: 3,213 / 434 ·
+2024: 3,765 / 494. M1+ as reported → harmonised: 2020 2→1, 2021 29→16, 2022 195→117,
+2023 365→202, **2024 935→545** (−42%). Part of the late-period rise in positives was the scale.
+Also: 5 XRA events attributed to `SDO` (none M1+) kept as reported, counted `scale_unverified`
+(decision K does not cover them); 2 events with impossible begin times skipped (all B-class, 2020).
+
+**Empty-day flags at decision-K thresholds:** 2 days moved C1 → genuine zero (2012-01-29,
+2020-09-26; peaks between 1.0e-6 and 1.43e-6). Final: 8 label-missing, 9 history-incomplete days.
+Max peak on any empty day: 1.95e-6.
+
+**Whole range:** 255,292 labelled rows (255,460 before the missing-day rule; −168), **10,146 positives
+(3.97%)**, 2,053 HARPs, 254 with a positive.
+
+**Missing-day rules (C, D), per year:** excluded — 2010: 168, all other years 0.
+history_incomplete — 2010: 224, 2017: 56 (the 2017-07-20 C1 day), all other years 0.
+The 3 low-coverage missing days (2016-09-12, 2018-07-27, 2019-09-25) exclude 0 rows because no labelled
+row lies within 24h/48h of them — verified against the pre-exclusion row set. The 2017-07-20 C1 day
+keeps its 14 label-window rows, as specified (C1 marks history incomplete, not the label missing).
+
+**Per year, region subsets (decision B)** — rows / positives / positive HARPs:
+
+| year | single (primary) | <= 2 (fallback) | all (robustness) |
+|------|------------------|-----------------|------------------|
+| 2010 |  7,134 /  61 /  3 |  7,805 /    81 /  4 |  7,805 /    81 /  4 |
+| 2011 | 17,311 / 484 / 10 | 21,996 /   657 / 17 | 23,915 /   747 / 22 |
+| 2012 | 17,008 / 183 /  6 | 21,703 /   485 / 14 | 23,100 /   781 / 21 |
+| 2013 | 21,924 / 454 / 17 | 25,711 /   602 / 23 | 28,024 /   790 / 29 |
+| 2014 | 17,215 / 568 / 13 | 21,819 /   761 / 17 | 25,475 / 1,273 / 30 |
+| 2015 | 19,555 / 569 / 12 | 22,973 /   618 / 15 | 24,421 /   715 / 17 |
+| 2016 |  4,637 /   0 /  0 |  5,200 /    67 /  1 |  5,329 /    67 /  1 |
+| 2017 |  4,784 / 124 /  3 |  5,233 /   124 /  3 |  5,233 /   124 /  3 |
+| 2018 |  3,472 /   0 /  0 |  3,472 /     0 /  0 |  3,472 /     0 /  0 |
+| 2019 |  2,128 /   0 /  0 |  2,128 /     0 /  0 |  2,128 /     0 /  0 |
+| 2020 |  4,240 /   0 /  0 |  4,331 /     0 /  0 |  4,481 /     0 /  0 |
+| 2021 | 10,940 / 134 /  5 | 11,958 /   156 /  6 | 12,386 /   178 /  7 |
+| 2022 | 18,536 / 246 /  9 | 22,218 /   453 / 15 | 24,685 /   695 / 20 |
+| 2023 | 21,659 / 420 / 15 | 27,080 /   772 / 25 | 32,367 / 1,337 / 44 |
+| 2024 | 20,863 / 666 / 16 | 25,725 / 1,307 / 27 | 32,471 / 3,358 / 57 |
+
+Positive rate, all rows: 2014 5.00%, 2024 10.34% (was 14.15% on HEK before harmonisation).
+
+**Checks on SWPC (January 2014 file for 1–4):**
+- CHECK 1 PASS — X1.2 2014-01-07 18:04, NOAA 11944 → HARP 3563; all 21 rows in [t0−24h, t0) = 1.
+- CHECK 2 PASS — median USFLUX positive/negative **12.87×** (HEK: 6.98×), TOTUSJH **15.87×** (HEK: 7.39×).
+- CHECK 3 — 23 HARPs, 5 with a positive (descriptive).
+- CHECK 4 PASS — unchanged (does not depend on flare source).
+- **CHECK 5 FAIL — 2020 only.** 2020 has exactly **1** M1+ flare (harmonised) and SWPC gives it no region:
+  0 of 1 usable → below the pre-registered 90%. Reported as a FAIL; the rule was not changed.
+  Maximum label cost: one missed positive episode in a year that is otherwise all zeros.
+  Whether a percentage threshold should apply to a one-flare year is the user's decision.
+  All other years with M1+ flares pass (2021 100%, 2022 90.6%, 2023 97.5%, 2024 96.0%).
+
+**Per-year join table (SWPC)** (`data/join_report_swpc.csv`): %usable 93.8–100% in every year with
+>= 8 M1+ flares; `%in_SHARP` 100% except 2014 (91.7%: 16 M1+ flares with a region no HARP contains)
+and 2024 (99.6%); dups removed per year 0–5.
