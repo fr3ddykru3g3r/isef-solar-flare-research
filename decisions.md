@@ -1826,3 +1826,9 @@ Distinct positive HARPs over 2025 + 2026 (single / <= 2 / all): **23 45 68**.
 - `data/raw_sharp_20250101_20260817.csv` `d6dc70b837fe0716e3ef0d31b735e70bb2a5c2e5a6ec7633c3412c0e05c779c2`
 - `data/labelled_20250101_20260817.csv` `1f6673956db3599616fe4d04fbd14b285a383737156a49d393f6c5d617c49263`
 **Stopped after Step 1.** No gate scoring, no cohort, no R.
+
+## 2026-09-21 — DIAGNOSTIC D8, pre-declared  (decided by: user; dev period only; primary result untouched)
+Identical to D7 (B&C period May 2010 – May 2014, their sample definition, N/P 16.5, random 70/30, 1,000 repeats,
+QUALITY <= 65536, ±68°, 10 features, median/std scaling, C = 4, γ = 0.075, tol = 1e-8), **but C1/C2 = 15.0 and decision
+value 0 (B&C Table 3 setting).** Then ONE comparison table, operational case, mean ± sd over 1,000 repeats: rows TSS,
+recall, precision, FPR, accuracy; columns B&C Table 2 | D7 | B&C Table 3 | D8. Table only.
