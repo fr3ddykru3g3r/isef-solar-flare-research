@@ -1710,3 +1710,19 @@ Checked with metadata only: JSOC series description, NCEI directory listings (na
 Proposed minimal checks, **not run** (each a fetch, awaiting approval): (1) one keyword-only JSOC query for the latest
 `hmi.sharp_cea_720s` T_REC; (2) SWPC reports for a few days around the first region ≥ 14000 plus a keyword-only SHARP
 `NOAA_ARS` query for the same days, to confirm the Reg# rule. **No analysis run on 2021–2024.**
+
+## 2026-09-21 — Confirmation-set decisions  (decided by: user; before any 2025+ data is fetched or R is computed)
+1. **τ_A approved:** the threshold maximising TSS on A's dev out-of-fold predictions.
+2. **Confirmation set = 2025-01-01 → the latest date with SHARP + SWPC + GOES coverage.** The end date is determined
+   from check 1 below and **frozen in this log BEFORE fetching**. Identical rules: K2 scale; CHECK 5 per calendar year
+   (>= 90% rule; failing years excluded); missing-day and empty-day rules; frozen gate and threshold; cohort rules
+   T1–T4; single-region primary.
+3. **Pre-registered confirmatory tests on the 2025+ set:**
+   (a) **Replication of the primary:** log-loss(A) − log-loss(B), region-bootstrap 95% CI, 10,000 HARP resamples.
+   (b) **Step B:** log-loss(A) − log-loss(C), same CI; plus the false-alarm count for A vs C at τ_A's dev true-alarm rate.
+   **Models A, B, C are trained on dev only (2010–2019) and frozen before 2025+ is scored.**
+4. **Step A recorded as exploratory:** on dev, the gate score alone had the lowest log-loss; adding the C/M/X counts
+   did not improve it.
+5. **Approved: the two keyword-only checks** (latest SHARP T_REC; SWPC Reg# convention around the first region >= 14000
+   vs SHARP NOAA_ARS). Report, then stop.
+**No 2025+ data is fetched until the user approves the frozen end date and the check results.**
