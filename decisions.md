@@ -1375,3 +1375,29 @@ Artefacts replaced: `data/stage3/cohort_dev.csv` (adds `episode_onset`, `hours_o
   ± sd TSS over 1,000 repeats (comparable to their 0.610 ± 0.048), min/max, TPR, FPR, positive/negative counts.
 - **Step 3 — D7b:** our own pipeline (baseline) restricted to the same period, with a region-bootstrap 95% CI.
 Table only, no interpretation.
+
+### D7 Step 1 — B&C (2015) protocol audit (me; paraphrased with page references, not quoted in full)
+
+| item | what the paper says (page) | status for D7 |
+|---|---|---|
+| data period | SHARP data and flares May 2010 – May 2014 (pp.6, 7) | MATCHABLE — end day not stated; **assumed 2010-05-01 → 2014-05-31** |
+| patch type / AR definition | SHARP patches from the automatic detection algorithm; may merge several NOAA ARs into one (pp.7, 9) | MATCHABLE (HARPs) |
+| multi-region handling | not described (only that patches can merge NOAA ARs, p.9) | NOT STATED — **assumed ANY rule**: a flare in any NOAA AR of the patch counts for the patch |
+| flare–patch association | flares located via NGDC catalogue (p.6); mapping of flare to patch not described | NOT STATED — **assumed via NOAA AR number in `NOAA_ARS`** |
+| longitude limit | flares within ±68° of central meridian (p.6); ARs outside ±68° rejected (p.10) | PARTLY MATCHABLE — AR limit applied as \|LON_FWT\| ≤ 68 at the sample time; the flare-location limit is **approximated** by the patch's LON_FWT at the record nearest the flare peak (SWPC XRA lines carry no flare location) |
+| QUALITY rule | SHARP entries with QUALITY > 65536 (0x10000) discarded (p.23) | MATCHABLE — rebuilt from raw: keep QUALITY ≤ 65536 |
+| flare catalogue | NGDC GOES X-ray flare catalogues (p.6) | NOT MATCHABLE — we use SWPC original event reports (the NGDC lists derive from the same SWPC reports); regions required (NGDC entries with locations, p.6) |
+| class scale | GOES operational scale of the time (catalogue, p.6) | MATCHABLE — K (old ×0.7) scale |
+| positive sample | sample time exactly 24 h before the GOES peak; every flare counted separately, repeated flares of one AR included (pp.6–7) | MATCHABLE with one approximation — nearest **hourly** record within ±30 min of peak − 24 h (our cache is hourly; B&C used 12-min records, p.7) |
+| negative sample | flare-quiet sample times chosen randomly; operational case: AR does not flare within 24 h after the sample time (pp.6–7) | MATCHABLE — random records whose patch has no M1+ in (t, t+24h]; **assumed uniform over eligible records, without replacement, drawn once** |
+| number / N/P | 303 positives, 5,000 random negatives (p.7); N/P = 16.5 in training and testing (p.21) | MATCHABLE — N = round(16.5 × P) |
+| features | 13 highest-F-score of Table 1 (p.24) | NOT MATCHABLE — 10 of 13 (TOTBSQ, TOTFZ, EPSZ not keywords) |
+| scaling | subtract median, divide by standard deviation (p.23) | MATCHABLE — **which data the median/sd come from is not stated; assumed the whole catalogue, before splitting** (literal reading of a pre-processing step) |
+| SVM kernel, parameters | RBF; C = 4, γ = 0.075, tol 1e-8 (pp.15, 21) | MATCHABLE |
+| C1/C2 | 2.0 for Table 2 (p.21) | MATCHABLE — **which class carries C is not stated; assumed C2 = C = 4 (negatives), C1 = 8** (same convention as our gate) |
+| threshold rule | not described | NOT STATED — **assumed the SVC default (decision value 0)** |
+| train/test split | examples randomly divided 30% test / 70% train, ratio always kept (pp.21, 28); N/P 16.5 in both | MATCHABLE — random, by example, **stratified by class** so both keep N/P |
+| repeats | 1,000 repetitions; means and sds in Tables 2–3 (p.28) | MATCHABLE — 1,000 |
+| metric | TSS = TP/(TP+FN) − FP/(FP+TN) (eq. 17, p.19) | MATCHABLE |
+| missing data | not described | NOT STATED — **assumed: examples with any missing feature dropped before sampling** |
+| NOAA mapping for negatives | not described | NOT STATED — **assumed: patches with a NOAA number only** (otherwise "does not flare" cannot be determined) |
