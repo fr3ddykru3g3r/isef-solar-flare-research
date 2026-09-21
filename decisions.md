@@ -917,3 +917,62 @@ Without 2022 (if the user excludes it): **55 >= 40 → still single-region.** (W
 Not re-run under K2 (report-only, not requested): the March 2011–2019 completeness check; its thresholds
 now match K2's M1 = 1.0e-5.
 **No model trained.**
+
+## 2026-09-21 — Decision L2  (decided by: user; fixed rule applied)
+
+**2022 fails CHECK 5 under K2 (89.7% < 90%) → 2022 is excluded from the PRIMARY test. Rule unchanged.**
+- **Primary test = 2021, 2023, 2024.**
+- **2022-included results are reported only as a labelled sensitivity analysis.**
+- `frozen/split.csv` **unchanged** — 2022 HARPs keep their `test` assignment; the primary test excludes
+  2022 **rows** at evaluation time (as 2020 rows are excluded under L).
+- **When training starts, CV fold strata are computed from the K2 labels** (the val stratification in
+  `split.csv` was drawn under K; `split.csv` itself is not changed).
+- Also requested: rerun the GOES completeness check at K2 thresholds; report primary-test positive HARPs.
+**Train nothing until the user confirms.**
+
+### RESULTS for L2 (me)
+
+**Completeness check at K2 thresholds (M1 = 1.0e-5 true flux; rules otherwise unchanged; report only):**
+
+| month | GOES M1+ peaks | matched | unmatched | SWPC M1+ | GOES coverage |
+|-------|---:|---:|---:|---:|---:|
+| 2011-03 | 35 | 32 | 3 | 32 | 94.6% |
+| 2012-03 | 29 | 28 | 1 | 29 | 86.3% |
+| 2013-03 |  3 |  3 | 0 |  3 | 87.5% |
+| 2014-03 | 34 | 33 | 1 | 34 | 94.4% |
+| 2015-03 | 39 | 38 | 1 | 39 | 97.9% |
+| 2016–2019-03 | 0 | 0 | 0 | 0 | 95.8–100% |
+| **total** | **140** | **134** | **6** | | (K: 99 / 97 / 2) |
+
+The 6 unmatched, each checked against the flux and the SWPC list within ±3 h:
+- **Artefacts of the peak rule (3):** 2012-03-07 04:43 (M1.2; long decay of the X5.4 of 00:02);
+  2015-03-03 02:27 (M1.0; decay of the M8.2 peaking 01:35); 2011-03-09 13:29 (M1.1; bump inside SWPC's
+  M1.7 event 13:17–14:02, 33 min before its listed peak — just outside ±30 min).
+- **Apparently genuine flares absent from SWPC (3):** 2011-03-09 05:18 (isolated peak ~5e-6 → 1.07e-5,
+  true M1.1 ≈ operational C7.6; nearest SWPC events 3 h earlier); 2011-03-09 06:56 (1.12e-5 as data
+  resume after a 05:30–06:52 gap, eclipse season — true peak may lie in the gap; SWPC lists nothing
+  02:33–08:23); 2014-03-11 19:46 (clean rise 4e-6 → 1.15e-5, true M1.1 ≈ operational C8.2, shortly after
+  an 18:00–18:37 gap; SWPC lists nothing 18:00–21:40).
+- **Interpretation (me):** SWPC appears to miss ~3 of 137 distinct GOES M1+ flares (~2%) in this sample,
+  all just above threshold, two beside eclipse-season data gaps. Each is a small set of false-negative
+  labels. The K-scale check did not see them because at 1.43e-5 they were below threshold.
+  **Report only — no labels changed.** Same coverage caveat as before for 2012-03 / 2013-03.
+
+**Primary test (2022 excluded; `frozen/split.csv` unchanged, SHA-256 `f3ab4056…`):**
+
+| set | subset | rows | positive rows | HARPs | positive HARPs |
+|-----|--------|-----:|------:|----:|---:|
+| train | single |  87,115 | 2,460 | 742 |  65 |
+| train | <= 2   | 103,553 | 3,384 | 860 |  91 |
+| train | all    | 111,991 | 4,697 | 913 | 118 |
+| val   | single |  28,053 |   712 | 244 |  21 |
+| val   | <= 2   |  34,487 | 1,032 | 290 |  30 |
+| val   | all    |  36,911 | 1,467 | 305 |  40 |
+| **test (primary)** | **single** | **53,462** | **1,978** | **450** | **55** |
+| test (primary) | <= 2   |  64,763 | 3,404 | 528 |  87 |
+| test (primary) | all    |  77,224 | 6,966 | 605 | 142 |
+
+Fallback rule on the primary test: **55 >= 40 → single-region** (unchanged).
+2022-included test (sensitivity only): single 71, <= 2 110, all 172 positive HARPs.
+`split_report.py` prints both the 2022-included (sensitivity) and 2022-excluded (primary) tables.
+**No model trained.**

@@ -2,10 +2,10 @@
 
 Sample: March of each year 2011-2019 (same sample as validate_swpc.py).
 Rules fixed before running (me, 2026-09-21):
-  GOES M1+ peak : a run of consecutive good minutes with flux >= 1.43e-5 W/m^2 (true flux = old-scale M1,
-                  decision K), primary satellite with secondary gap fill (decisions H, I).
+  GOES M1+ peak : a run of consecutive good minutes with flux >= goes_xrs.M1 (true flux; 1.0e-5 under
+                  decision K2, was 1.43e-5 under K), primary satellite with secondary gap fill (H, I).
                   Runs separated by <= 5 minutes are merged into one peak.  Peak = the run's max.
-  match         : an SWPC M1+ event (harmonised scale) whose peak time -- or begin time if the peak is
+  match         : an SWPC M1+ event (harmonised scale, K2: true flux) whose peak time -- or begin time if the peak is
                   missing -- lies within +-30 min of the GOES peak.
 """
 import pandas as pd
@@ -32,7 +32,7 @@ def goes_peaks(s):
     for r in runs:
         seg = s[r[0]:r[-1]]
         out.append({"goes_peak": seg.idxmax(), "goes_flux_true": float(seg.max()),
-                    "old_scale_class": f"{goes_xrs_class(seg.max() * 0.7)}"})
+                    "true_class": goes_xrs_class(seg.max())})
     return out
 
 

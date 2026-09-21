@@ -25,11 +25,13 @@ def table(d, title, np_col=False):
                   f"{g.loc[g['flared_M1_next_24h'] == 1, 'harpnum'].nunique():9d}{extra}")
 
 
-table(lab, "7. per set x subset (hourly)")
+table(lab, "7. per set x subset (hourly), 2022 INCLUDED -- sensitivity analysis only (decision L2)")
+primary = lab[~lab["t_rec_utc"].str.startswith("2022")]            # decision L2: primary test = 2021, 2023, 2024
+table(primary, "7b. per set x subset (hourly), PRIMARY -- 2022 excluded (decision L2)")
 
-test = lab[lab["set"] == "test"]
+test = primary[primary["set"] == "test"]
 n_single = test.loc[(test["noaa_ar_count"] == 1) & (test["flared_M1_next_24h"] == 1), "harpnum"].nunique()
-print(f"\n8. fallback rule: positive test HARPs, single-region = {n_single} -> "
+print(f"\n8. fallback rule on the PRIMARY test: positive test HARPs, single-region = {n_single} -> "
       + ("single-region (>= 40)" if n_single >= 40 else "<= 2 regions (< 40)"))
 
 dev = lab[lab["set"].isin(["train", "val"])]
