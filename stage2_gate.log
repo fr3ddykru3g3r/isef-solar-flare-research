@@ -1,23 +1,23 @@
-dev hourly rows 148902; missing a gate feature: 21 (positives 1) -> unscorable, excluded
+dev hourly rows 148659; missing a gate feature: 21 (positives 1) -> unscorable, excluded
 
 folds (HARPs / positive-single HARPs): {0: (245, 18), 1: (244, 17), 2: (243, 17), 3: (243, 17), 4: (243, 17)}
 fold 0: trained on 16705 thinned single-region rows (443 positive), 980 support vectors, 1.0 s
-fold 1: trained on 17109 thinned single-region rows (451 positive), 1003 support vectors, 1.1 s
+fold 1: trained on 17109 thinned single-region rows (451 positive), 1003 support vectors, 1.0 s
 fold 2: trained on 17127 thinned single-region rows (499 positive), 1023 support vectors, 1.1 s
 fold 3: trained on 17096 thinned single-region rows (495 positive), 963 support vectors, 0.8 s
-fold 4: trained on 16895 thinned single-region rows (460 positive), 909 support vectors, 0.8 s
+fold 4: trained on 16895 thinned single-region rows (460 positive), 909 support vectors, 0.9 s
 total wall time 2.8 s (limit 3 h)
 
-pooled out-of-fold threshold (max TSS, primary subset, hourly): -0.992496  (TSS 0.6789)
+pooled out-of-fold threshold (max TSS, primary subset, hourly): -0.992496  (TSS 0.6793)
 
 primary subset, hourly, at the pooled threshold (own-fold optimum shown for comparison):
   fold   rows  pos_rows  HARPs  pos_HARPs    TSS    HSS    TPR    FPR    FAR  own_opt_threshold  TSS_at_own_opt
-     0  24586       754    209         18 0.7882 0.4731 0.8369 0.0487 0.6477            -0.9920          0.7883
-     1  22197       739    193         17 0.7852 0.5307 0.8254 0.0402 0.5859            -0.9800          0.7869
-     2  22343       479    191         17 0.6619 0.3813 0.7015 0.0395 0.7200            -0.9940          0.6645
-     3  22421       505    195         17 0.3915 0.3293 0.4139 0.0224 0.7014            -1.0057          0.4156
-     4  23600       694    198         17 0.6630 0.3924 0.7147 0.0517 0.7049            -0.9962          0.6652
-pooled 115147      3171    986         86 0.6789 0.4344 0.7196 0.0407 0.6666            -0.9925          0.6789
+     0  24538       753    209         18 0.7881 0.4735 0.8367 0.0486 0.6473            -0.9920          0.7882
+     1  22160       739    193         17 0.7852 0.5307 0.8254 0.0403 0.5859            -0.9800          0.7869
+     2  22307       479    191         17 0.6619 0.3815 0.7015 0.0395 0.7198            -0.9940          0.6645
+     3  22381       503    195         17 0.3931 0.3299 0.4155 0.0224 0.7014            -1.0057          0.4175
+     4  23566       694    198         17 0.6630 0.3929 0.7147 0.0517 0.7044            -0.9962          0.6653
+pooled 114952      3168    986         86 0.6793 0.4347 0.7200 0.0407 0.6663            -0.9925          0.6793
 fold0.joblib sha256 d283c18bfe242518d0389c33c2e94bfe25405b0bc9ebd3f42030592ec09ee00a
 fold1.joblib sha256 1dbc5a7908903d4cb9d9c03d14e3c51945b2712333a1b2dbcd556779b7769c20
 fold2.joblib sha256 9e6f233705d9490f830b439a5debd215dc856f3879fd51e142b7f7a8df164d7c

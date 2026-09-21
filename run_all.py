@@ -44,6 +44,19 @@ lab = pd.concat([pd.read_csv(f"data/labelled_{a}_{b}.csv".replace("-", ""), pars
                              low_memory=False) for a, b in chunks], ignore_index=True)
 # empty chunks (e.g. May 2016) make pandas fall back to an object column; re-parse explicitly
 lab["t_rec_utc"] = pd.to_datetime(lab["t_rec_utc"])
+
+# JSOC record-set ranges "A-B" include BOTH ends, so the 00:00 TAI record on the 1st of each month is in
+# two adjacent chunks.  Drop the second copy -- after asserting the copies are identical in every column.
+def dedup(df, key, name):
+    dup = df.duplicated(key, keep=False)
+    for _, g in df[dup].groupby(key):
+        assert len(g.astype(str).drop_duplicates()) == 1, f"{name}: non-identical duplicates {g.iloc[0][key].tolist()}"
+    n = int(df.duplicated(key).sum())
+    print(f"{name}: dropped {n} month-boundary duplicate rows (identical copies)")
+    return df.drop_duplicates(key).reset_index(drop=True)
+
+raw = dedup(raw, ["HARPNUM", "T_REC"], "raw")
+lab = dedup(lab, ["harpnum", "t_rec_tai"], "labelled")
 raw.to_csv(f"data/raw_sharp_{TAG}.csv", index=False)
 lab.to_csv(f"data/labelled_{TAG}.csv", index=False)
 print(f"\nwrote data/raw_sharp_{TAG}.csv ({len(raw)}) and data/labelled_{TAG}.csv ({len(lab)})")

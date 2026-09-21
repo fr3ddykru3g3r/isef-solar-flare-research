@@ -1066,3 +1066,42 @@ fold2 `9e6f233705d9490f830b439a5debd215dc856f3879fd51e142b7f7a8df164d7c`,
 fold3 `7aeae7f67c858889c249089e7f0af54832490e190e158e4b731cfb36ac87970c`,
 fold4 `49e7c9597746e1398990b13c65a311aa8f16de12780900878cc0b7cd91ac8f48`.
 **Test years not touched.** Awaiting approval of CHECKPOINT 2.
+
+### CHECKPOINT 2 approved (user, 2026-09-21)
+- **Missing-feature rule adopted as the user's decision:** rows with any gate feature missing are
+  **unscorable** — excluded from alarms and metrics, counted and reported (dev 21, test 34).
+- **Dev TSS is mildly optimistic:** the threshold was chosen on the same pooled out-of-fold scores it is
+  evaluated on. **The test TSS is the unbiased estimate.**
+
+## 2026-09-21 — BUG FOUND AND FIXED (me): month-boundary duplicate rows
+
+Found while building the Stage 3 cohort (a one-to-one merge assert failed).
+**Cause:** JSOC record-set ranges `A-B` include both ends, so each monthly query
+`[1st 00:00 TAI – next 1st 00:00 TAI]` also returned the next month's 00:00 TAI record, which the next
+chunk fetched again. **Extent:** 1,488 duplicate raw rows of 1,074,130 (0.14%); **393 duplicate labelled rows**
+of 255,292 (0.15%), 21 positive. Every duplicate is the 00:00 TAI record on the 1st of a month; **all 393 pairs
+were identical in every column** (labels agreed because each chunk's flare window was padded), so no value
+was wrong — rows were counted twice.
+**Fix:** `run_all.py` drops the second copy when concatenating, after **asserting the copies are identical**.
+Raw chunk files are untouched. Result verified equal to the old file with duplicates removed.
+- Labelled: **255,292 → 254,899 rows**, 0 duplicates. **New SHA-256:**
+  `62a0e4ccffe8b1fc4dacd2a0ba80570bf56018540d57367c16eb37337380ffeb`
+- Raw combined: 1,074,130 → 1,072,642. **New SHA-256:**
+  `be7c7d44b33b13a4620e4b98d23a217fac8e87597360b6ed548cf53f4faf8fa3`
+- **`frozen/split.csv` unaffected** (the HARP set is unchanged; split is per HARP).
+- Earlier row-count tables in this log (from the first full summary through K2 and L2) include these
+  duplicates; they are overstated by ≤ 0.15% of rows. Positive-HARP counts are unaffected (a duplicate
+  never introduces a new HARP).
+
+**Stage 2 rerun on the corrected file** (deterministic, 2.8 s): **threshold unchanged (−0.992496); fold
+models bit-for-bit identical to the approved ones** (training uses TAI {4,10,16,22}, never hour 00);
+fold assignment unchanged. Metrics change only through the removed duplicate rows: 195 fewer primary-
+subset rows (3 positive); per-fold TSS change ≤ 0.0016; **pooled TSS 0.6789 → 0.6793**, HSS +0.0003,
+FAR −0.0003; positive HARPs unchanged. Approved CHECKPOINT 2 results otherwise stand.
+
+### Fold 3 detail (report only, user request; K2, primary subset, OOF, threshold −0.992496)
+8 of 17 positive HARPs detected. Detected (max OOF score on positive rows): 3291 (2.941), 4941 (1.331),
+753 (0.848), 5956 (−0.356), 2636 (−0.863), 2635 (−0.872), 54 (−0.939), 4231 (−0.974). Not detected:
+902 (−0.996; 67 positive rows), 1990 (−0.997), 4760 (−0.999), 1464 (−1.004), 1558 (−1.005), 3344 (−1.005),
+6972 (−1.024), 2887 (−1.073), 3258 (−1.270; alarmed at other times, max over all rows 1.728).
+Six of the nine misses lie within 0.013 of the threshold.
