@@ -1946,5 +1946,5 @@ origin for it; Zenodo has no record matching "BADPIT"; the arXiv abstract page l
 | 11429 | flaring (C, M; two X flares starting just after the window) | 2012-03-06T00:00 → 2012-03-07T00:00 | N17E27 at 03-06 00:00 | **dev (2010–2019)** |
 | 13186 | non-flaring (no ≥ C1 in the window or ±48 h) | 2023-01-16T00:00 → 2023-01-17T00:00 | N25W15 at 01-16 18:58 | **2023 — inside the 2021–2024 test years** |
 **Conflict:** validating against AR 13186 would read 2023 data, which the pilot instruction forbids. AR 11429 is usable.
-Also: AR 11429 lies at ~E27 at the start of its window, inside ±30°–45°.
+Also: AR 11429 lies at ~E27 at the start of its window, i.e. inside ±30°.
 **No downloads made. Stopped at CHECKPOINT 1.**
