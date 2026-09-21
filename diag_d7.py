@@ -105,6 +105,15 @@ X = cat[F].to_numpy(float); y = cat["y"].to_numpy()
 X = (X - np.median(X, axis=0)) / X.std(axis=0)                 # assumption: scaling on the whole catalogue
 
 
+def counts(i, ratio):
+    """D7 / D8: one random stratified 70/30 split, class weight positive:negative = ratio:1, decision value 0.
+    Returns TP, FN, FP, TN on the 30% test."""
+    Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.30, stratify=y, random_state=SEED + i)
+    pred = SVC(**{**SVM, "class_weight": {1: ratio, 0: 1.0}}).fit(Xtr, ytr).decision_function(Xte) >= 0
+    return [int((pred & (yte == 1)).sum()), int((~pred & (yte == 1)).sum()),
+            int((pred & (yte == 0)).sum()), int((~pred & (yte == 0)).sum())]
+
+
 def one(i, thr_rule="zero"):
     """thr_rule 'zero' = D7 (SVC default boundary, assumption); 'train_maxTSS' = D7t (max TSS on the training 70%,
     in-sample decision values, applied to the 30% test)."""
@@ -126,6 +135,34 @@ print(f"\nD7 over {REPEATS} random 70/30 splits: TSS {res[:, 0].mean():.4f} ± {
       f"{int(round(0.3 * N))} neg")
 print(f"distinct patches among positives: {cat.loc[cat.y == 1, 'harpnum'].nunique()}, among negatives: "
       f"{cat.loc[cat.y == 0, 'harpnum'].nunique()}")
+
+# ---------------------------------------------------------------- D7 (C1/C2 = 2) and D8 (C1/C2 = 15): full counts
+if "--d8" in sys.argv:
+    rows = {}
+    for name, ratio in [("D7", 2.0), ("D8", 15.0)]:
+        c = np.array(Parallel(n_jobs=3)(delayed(counts)(i, ratio) for i in range(REPEATS)), float)
+        TP, FN, FP, TN = c.T
+        m = pd.DataFrame({"TSS": TP / (TP + FN) - FP / (FP + TN), "recall": TP / (TP + FN),
+                          "precision": np.where(TP + FP > 0, TP / np.maximum(TP + FP, 1), np.nan),
+                          "FPR": FP / (FP + TN), "accuracy": (TP + TN) / (TP + FN + FP + TN)})
+        m.assign(TP=TP, FN=FN, FP=FP, TN=TN).to_csv(f"data/diag/{name.lower()}_counts.csv", index=False)
+        rows[name] = m
+        print(f"{name}: undefined precision (no positive predictions) in {int(m['precision'].isna().sum())} of {REPEATS} splits")
+    assert np.allclose(rows["D7"]["TSS"].to_numpy(), pd.read_csv("data/diag/d7_repeats.csv")["TSS"].to_numpy()), \
+        "D7 not reproduced"
+    print("D7 TSS reproduced exactly from the saved repeats")
+    bc = {"B&C Table 2 (C1/C2=2)": {"TSS": "0.610 ± 0.048", "recall": "0.627 ± 0.049", "precision": "0.690 ± 0.049",
+                                     "FPR": "0.017 ± 0.004", "accuracy": "0.962 ± 0.004"},
+          "B&C Table 3 (C1/C2=15)": {"TSS": "0.761 ± 0.039", "recall": "0.832 ± 0.042", "precision": "0.417 ± 0.037",
+                                      "FPR": "0.071 ± 0.008", "accuracy": "0.924 ± 0.007"}}
+    f = lambda m, k: f"{m[k].mean():.3f} ± {m[k].std(ddof=1):.3f}"
+    t = pd.DataFrame({"B&C Table 2 (C1/C2=2)": bc["B&C Table 2 (C1/C2=2)"],
+                      "our D7 (C1/C2=2)": {k: f(rows["D7"], k) for k in ["TSS", "recall", "precision", "FPR", "accuracy"]},
+                      "B&C Table 3 (C1/C2=15)": bc["B&C Table 3 (C1/C2=15)"],
+                      "our D8 (C1/C2=15)": {k: f(rows["D8"], k) for k in ["TSS", "recall", "precision", "FPR", "accuracy"]}})
+    t.to_csv("data/diag/d7_d8_comparison.csv")
+    print(t.to_string())
+    sys.exit(0)
 
 # ---------------------------------------------------------------- D7t: threshold from the training 70%
 rt = np.array(Parallel(n_jobs=3)(delayed(one)(i, "train_maxTSS") for i in range(REPEATS)))

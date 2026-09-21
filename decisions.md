@@ -1832,3 +1832,20 @@ Identical to D7 (B&C period May 2010 – May 2014, their sample definition, N/P 
 QUALITY <= 65536, ±68°, 10 features, median/std scaling, C = 4, γ = 0.075, tol = 1e-8), **but C1/C2 = 15.0 and decision
 value 0 (B&C Table 3 setting).** Then ONE comparison table, operational case, mean ± sd over 1,000 repeats: rows TSS,
 recall, precision, FPR, accuracy; columns B&C Table 2 | D7 | B&C Table 3 | D8. Table only.
+
+### D8 — RESULTS and the D7/D8 vs B&C comparison (diagnostic; dev period only; primary result untouched)
+B&C values were checked against the paper before use: **all ten user-supplied operational values match** Table 2
+(p.34) and Table 3 (p.35). FPR is not reported by B&C; it is taken as 1 − recall(negative), with the same sd.
+D7 was rerun with full confusion counts (`diag_d7.py --d8`) and **reproduces its saved TSS exactly**. D8 = D7 with
+class weight positive:negative = 15.0 (decision value 0). Same catalogue (P 272, N 4,488) and the same 1,000 splits.
+No split had zero positive predictions. Per-split counts in `data/diag/d7_counts.csv`, `d8_counts.csv`.
+
+**Operational case, mean ± sd over 1,000 repeats**
+
+| metric | B&C Table 2 (C1/C2 = 2) | our D7 (C1/C2 = 2) | B&C Table 3 (C1/C2 = 15) | our D8 (C1/C2 = 15) |
+|---|---|---|---|---|
+| TSS | 0.610 ± 0.048 | 0.527 ± 0.050 | 0.761 ± 0.039 | 0.716 ± 0.040 |
+| recall | 0.627 ± 0.049 | 0.540 ± 0.051 | 0.832 ± 0.042 | 0.805 ± 0.042 |
+| precision | 0.690 ± 0.049 | 0.717 ± 0.050 | 0.417 ± 0.037 | 0.356 ± 0.022 |
+| FPR | 0.017 ± 0.004 | 0.013 ± 0.003 | 0.071 ± 0.008 | 0.089 ± 0.009 |
+| accuracy | 0.962 ± 0.004 | 0.961 ± 0.004 | 0.924 ± 0.007 | 0.905 ± 0.008 |
