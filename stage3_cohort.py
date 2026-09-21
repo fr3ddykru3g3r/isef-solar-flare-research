@@ -15,23 +15,37 @@ scored = scored.merge(lab, on=["harpnum", "t_rec_utc"], how="left", validate="on
 assert scored["flared_M1_next_24h"].notna().all()
 
 c, x, eps = cohort.build(scored, lab, thr, swpc.label_missing_days())
-alarm_harps = eps["harpnum"].nunique()
 print(f"threshold {thr:.6f}")
 print(f"alarm hours (primary subset): {int((scored['score'] >= thr).sum())}; "
-      f"episodes: {len(eps)} in {alarm_harps} HARPs (regions)")
-print(f"\nexclusions (episodes skipped while searching for each HARP's first eligible episode):")
+      f"episodes (T1 merging): {len(eps)} in {eps['harpnum'].nunique()} HARPs; "
+      f"length median {eps['alarm_hours'].median():.0f} h, max {eps['alarm_hours'].max()} h (alarm hours)")
+print("\nexclusions (episodes):")
 print(x["reason"].value_counts().to_string() if len(x) else "  none")
-no_elig = alarm_harps - len(c)
-print(f"HARPs with an alarm but NO eligible episode: {no_elig}")
-if no_elig:
-    last = x[~x["harpnum"].isin(c["harpnum"])].groupby("harpnum")["reason"].agg(lambda r: r.value_counts().idxmax())
-    print("  by dominant reason:", last.value_counts().to_dict())
-print(f"\nCOHORT (one episode per region): {len(c)} regions")
-print(f"  true alarms  : {int(c['true_alarm'].sum())}")
-print(f"  false alarms : {int((c['true_alarm'] == 0).sum())}")
-print(f"  delayed (exploratory, subset of false, complete follow-up): {int(c['delayed'].sum())}")
-print(f"  false alarms with a flare in (t+24h, t+48h] but follow-up incomplete: {int(c['delayed_followup_incomplete'].sum())}")
-print(f"  episode onset used: first eligible = first episode for {int((~c['harpnum'].isin(x['harpnum'])).sum())} regions")
+print(f"HARPs with an alarm but NO eligible episode: {eps['harpnum'].nunique() - c['harpnum'].nunique()}")
+
+
+def summary(d, label):
+    reg = d.groupby("harpnum").agg(any_true=("true_alarm", "max"), any_delayed=("delayed", "max"))
+    w = d["weight"] if "weight" in d else 1.0
+    f = d["true_alarm"] == 0
+    print(f"\n{label}")
+    print(f"  episodes: {len(d)}  true {int(d['true_alarm'].sum())}  false {int(f.sum())}  delayed {int(d['delayed'].sum())}")
+    print(f"  regions : {len(reg)}  with >=1 true episode {int(reg['any_true'].sum())}  "
+          f"with only false {int((reg['any_true'] == 0).sum())}  with >=1 delayed {int(reg['any_delayed'].sum())}")
+    print(f"  region-weighted (effective) counts: true {(w * d['true_alarm']).sum():.2f}  "
+          f"false {(w * f).sum():.2f}  delayed {(w * d['delayed']).sum():.2f}  (total = {w.sum():.2f} regions)")
+
+
+summary(c, "PRIMARY COHORT (T2: all eligible episodes, weight 1/episodes-in-HARP)")
+first = c[c["first_eligible"]].drop(columns="weight").assign(weight=1.0)
+summary(first, "SENSITIVITY: first eligible episode per region")
 c.to_csv("data/stage3/cohort_dev.csv", index=False)
 x.to_csv("data/stage3/exclusions_dev.csv", index=False)
 eps.to_csv("data/stage3/episodes_dev.csv", index=False)
+
+# the flaring regions: HARPs with >= 1 detected positive hour (out-of-fold, primary subset)
+o = scored
+flaring = set(o.loc[(o["flared_M1_next_24h"] == 1) & (o["score"] >= thr), "harpnum"])
+true_regions = set(c.loc[c["true_alarm"] == 1, "harpnum"])
+print(f"\nregions with >= 1 detected positive hour: {len(flaring)}; in the cohort: {len(flaring & set(c['harpnum']))}; "
+      f"contributing >= 1 TRUE-alarm episode: {len(flaring & true_regions)}")

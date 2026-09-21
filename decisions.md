@@ -1164,3 +1164,60 @@ bootstrap stay grouped by HARP. **Sensitivity: first-episode-per-region.**
 **T3. The 18-of-24 trend rule is unchanged.**
 
 Also requested: the Bobra & Couvidat replication check (skipped so far) — **protocol report first, then stop**.
+
+## 2026-09-21 — REVISED STAGE 3 RESULTS (T1, T2, T3) — revised CHECKPOINT 3
+
+Rebuilt with T1 merging and T2 unit; T3 unchanged. Same threshold (−0.992496), same OOF scores.
+- Alarm hours 6,836; **episodes (T1): 697 in 220 HARPs** (was 1,311); episode length median 2 alarm hours,
+  max 151.
+- Exclusions: **197 episodes** "trend window < 18 points"; 0 `history_incomplete`; 0 label-missing.
+  **51 HARPs** alarmed with no eligible episode (was 41).
+
+| cohort | episodes | true | false | delayed | regions | regions with >= 1 true episode | region-weighted true / false / delayed |
+|---|---:|---:|---:|---:|---:|---:|---|
+| **PRIMARY (T2: all eligible episodes, weight 1/episodes-in-HARP)** | **500** | **83** | **417** | **39** | **169** | **33** | **19.53 / 149.47 / 11.09** (sum 169) |
+| SENSITIVITY: first eligible episode per region | 169 | 20 | 149 | 13 | 169 | 20 | 20 / 149 / 13 |
+
+**The 55 flaring regions** (previous cohort, >= 1 detected positive hour): **33 now contribute >= 1
+true-alarm episode**; 16 are in the cohort with only false episodes; **6 are no longer in the cohort**
+(trend window < 18 points).
+Mechanism (me): 10 regions of the previous cohort lost eligibility and none gained it. Under T1, a later
+fragment that was eligible on its own is absorbed into an episode whose (earlier) onset fails the 18-of-24
+rule, which T3 keeps. The first-per-region sensitivity cohort now has 20 true alarms (previous cohort: 25)
+for the same reason — merged onsets are earlier, further from the flare.
+Artefacts replaced: `data/stage3/cohort_dev.csv` (now all eligible episodes, with `weight`,
+`first_eligible`), `exclusions_dev.csv`, `episodes_dev.csv`.
+**No trend or model result computed or viewed. Test years not touched.**
+
+## 2026-09-21 — PROPOSED protocol: Bobra & Couvidat replication check (me; awaiting user approval; NOT run)
+
+**Comparator, verified in the paper:** B&C report two parameter sets. **Table 2: C1/C2 = 2.0, operational
+case, 13 features → TSS 0.610 ± 0.048.** Table 3: C1/C2 = 15.0 (chosen to maximise TSS) → 0.76 operational
+(their conclusion's figure). **Our gate uses C1/C2 = 2.0, so the like-for-like comparator is Table 2's
+0.610 ± 0.048,** not 0.76.
+
+**Our quantity:** gate TSS, hour-level, primary subset —
+(a) dev pooled out-of-fold at the frozen threshold (0.6793; mildly optimistic, noted at checkpoint 2);
+(b) test, Stage 5, 2021/2023/2024, at the frozen threshold (the unbiased figure).
+Optional, if approved: TSS at SVM decision value 0 (B&C classify by the sign of the decision function;
+we use a max-TSS threshold), computed on the same dev OOF scores — the closest analogue of their rule.
+
+**Pre-stated framing:** the comparison is **descriptive, not pass/fail** — the protocols differ in ways
+that move TSS in both directions. Reported alongside our number:
+
+| | Bobra & Couvidat (2015) | this study |
+|---|---|---|
+| features | 13 | 10 (TOTBSQ, TOTFZ, EPSZ unavailable) |
+| QUALITY | discard > 65536 | keep == 0 (stricter; drops 06/18 TAI) |
+| longitude | flares within ±68° of central meridian | HARP |LON_FWT| <= 45° |
+| samples | 1 per flare (24 h before GOES peak) + random quiet times | every hourly row (training thinned 6-hourly) |
+| class ratio | N/P fixed 16.5 (train and test) | natural (35.2 primary, thinned) |
+| split | random 70/30 of examples — same region can be in train and test | grouped by HARP; chronological test |
+| threshold | sign of decision function | max TSS on pooled OOF |
+| scaling | median / std | median / std (same) |
+| flare scale / catalogue | operational scale; NGDC GOES catalogue | true irradiance (K2); SWPC originals |
+| period | 2010-05 → 2014-05 | dev 2010–2019; test 2021, 2023, 2024 |
+| C1/C2 | 2.0 (Table 2) | 2.0 |
+The random 70/30 split lets one region's samples fall on both sides, which tends to inflate B&C's TSS;
+our stricter QUALITY and ±45° cut change the population. Neither direction is assumed in advance.
+**Stopped: awaiting approval of the protocol and of revised CHECKPOINT 3.**
