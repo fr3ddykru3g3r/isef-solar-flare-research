@@ -236,3 +236,52 @@ which cannot happen here (hourly `T_REC` converts to `hh:59:2x` UTC), so the fla
 cover the same span. HEK comparison labels carry `history_incomplete = False` — the missing-day
 rules apply to the SWPC source only.
 PENDING: `history_incomplete` rows per year.
+
+## 2026-09-21 — validation verdict; empty SWPC reports resolved with GOES XRS  (decided by: user)
+
+### Validation: PASS — SWPC original event reports are the label source
+March 2011–2019, SWPC vs HEK (`validate_swpc.py`, sample fixed in advance):
+- 1,281 of 1,285 SWPC events matched HEK on begin time; **class agreement 100%** on matched pairs.
+- **Region agreement: 1 disagreement in ~1,100** pairs (2011-03-09 C5.0: SWPC 11169, HEK 11165).
+- **M1+-only** (months with >= 5 SWPC M1+ — fixed in advance): 2011, 2012, 2014, 2015 → 96 of 97
+  matched, class and region 100% on matched.
+- 0 duplicates removed in every sampled month.
+- Found in passing (me): the same flare can carry different begin times in the two catalogues
+  (2015-03-02 M1.1 AR 12290: 08:52 HEK vs 09:37 SWPC; 2012-03-29 C7.7: 72 min; 2013-03-10 B6.7: 1 h).
+  Rare, but exactly what flips a label at the 24h edge. SWPC's time is used, consistently.
+- 2014-03: 3 flares where SWPC has a region and HEK does not — HEK's region loss predates 2020.
+
+### The gap found during validation (me)
+The NCEI archive has a file for **every** day 2010-04-29 → 2025-01-02 (5,363 files, **0 × 404**), so
+decisions C and D as first implemented would exclude nothing. But many files read only
+`NO EVENT REPORTS.` — 39 (2010), 2 each (2011–13), 25 (2016), 79 (2017), 196 (2018), 236 (2019),
+193 (2020), 61 (2021). Some are genuinely quiet; **2017-03-14 is empty in SWPC while HEK lists 32
+flares.** The file alone cannot distinguish "no flares" from "report not compiled".
+I offered three options; **the user rejected all three** (genuine-zero, all-missing, HEK-flagged).
+
+### Decision E — GOES XRS 1–8 Å flux decides what an empty-report day means
+For each empty-report day, take the **GOES XRS 1–8 Å daily maximum, 1-minute data, primary
+satellite**:
+- **max >= 1e-5 W/m² (M1)** → day is **MISSING for labels**: exclude rows whose `(t, t+24h]`
+  overlaps it (decision C, now driven by this rule).
+- **max >= 1e-6 W/m² (C1)** → day is **incomplete for history**: `history_incomplete = True` for rows
+  whose `(t-48h, t]` overlaps it (decision D, now driven by this rule).
+- **otherwise** → **genuine zero**: the day is quiet and the empty report is trusted.
+Reason: the X-ray flux is the physical measurement flare classes are defined from, so it answers
+directly whether a flare of the relevant class could have been missed — independent of any
+catalogue. It does not depend on HEK.
+Note (me): an M1 day is also a C1 day, so it sets both flags.
+PENDING: per year — empty days, days flagged missing (M1), days flagged incomplete (C1).
+
+### Decision F — history control is C/M/X only
+`n_B` is **not** a history feature; the flare-history control uses `n_C_prev_48h`, `n_M_prev_48h`,
+`n_X_prev_48h` only. (`n_flares_prev_48h` still counts all classes — see note.)
+Note (me): the labelled file has never had an `n_B_prev_48h` column; B flares only entered
+through the all-class total `n_flares_prev_48h`. Flagged for the user: if the total should also
+exclude B, that is a change to a feature definition, and I have not made it.
+
+### Decision G — HEK stays cross-check only
+HEK flare counts on SWPC-empty days are reported **as a sanity check against the GOES rule**, never
+used to flag days or set labels. PENDING: HEK-on-empty-days vs GOES-rule comparison.
+
+Then: relabel all 176 chunks. PENDING: post-relabel tables.
