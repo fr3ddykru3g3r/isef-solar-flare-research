@@ -1446,3 +1446,38 @@ Output: `data/diag/d7t_repeats.csv`.
 | D7 | decision value 0 (assumed) | 0.5267 | 0.0500 | 0.3562 | 0.6969 | 0.5399 ± 0.0505 | 0.0132 ± 0.0032 | 0 |
 | **D7t** | **max TSS on the training 70% (in-sample), applied to the 30%** | **0.7065** | **0.0401** | **0.5680** | **0.8189** | 0.7843 ± 0.0427 | 0.0778 ± 0.0094 | mean −0.9926 (−1.0241 … −0.8920) |
 **Stage 4 remains on hold.**
+
+## 2026-09-21 — Replication conclusion  (decided by: user)
+"Closest reproduction of B&C 2015 (D7): TSS 0.527 ± 0.050 with decision value 0; D7t: 0.707 ± 0.040 with threshold
+learned on the training 70%. B&C's reported 0.610 ± 0.048 lies between these; their threshold rule is not stated.
+Replication diagnostics complete; no changes to the primary pipeline."
+
+## 2026-09-21 — STAGE 4 hold released  (decided by: user)
+Specification (user): Logistic **A** = gate score + n_C + n_M + n_X; **B** = A + USFLUX and TOTUSJH relative 24h slopes.
+`LogisticRegression`, L2, **C = 1.0, no tuning**; inputs standardised inside each training fold; episode weights
+1/(eligible episodes in HARP). Grouped 5-fold CV by HARP on the dev cohort, seed 20260921. Report weighted log-loss and
+AUC for A and B (per fold and pooled) and a region-bootstrap 95% CI on log-loss(A) − log-loss(B), 1,000 HARP resamples.
+Supporting: score-matched pairs (caliper fixed before looking at trends). Exploratory: delayed vs true, descriptive
+only. Also the first-episode sensitivity cohort. Write `frozen/frozen_spec.json`, hash it here. Stop at CHECKPOINT 4.
+
+### Stage 4 implementation details — PRE-REGISTERED by me, BEFORE any trend or model result
+1. **Folds:** the cohort's HARPs are split into 2 strata (>= 1 true-alarm episode / none), each shuffled with seed
+   20260921 and dealt round-robin into 5 folds. Every episode of a HARP is in its HARP's fold.
+2. **Standardisation:** mean / sd of each input, fitted on the training folds only (`StandardScaler`).
+3. **Fit:** `LogisticRegression(penalty="l2", C=1.0, solver="lbfgs", max_iter=10000)`, `sample_weight` = episode weight.
+4. **Metrics:** out-of-fold predicted probabilities. **Weighted log-loss** = Σ wᵢ·ℓᵢ / Σ wᵢ; **weighted AUC** =
+   ROC AUC with `sample_weight`. Per fold (on that fold's held-out episodes) and pooled (all OOF predictions).
+5. **Primary contrast:** Δ = log-loss(A) − log-loss(B) on the pooled OOF predictions (positive Δ = B better).
+   **Bootstrap:** 1,000 resamples of HARPs with replacement (seed 20260921); predictions held fixed (no refit);
+   weighted Δ recomputed per resample; percentile 95% CI.
+6. **Score-matched pairs (supporting):** each true-alarm episode is matched 1:1, greedy nearest neighbour on the **gate
+   score**, without replacement, to a false-alarm episode **from a different HARP**; true episodes processed in a seeded
+   random order. **Caliper = 0.2 × SD of the gate score over the dev cohort's episodes** (computed from gate scores
+   only). Reported: number of pairs, unmatched true episodes, max |score difference|; for each slope, mean and median
+   of the paired difference (true − false) with a 95% bootstrap CI resampling pairs **clustered by the true episode's
+   HARP** (1,000 resamples).
+7. **Delayed vs true (exploratory, descriptive only):** weighted mean and median of gate score, n_C, n_M, n_X and the two
+   slopes for true, delayed and other-false episodes; counts; no test statistic.
+8. **First-episode sensitivity:** items 1–5 repeated on the first-eligible-episode cohort (weights 1).
+9. **Stage 5 prediction rule for A and B (proposed; flagged for approval at CHECKPOINT 4):** by analogy with N2, test
+   probabilities = mean of the 5 fold models' predicted probabilities; no refit on the full dev cohort.
