@@ -2033,3 +2033,12 @@ Score spread 0.0001 (caliper 0.0747). Why these: the rule's minimum spread; all 
 
 **JSOC outage (decision 6):** the metadata call failed again with the same database disk-full error; per the decision,
 waiting and retrying (no source switch).
+
+### EUV pilot — approvals and amendments  (decided by: user)
+- **P1, P3, P5, P6 approved.**
+- **P2 amended:** a frame is excluded if it falls within the begin–end interval of **(a) any C1+ SWPC event attributed to the
+  same NOAA region(s) as the HARP**, or **(b) any M1+ event from any region** (K2 true scale). **Report per episode how many
+  frames each rule removes.**
+- **P4 approved with clarification:** the **12,000 DN saturation cut applies to raw DN, before exposure normalisation.**
+- **AARP: not used** (no 2019 or 2025+ coverage; 6 h/day only).
+- Continue waiting on JSOC per decision 6; when it recovers: confirm the LoS segment, run the pilot, stop at CHECKPOINT 2.
