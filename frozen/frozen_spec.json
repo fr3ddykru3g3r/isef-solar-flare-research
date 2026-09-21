@@ -137,7 +137,7 @@
   "sample_weight": "episode weight",
   "secondary": "weighted AUC for A and B",
   "standardisation": "StandardScaler fitted on training folds",
-  "test_prediction": "PROPOSED, awaiting approval: mean of the 5 fold models' probabilities; no refit"
+  "test_prediction": "APPROVED by user 2026-09-21: mean of the 5 fold models' predicted probabilities; no refit"
  },
  "seeds": {
   "all": 20260921

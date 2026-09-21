@@ -1533,3 +1533,24 @@ hashes, gate features / scaling / SVM / threshold (−0.992496) / fold-model has
 **Awaiting approval.** Open item for approval: pre-registered item 9 — Stage 5 predictions for A and B = mean of the
 5 fold models' probabilities, no refit.
 **Test years untouched.**
+
+## 2026-09-21 — CHECKPOINT 4 approved; Stage 5 prediction rule approved  (decided by: user)
+**Approved: models A and B score the test set with the mean of the 5 fold models' predicted probabilities; no refit.**
+Marked in `frozen/frozen_spec.json` (only the `models.test_prediction` field changed; `git diff` shows one line).
+**New SHA-256 of `frozen/frozen_spec.json`: `1d20506849930dd52f7f77333f44e4f458a65d9946cb0007a1c603816785368d`**
+(supersedes `598be4fa…`). No other changes to the frozen spec.
+
+### Stage 5 execution details fixed BEFORE the test run (me; where the spec is silent)
+- **Integrity check first:** the script recomputes every hash in `frozen_spec.json` (labelled file, split, gate fold
+  models, `cohort.py`, A/B fold models) and stops if any differs.
+- **Gate evaluation population:** scorable rows of test HARPs in the stated years; hour level = every row; **region level
+  = one contingency entry per HARP: positive if >= 1 positive row, alarmed if >= 1 alarm hour** in that period/subset.
+  TSS, HSS, FAR at both levels; hour- and region-level TSS with a HARP-bootstrap 95% CI, 1,000 resamples; TSS at
+  decision value 0 at both levels.
+- **Matched pairs:** the **frozen dev caliper 0.0747** (the Stage 4 spec said "caliper fixed on dev"; `frozen_spec.json`
+  records the value), same matching procedure.
+- **Primary Δ bootstrap: 10,000 HARP resamples** (as in `frozen_spec.json`); seed 20260921 throughout.
+- **Robustness subsets (≤ 2 regions, all HARPs):** the gate's fold models score those rows (no refit); the cohort is
+  built with T1–T4 from alarms in that subset's rows; models A and B (fold models, no refit) score it.
+- **Run once:** the code is first exercised end-to-end on a DEV-period stand-in (2014, dev HARPs; outputs discarded, not
+  test data) to remove coding errors; then the test run is executed exactly once.
