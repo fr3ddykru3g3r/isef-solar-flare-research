@@ -144,3 +144,76 @@ Table: PENDING: same as decision 2.
 - PENDING: SWPC originals cross-check (decision 3)
 - No relabelling has been run. Raw SHARP chunk files are unaffected by any of this and remain
   valid; only the labelled files for low-coverage years are suspect.
+
+## 2026-09-21 — flare source switched to SWPC originals; multi-region and missing-day rules
+
+### Evidence that prompted the switch (found by me; `swpc_check.py`)
+HEK copies SWPC's catalogue but loses region numbers that SWPC recorded:
+
+| month   | M1+ SWPC / HEK | matched (time+class) | SWPC has Reg# | HEK usable region | region agrees |
+|---------|----------------|----------------------|---------------|-------------------|---------------|
+| 2014-03 | 23 / 23        | 23                   | 23            | 23                | 23 / 23       |
+| 2022-03 | 14 / 14        | 14                   | 13            | **0**             | **0 / 14**    |
+
+The events are the same flares; only the region field is lost, and only in HEK.
+
+### Decision A — flare labels from SWPC original daily event reports, ALL years 2010–2024
+**(decided by: user, 2026-09-21)**
+Reason: it is the same catalogue HEK copies, and it keeps the region numbers HEK drops in later
+years. **One source for the whole range, never switched per year** — the split is chronological,
+so a per-year source change would confound period with catalogue.
+Source: NCEI archive of SWPC "Edited Events",
+`https://www.ngdc.noaa.gov/stp/space-weather/swpc-products/daily_reports/solar_event_reports/`.
+Rules (`swpc.py`, identical for every year):
+- XRA lines only; begin time = Begin column on the report date, UTC.
+- **Region: one explicit rule, `Reg# < 10000 -> Reg# + 10000`**, nothing else. Blank Reg# = unknown,
+  never joined (same principle as decision 1 of the previous entry).
+- **Dedup on (begin time, GOES class)**, logged per year — guards against one flare listed from two
+  GOES satellites (e.g. G16 and G18). If one copy has a region and the other doesn't, the copy with
+  the region is kept.
+- The HEK-based labels are **kept** in `data/labels_hek/` for comparison, not deleted.
+Preconditions set by the user before relabelling:
+1. Validation, SWPC vs HEK: flares, times, class, region, one month per year 2011–2019.
+   Sample fixed in advance by me: **March of each year**. Reported **all-class**, and **M1+-only**
+   where there are enough events. PENDING: validation table.
+2. % of converted SWPC regions found in SHARP `NOAA_ARS` for the same period. PENDING: table.
+3. Dedup removals per year. PENDING: table.
+Then: relabel all 176 chunks from cached raw (no JSOC re-download), rerun checks 1–5 against the
+SWPC source with the **same 90% threshold**, regenerate the per-year table.
+PENDING: post-relabel per-year table.
+
+Regression evidence that relabelling from cache is faithful (me): with `FLARE_SOURCE=hek`,
+labels regenerated from the cached raw files are **byte-identical** to the original HEK labels for
+2014-01 and 2019-11 (the latter has only single-region mappings, the case where `NOAA_ARS` could
+otherwise read back from CSV as a float and silently lose its region). A first run of this test
+falsely "passed" because the run crashed and I compared the archive with itself; the test now
+deletes its output first, so a crash cannot pass.
+
+### Decision B — multi-region HARPs  (decided by: user, 2026-09-21)
+Prompted by the 2024 audit: 80% of 2024 positive rows (3,656 / 4,596) came from multi-region HARPs;
+positive rate 4.51% on single-region rows vs 31.5% on multi-region rows; HARPs of up to 11 NOAA
+regions; mean regions per multi-region HARP 3.79 in 2024 vs 2.0–2.8 in 2010–2022. Under the ANY rule
+an 11-region patch is positive whenever any one of its regions flares.
+- **Primary analysis: single-region HARPs only (`noaa_ar_count == 1`).**
+- **Robustness: repeat with the ANY rule on all HARPs.**
+- **Fallback, fixed now before results: if single-region gives < 40 positive HARPs in the candidate
+  test years, use `noaa_ar_count <= 2` instead.**
+- **The dataset is NOT filtered.** A `region_group` column ("1", "2", "3+") is added so every analysis
+  selects its own subset from one file.
+Note (me): the fallback depends on "candidate test years", which are not chosen yet. The per-year
+counts below are reported for all three groups so the fallback can be evaluated once the split is
+fixed; it cannot be evaluated before then.
+PENDING: per year, rows / positives / positive HARPs for (a) single-region, (b) <= 2, (c) all.
+
+### Decision C — days with no SWPC report  (decided by: user, 2026-09-21)
+**Any row whose 24h label window `(t, t+24h]` overlaps a day with no SWPC report gets label =
+unknown and is excluded from the labelled file.** Count reported per year.
+Reason: a missing report means "flares unknown", not "no flares"; labelling those rows 0 would be
+false negatives — same principle as the missing-mapping and unknown-region rules.
+Implementation (me): a missing day is one the NCEI archive returns 404 for (listed in
+`data/swpc_events/_missing_days.txt`). Excluded rows are written to
+`data/excluded_missing_swpc_<chunk>.csv` so the exclusion is auditable, not silent.
+Note (me): the rule as specified covers the forward 24h label window. The backward 48h window
+(`n_*_prev_48h` features) can also overlap a missing day, which would *undercount* prior flares.
+That is a feature, not a label, and I have not changed it — flagged for your decision.
+PENDING: excluded rows per year.
