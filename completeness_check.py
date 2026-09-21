@@ -12,35 +12,7 @@ import pandas as pd
 import goes_xrs, swpc
 
 MONTHS = [f"{y}-03" for y in range(2011, 2020)]
-MERGE_GAP = pd.Timedelta(minutes=5)
 WINDOW = pd.Timedelta(minutes=30)
-
-
-def goes_peaks(s):
-    """M1+ peaks from a 1-minute flux series."""
-    above = s[s >= goes_xrs.M1]
-    if above.empty:
-        return []
-    runs, cur = [], [above.index[0]]
-    for t in above.index[1:]:
-        if t - cur[-1] <= MERGE_GAP:
-            cur.append(t)
-        else:
-            runs.append(cur); cur = [t]
-    runs.append(cur)
-    out = []
-    for r in runs:
-        seg = s[r[0]:r[-1]]
-        out.append({"goes_peak": seg.idxmax(), "goes_flux_true": float(seg.max()),
-                    "true_class": goes_xrs_class(seg.max())})
-    return out
-
-
-def goes_xrs_class(f):
-    for letter, lo in (("X", 1e-4), ("M", 1e-5), ("C", 1e-6)):
-        if f >= lo:
-            return f"{letter}{f / lo:.1f}"
-    return f"{f:.1e}"
 
 
 rows, unmatched = [], []
@@ -48,7 +20,7 @@ for ym in MONTHS:
     lo = pd.Timestamp(f"{ym}-01"); hi = lo + pd.offsets.MonthBegin(1)
     days = pd.date_range(lo, hi - pd.Timedelta(days=1), freq="D")
     s = pd.concat([goes_xrs.day_minutes(d)[0] for d in days]).sort_index()
-    peaks = goes_peaks(s)
+    peaks = goes_xrs.peaks(s)
     ev, _ = swpc.load(lo - WINDOW, hi + WINDOW)
     ev = ev[ev["flux"] >= 1e-5].copy()                        # SWPC M1+ on the harmonised scale
     ev["t"] = ev["peak"].fillna(ev["start"])

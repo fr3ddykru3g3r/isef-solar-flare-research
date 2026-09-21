@@ -981,3 +981,30 @@ Fallback rule on the primary test: **55 >= 40 → single-region** (unchanged).
 **SWPC M1+ completeness at K2 = 134/137 in the sampled months** (March 2011–2019): of 137 distinct GOES
 M1+ flares, SWPC lists 134. **The misses are near-threshold** (true M1.1–M1.3), two beside eclipse-season
 data gaps. **Reported as label noise; labels unchanged.**
+
+## 2026-09-21 — AUDIT 2018-01-01 → 2020-12-31 (report only; `audit_2018_2020.py`)
+
+**BUG count: 0.** Every SWPC M1+ event (K2) is accounted for:
+
+| start | K2 class (reported, obs) | region | trace | reason |
+|---|---|---|---|---|
+| 2018-02-07 13:31 | M1.2 (C8.1, G15) | 12699 → HARP 7237 | 24 raw → 21 QUALITY==0 → 0 within ±45° | HARP outside ±45° |
+| 2019-05-06 05:04 | M1.4 (C9.9, G15) | 12740 → HARP 7357 | 24 → 22 → 0 | HARP outside ±45° |
+| 2019-05-06 13:35 | M1.0 (C7.3, G15) | 12740 → HARP 7357 | 24 → 22 → 0 | HARP outside ±45° |
+| 2020-05-29 07:13 | M1.1 (G16) | none | — | no region; 2020 excluded (L) |
+| 2020-11-29 12:34 | M4.4 (G16) | none | — | no region; 2020 excluded (L) |
+
+The zero-positive years 2018–2020 are real consequences of the filters, not a pipeline fault.
+
+**GOES M1+ peaks over the 3 years** (1,096 days, 99.5% coverage): 6 peaks, 5 matched to SWPC within ±30 min.
+Unmatched: **2019-05-09 05:51**, GOES true 1.03e-5 (M1.0). SWPC lists the **same flare, same minute** as
+C6.7 from **GOES-15** = 9.57e-6 true — just below M1. Explanation (me): **inter-satellite calibration**, not
+a missed flare. The GOES check uses GOES-16 (science primary from 2017-02-07); SWPC reported from GOES-15.
+NCEI readme Table 2 gives the XRS-B ratio GOES-15/GOES-16 = **0.923**; 9.57e-6 / 0.923 ≈ 1.04e-5.
+
+**Caveat raised for the user (no change made):** K2's ÷0.7 removes SWPC's scaling factor but not the
+~8% GOES-15/GOES-16 calibration difference. For 2017-02 → 2019-11, SWPC's GOES-15-based classes read ~8%
+low relative to GOES-16. Effect limited to near-threshold flares; in this window it touches only the one
+event above.
+Refactor: the GOES peak detector moved into `goes_xrs.peaks()` (shared by `completeness_check.py` and
+the audit); the completeness check reproduces 140 / 134 / 6 after the move.

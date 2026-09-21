@@ -118,6 +118,37 @@ def classify(mx, coverage):
     return "genuine_zero"
 
 
+MERGE_GAP = pd.Timedelta(minutes=5)
+
+
+def peaks(s):
+    """M1+ peaks in a 1-minute true-flux series: runs of minutes >= M1, runs <= MERGE_GAP apart merged,
+    peak = the run's max.  Shared by completeness_check.py and audit_2018_2020.py."""
+    above = s[s >= M1]
+    if above.empty:
+        return []
+    runs, cur = [], [above.index[0]]
+    for t in above.index[1:]:
+        if t - cur[-1] <= MERGE_GAP:
+            cur.append(t)
+        else:
+            runs.append(cur); cur = [t]
+    runs.append(cur)
+    out = []
+    for r in runs:
+        seg = s[r[0]:r[-1]]
+        out.append({"goes_peak": seg.idxmax(), "goes_flux_true": float(seg.max()),
+                    "true_class": xrs_class(seg.max())})
+    return out
+
+
+def xrs_class(f):
+    for letter, lo in (("X", 1e-4), ("M", 1e-5), ("C", 1e-6)):
+        if f >= lo:
+            return f"{letter}{f / lo:.1f}"
+    return f"{f:.1e}"
+
+
 if __name__ == "__main__":
     import glob
     empty = sorted(pd.Timestamp(f.split("/")[-1][:8]) for f in glob.glob("data/swpc_events/*events.txt")
