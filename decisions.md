@@ -2042,3 +2042,14 @@ waiting and retrying (no source switch).
 - **P4 approved with clarification:** the **12,000 DN saturation cut applies to raw DN, before exposure normalisation.**
 - **AARP: not used** (no 2019 or 2025+ coverage; 6 h/day only).
 - Continue waiting on JSOC per decision 6; when it recovers: confirm the LoS segment, run the pilot, stop at CHECKPOINT 2.
+
+### EUV pilot — preparation while JSOC is down (me)
+- `swpc.py` now also parses each event's **end** time (needed for P2); labels verified **byte-identical** for 2014-01 and
+  2024-05 chunks after the change.
+- JSOC `im_patch` documentation (read from jsoc.stanford.edu): patches are **tracked by default** (`-t` disables tracking),
+  no reprojection is done (plain cutout in original pixels) → U10 = tracked cutouts; level 1.5 via `aiapy` (P4).
+- `euv_pilot.py` written; its pure-logic parts pass a self-test on synthetic data (PIL mask incl. a no-overlap case,
+  P2 counts per rule, P5 trailing 3σ, P1 detrended SD, P4 saturation before normalisation).
+- **JSOC export address:** JSOC's registration check returned "invalid or not registered" for the address the user
+  supplied. This may be genuine or an effect of the outage (the check uses the same failing JSOC services). Registering
+  the address is the user's action (JSOC sends a confirmation email); not done by me.

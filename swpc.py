@@ -137,6 +137,7 @@ def parse_day(day):
         i = tok.index("XRA")
         begin = "".join(ch for ch in tok[1] if ch.isdigit())      # strip B/U/A qualifiers
         peak = "".join(ch for ch in tok[2] if ch.isdigit())
+        endt = "".join(ch for ch in tok[3] if ch.isdigit())
         if not _valid_hhmm(begin):
             BAD_TIMES["begin"] += 1                                 # missing (////) or garbled, e.g. '0091'
             continue
@@ -165,7 +166,11 @@ def parse_day(day):
         tp = pd.Timestamp(f"{day:%Y-%m-%d} {peak[:2]}:{peak[2:]}") if len(peak) == 4 else pd.NaT
         if tp is not pd.NaT and tp < t0:
             tp += pd.Timedelta(days=1)                              # peak after midnight
-        out.append({"start": t0, "peak": tp,
+        # end time (EUV pilot, decision P2); impossible or missing -> NaT; after midnight -> next day
+        te = pd.Timestamp(f"{day:%Y-%m-%d} {endt[:2]}:{endt[2:]}") if _valid_hhmm(endt) else pd.NaT
+        if te is not pd.NaT and te < t0:
+            te += pd.Timedelta(days=1)
+        out.append({"start": t0, "peak": tp, "end": te,
                     "goes_class": cls, "flux_reported": flux_rep,   # as SWPC printed it
                     "flux": flux, "cls": class_of(flux),            # harmonised, true scale (K2)
                     "noaa_ar": to_noaa(reg) if reg is not None else pd.NA, "obs": obs})
@@ -176,7 +181,7 @@ def load(lo, hi):
     """All XRA flares with begin in [lo, hi], deduplicated. Returns (flares, n_duplicates)."""
     days = pd.date_range(pd.Timestamp(lo).normalize(), pd.Timestamp(hi).normalize(), freq="D")
     rows = [e for d in days for e in parse_day(d)]
-    fl = pd.DataFrame(rows, columns=["start", "peak", "goes_class", "flux_reported", "flux", "cls",
+    fl = pd.DataFrame(rows, columns=["start", "peak", "end", "goes_class", "flux_reported", "flux", "cls",
                                      "noaa_ar", "obs"])
     fl = fl[(fl["start"] >= pd.Timestamp(lo)) & (fl["start"] <= pd.Timestamp(hi))]
     n0 = len(fl)
