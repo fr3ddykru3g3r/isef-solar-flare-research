@@ -1769,3 +1769,60 @@ resumable monthly chunks with the same record-set pattern and a boundary-duplica
 XRS for the period (+48 h before, +24 h after where available); build labels with identical rules (K2, missing-day,
 empty-day, history_incomplete, region_group); run CHECKS 1–5, CHECK 5 per calendar year (2025; 2026 partial) with the
 90% rule, excluding failing years per L; report per year and hash the new raw and labelled files. STOP after Step 1.
+
+## 2026-09-21 — CONFIRMATION SET, STEP 1 RESULTS (data only; no gate scoring, no cohort, no R)
+
+**Fetched / built**
+- SWPC daily reports 2024-12-29 → 2026-08-18 (593 files for 2025–2026). **404 days: 2025-12-30, 2025-12-31** (added to
+  `_missing_days.txt`; rule C → label-missing and history-incomplete). **Empty-report days in 2025–2026: 0.**
+- **GOES XRS: not fetched.** GOES is read only to classify empty-report days (rules E, H, I); a 404 day is missing
+  without a GOES check (rule C). With zero empty-report days no rule reads GOES in this period. The empty-day table is
+  unchanged. (Deviation from the instruction's "fetch GOES XRS", stated here; available on request.)
+- SHARP extras (`fetch_extra.py 2025-01-01 2026-08-17`): 20/20 chunks. SHARP keywords + labels (`run_all.py`), 20 monthly
+  chunks, same record-set pattern; **final chunk queried to 2026.08.16_23:00_TAI** via `JSOC_END_OVERRIDE` (applied only to
+  the chunk whose end is 2026-08-17). **Boundary-duplicate check:** 282 raw / 76 labelled duplicate rows, all identical
+  copies, dropped.
+- Code changes (defaults unchanged; a default 2014-01 rebuild is byte-identical): `JSOC_END_OVERRIDE` in
+  `build_dataset.py` / `fetch_extra.py`; `CHUNK_RANGE` in `chunks.py`; GOES-19 added to `goes_xrs.BASE`; `join_report.py`
+  derives years and output file from the chunk range (the 2010–2024 table is never overwritten); CHECK 1 now uses the
+  first X flare with >= 1 labelled row in its 24-h window (see below).
+
+**CHECKS on the confirmation set: 1 PASS, 2 PASS, 3 descriptive, 4 PASS, 5 PASS.**
+- CHECK 1 first **failed on event selection, not labels**: it took the first X flare of the padded flare list
+  (X1.5, 2024-12-30), whose 24-h window precedes every confirmation row, so "all 0 rows labelled 1" was false. Fixed to
+  the first X flare with a labelled row in [t0−24h, t0): X2.0, 2025-02-23 19:22, NOAA 14001 → HARP 12755; **12 of 12 rows
+  in [t0−24h, t0) labelled 1**. The same fix on 2014-01 selects the original event (X1.2, HARP 3563; 21/21) — unchanged.
+- CHECK 2: median USFLUX positive/negative 6.42×, TOTUSJH 7.15×.
+- CHECK 3: 49,935 rows, 402 HARPs, 68 with a positive row.
+- CHECK 4: missing-mapping rows median USFLUX 0.026× mapped; 1.0% above the mapped median.
+- **CHECK 5 per calendar year (>= 90%): 2025 — 356 M1+, 21 unknown region, 94.1% usable → USABLE; 2026 (to 08-16) —
+  205 M1+, 7 unknown, 96.6% → USABLE. No year excluded.** %in_SHARP 100% / 99.5%; dups 1 / 0.
+
+**Exclusions by reason** (UTC year; sequential as in the pipeline)
+
+| year | raw rows | QUALITY != 0 | \|LON\| > 45 | mapping missing | label-missing day | → labelled | history_incomplete (kept) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 2024* | 15 | 0 | 4 | 1 | 0 | 6 | 0 |
+| 2025 | 140,567 | 15,653 | 29,094 | 38,541 | 320 | 32,830 | 0 |
+| 2026 | 70,474 | 8,091 | 14,482 | 18,536 | 0 | 17,099 | 237 |
+
+**Per year by region subset** — rows / positive rows / HARPs / positive HARPs
+
+| year | single (primary) | <= 2 | all |
+|---|---|---|---|
+| 2024* | 2 / 0 / 2 / 0 | 4 / 0 / 4 / 0 | 6 / 1 / 6 / 1 |
+| 2025 | 21,303 / 390 / 185 / 12 | 27,770 / 1,073 / 232 / 28 | 32,830 / 1,843 / 267 / 46 |
+| 2026 | 12,398 / 468 / 104 / 11 | 14,930 / 636 / 122 / 17 | 17,099 / 847 / 137 / 22 |
+
+Distinct positive HARPs over 2025 + 2026 (single / <= 2 / all): **23 45 68**.
+
+**\* Overlap with the 2021–2024 test data (flagged for the user; nothing excluded yet).** The frozen start, 2025-01-01
+00:00 TAI, is **2024-12-31 23:59:23 UTC**, and the 2024-12 chunk of the 2010–2024 dataset already contains that slot
+(JSOC ranges include both ends). **15 raw / 6 labelled rows are in both files** — identical in every column. They are the
+"2024" rows above. **6 HARPs** appear in both 2021–2024 and the confirmation set (all 6 via this slot; 6 of 267 HARPs in
+2025 also continue into 2025, 0 in 2026).
+
+**Hashes (SHA-256)**
+- `data/raw_sharp_20250101_20260817.csv` `d6dc70b837fe0716e3ef0d31b735e70bb2a5c2e5a6ec7633c3412c0e05c779c2`
+- `data/labelled_20250101_20260817.csv` `1f6673956db3599616fe4d04fbd14b285a383737156a49d393f6c5d617c49263`
+**Stopped after Step 1.** No gate scoring, no cohort, no R.

@@ -15,10 +15,13 @@ import flares, chunks, swpc
 SOURCE = os.environ.get("FLARE_SOURCE", "swpc")
 assert SOURCE in ("swpc", "hek"), SOURCE
 OUT = "data/join_report.csv" if SOURCE == "hek" else "data/join_report_swpc.csv"
+if os.environ.get("CHUNK_RANGE"):                                 # never overwrite the 2010-2024 table
+    OUT = OUT.replace(".csv", "_" + os.environ["CHUNK_RANGE"].replace("-", "").replace(",", "_") + ".csv")
 LABELS = "labelled" if SOURCE == "swpc" else "labels_hek/labelled"
 
 THRESHOLD = 0.90
-YEARS = range(2010, 2025)
+# years covered by the chunk range (default 2010-2024; CHUNK_RANGE selects the confirmation set)
+YEARS = range(int(chunks.RANGE[0][:4]), int((pd.Timestamp(chunks.RANGE[1]) - pd.Timedelta(days=1)).year) + 1)
 
 
 def sharp_noaa_by_year():
@@ -56,7 +59,8 @@ def year_window(y):
 
 def m1_for_year(y):
     """Joinable M1+ flares and the unknown-region M1+ count for year y, cached on disk."""
-    path = f"data/{SOURCE}_m1_{y}.csv"
+    lo, hi = year_window(y)
+    path = f"data/{SOURCE}_m1_{y}_{lo:%m%d}_{hi:%m%d}.csv"            # window in the name: partial years never collide
     if os.path.exists(path):
         m1 = pd.read_csv(path)
         unknown = int(open(path + ".unknown").read())

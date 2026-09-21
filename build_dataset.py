@@ -40,12 +40,18 @@ def jsoc(d):
     return d.replace("-", ".") + "_TAI"
 
 
+# Confirmation set (user, frozen 2026-09-21): the FINAL chunk ends at 2026.08.16_23:00_TAI, inclusive.
+# JSOC_END_OVERRIDE="2026-08-17|2026.08.16_23:00_TAI" replaces the query end only for the chunk whose END matches.
+_ov = os.environ.get("JSOC_END_OVERRIDE", "")
+JSOC_END = _ov.split("|")[1] if _ov and _ov.split("|")[0] == END else jsoc(END)
+
+
 def banner():
     print("=" * 62)
     print(f"  argv          : {sys.argv[1:] or '(none -> defaults)'}")
     print(f"  START (CLI)   : {START}      END (CLI, exclusive): {END}")
     print(f"  START (JSOC)  : {jsoc(START)}   END (JSOC): {jsoc(END)}")
-    print(f"  JSOC record set: hmi.sharp_cea_720s[][{jsoc(START)}-{jsoc(END)}@1h]")
+    print(f"  JSOC record set: hmi.sharp_cea_720s[][{jsoc(START)}-{JSOC_END}@1h]")
     print(f"  flare source  : {FLARE_SOURCE}   labels -> {LABEL_DIR}/")
     print("=" * 62)
 
@@ -61,7 +67,7 @@ def step(msg): print(f"\n=== {msg} ===")
 # ---------------------------------------------------------------- STEP 1
 banner()
 step("STEP 1  SHARP keywords")
-qs = f"hmi.sharp_cea_720s[][{jsoc(START)}-{jsoc(END)}@1h]"
+qs = f"hmi.sharp_cea_720s[][{jsoc(START)}-{JSOC_END}@1h]"
 RAW = f"data/raw_sharp_{TAG}.csv"
 if os.path.exists(RAW):
     # relabelling never re-downloads.  NOAA_ARS must stay a string: a month whose regions are

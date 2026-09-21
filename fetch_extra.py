@@ -17,12 +17,14 @@ KEYS = ["HARPNUM", "T_REC"] + EXTRA
 jsoc = lambda d: d.replace("-", ".") + "_TAI"
 
 c = drms.Client()
-ch = months()
+ch = months(*sys.argv[1:3]) if len(sys.argv) >= 3 else months()
+_ov = os.environ.get("JSOC_END_OVERRIDE", "")                  # same final-chunk override as build_dataset.py
 for i, (a, b) in enumerate(ch, 1):
     out = f"data/raw_sharp_extra_{a}_{b}.csv".replace("-", "")
     if os.path.exists(out):
         continue
-    qs = f"hmi.sharp_cea_720s[][{jsoc(a)}-{jsoc(b)}@1h]"      # identical record set to build_dataset.py
+    end = _ov.split("|")[1] if _ov and _ov.split("|")[0] == b else jsoc(b)
+    qs = f"hmi.sharp_cea_720s[][{jsoc(a)}-{end}@1h]"           # identical record set to build_dataset.py
     for attempt in range(1, 6):
         try:
             r = c.query(qs, key=",".join(KEYS))

@@ -32,7 +32,8 @@ BASE = {13: "https://www.ncei.noaa.gov/data/goes-space-environment-monitor/acces
         15: "https://www.ncei.noaa.gov/data/goes-space-environment-monitor/access/science/xrs/goes15/xrsf-l2-avg1m_science/",
         16: "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/goes16/l2/data/xrsf-l2-avg1m_science/",
         17: "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/goes17/l2/data/xrsf-l2-avg1m_science/",
-        18: "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/goes18/l2/data/xrsf-l2-avg1m_science/"}
+        18: "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/goes18/l2/data/xrsf-l2-avg1m_science/",
+        19: "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/goes19/l2/data/xrsf-l2-avg1m_science/"}
 CACHE = "data/goes_xrs"
 # Decision K2 (user, 2026-09-21; supersedes K): labels are on the TRUE irradiance scale, the same scale
 # as the GOES science data, so the class boundaries apply directly: M1 = 1.0e-5, C1 = 1.0e-6, all years.

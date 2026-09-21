@@ -21,14 +21,26 @@ fl, _ = swpc.fetch(lab["t_rec_utc"].min() - pd.Timedelta(hours=48),       # labe
                    lab["t_rec_utc"].max() + pd.Timedelta(hours=24), verbose=False)
 xf = fl[fl["goes_class"].str.startswith("X")].dropna(subset=["noaa_ar"]).sort_values("start")
 print(xf.to_string(index=False))
-ev = xf.iloc[0]
+# the first X flare with >= 1 labelled row in [t0-24h, t0) of a HARP containing its region -- the flare list is padded
+# 48 h before the period, so the very first X flare can precede every labelled row (e.g. 2024-12-30 for a 2025 file)
+def testable(ev):
+    ar_, t0_ = int(ev["noaa_ar"]), ev["start"]
+    hs = lab[lab["noaa_ars"].astype(str).str.split(",").apply(lambda L: str(ar_) in [x.strip() for x in L])]
+    return ((hs["t_rec_utc"] >= t0_ - pd.Timedelta(hours=24)) & (hs["t_rec_utc"] < t0_)).any()
+skipped = 0
+for _, ev in xf.iterrows():
+    if testable(ev):
+        break
+    skipped += 1
+print(f"(skipped {skipped} earlier X flare(s) with no labelled row in their 24-h window)")
 ar = int(ev["noaa_ar"]); t0 = ev["start"]
 print(f"\nX flare: {ev['goes_class']} at {t0} UTC in NOAA {ar}")
 
 has = lab[lab["noaa_ars"].astype(str).str.split(",").apply(lambda L: str(ar) in [x.strip() for x in L])]
 harps = sorted(has["harpnum"].unique())
 print(f"HARPNUM(s) containing NOAA {ar}: {harps}")
-h = harps[0]
+h = next(x for x in harps if ((lab["harpnum"] == x) & (lab["t_rec_utc"] >= t0 - pd.Timedelta(hours=24))
+                                & (lab["t_rec_utc"] < t0)).any())
 w = lab[(lab["harpnum"] == h) & (lab["t_rec_utc"] >= t0 - pd.Timedelta(hours=36))
                               & (lab["t_rec_utc"] <= t0 + pd.Timedelta(hours=6))]
 w = w.sort_values("t_rec_utc")
