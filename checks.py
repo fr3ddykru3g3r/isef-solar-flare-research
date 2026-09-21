@@ -85,6 +85,20 @@ ok4 = mm < md
 verdict(4, ok4, "missing-mapping HARPs are systematically smaller" if ok4
         else "missing-mapping rows include large regions -- we are dropping real data, reconsider")
 
+# ---------------------------------------------------------------- CHECK 5
+print("\n" + "=" * 70 + "\nCHECK 5  per-year flare->HARP join coverage")
+import os, join_report
+if os.path.exists("data/join_report.csv"):
+    jr = pd.read_csv("data/join_report.csv")
+    print("(using cached data/join_report.csv -- delete it to recompute)")
+else:
+    jr = join_report.build(); jr.to_csv("data/join_report.csv", index=False)
+bad = join_report.show(jr)
+ok5 = len(bad) == 0
+verdict(5, ok5, "" if ok5 else
+        f"years below the {join_report.THRESHOLD:.0%} usable-region threshold: {list(bad['year'])} "
+        "-- their labels are false negatives, not quiet Sun")
+
 print("\n" + "=" * 70)
 print("SUMMARY: " + "  ".join(f"check{k}={'PASS' if v else 'FAIL'}" for k, v in results.items()))
 sys.exit(0 if all(results.values()) else 1)

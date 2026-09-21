@@ -31,13 +31,23 @@ def fetch(lo, hi, verbose=True):
     })
     n0 = len(fl)
     fl = fl.drop_duplicates(subset=["start", "noaa_ar", "goes_class"])
+    n_dup = n0 - len(fl)
     fl[["cls", "flux"]] = fl["goes_class"].apply(lambda s: pd.Series(parse_goes(s)))
-    fl = fl.dropna(subset=["noaa_ar", "flux"])
+    # ar_noaanum <= 0 or NaN means the region is UNKNOWN, not region zero.  HEK reports 0
+    # for whole years (e.g. 2022).  Joining those would match no HARP and silently emit
+    # false-negative labels, so they are dropped from the join and counted instead.
+    fl = fl.dropna(subset=["flux"])
+    unknown = fl["noaa_ar"].isna() | (fl["noaa_ar"] <= 0)
+    n_unknown = int(unknown.sum())
+    n_unknown_m1 = int((unknown & (fl["flux"] >= 1e-5)).sum())   # M1+ only, for the join report
+    fl = fl[~unknown]
     fl["noaa_ar"] = fl["noaa_ar"].astype(int)
-    m1 = fl[fl["flux"] >= 1e-5]          # M1.0 and above, parsed numerically here, not catalogue-side
+    m1 = fl[fl["flux"] >= 1e-5].copy()
+    m1.attrs["n_unknown_m1"] = n_unknown_m1   # M1+ flares that could not be joined at all          # M1.0 and above, parsed numerically here, not catalogue-side
     if verbose:
         print(f"flares retrieved: {n0}")
-        print(f"duplicates removed: {n0 - len(fl) - 0}  (on start_time, noaa_ar, goes_class)")
+        print(f"duplicates removed: {n_dup}  (on start_time, noaa_ar, goes_class)")
         print(f"parsed & AR-matched: {len(fl)};  M1+ retained: {len(m1)}")
+        print(f"flares with UNKNOWN region (ar_noaanum <= 0 or NaN), not joined: {n_unknown}  (of which M1+: {n_unknown_m1})")
         print("class counts:", fl["cls"].value_counts().to_dict())
     return fl, m1
