@@ -1008,3 +1008,22 @@ low relative to GOES-16. Effect limited to near-threshold flares; in this window
 event above.
 Refactor: the GOES peak detector moved into `goes_xrs.peaks()` (shared by `completeness_check.py` and
 the audit); the completeness check reproduces 140 / 134 / 6 after the move.
+
+## 2026-09-21 — TRAINING AUTHORISED  (decided by: user)
+
+**"Training authorised by me on 2026-09-21; research plan not yet signed at this point."**
+
+**Residual calibration difference (recorded, user):** a GOES-15 vs GOES-16 calibration difference
+(~8%; NCEI XRS-B ratio GOES-15/GOES-16 = 0.923) **remains after K2**. It affects **near-threshold events
+only** and is **not corrected**.
+
+**Staged plan (user).** Stop and report at each CHECKPOINT; continue only on approval; commit after each
+stage. Labels = K2. Primary test years = 2021, 2023, 2024 (2022 sensitivity only; 2020 excluded).
+- STAGE 2 gate (dev 2010–2019, single-region primary subset) → CHECKPOINT 2 (test years not touched)
+- STAGE 3 dev cohort → CHECKPOINT 3
+- STAGE 4 primary models on dev; write `frozen/frozen_spec.json`, hash here → CHECKPOINT 4
+- STAGE 5 test, run once, only after approval of CHECKPOINT 4 → CHECKPOINT 5 (results table only)
+
+**Scaling (user; supersedes the StandardScaler in amended decision S):** follow B&C (2015) §5 —
+"we subtract from every feature its median value and divide by its standard deviation."
+Median and standard deviation are **fitted inside each training fold only**.
