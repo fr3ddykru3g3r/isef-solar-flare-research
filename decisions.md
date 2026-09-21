@@ -836,3 +836,84 @@ Implementation (as specified):
 7. Per set × subset table under the unchanged `frozen/split.csv`. 8. Fallback rule re-applied.
 9. Thinned training set (TAI {4,10,16,22}) re-reported.
 **Train nothing until the user confirms.**
+
+## 2026-09-21 — RESULTS: decision K2 (true irradiance scale)
+
+**Conversion** (`data/scale_conversion_report_K2.csv`): GOES-13/14/15 events ÷ 0.7 (exact decimal
+arithmetic — binary floating point gives e.g. X1.4 / 0.7 = 1.9999…e-4, not 2.0e-4); GOES-16/18 as
+reported; 5 SDO events as reported, `scale_unverified`. 4,170 of 27,219 events changed class K → K2
+(both periods: 2010–2019 through ÷0.7; 2020–2024 because K had applied ×0.7).
+
+**Empty-day flags at M1 = 1.0e-5, C1 = 1.0e-6:** 2 changes vs K — 2012-01-29 and 2020-09-26
+genuine zero → incomplete_C1 (peaks between 1.0e-6 and 1.43e-6). Now: 824 genuine zero, 3 C1,
+5 no data, 3 low coverage → **8 label-missing days (unchanged), 11 history-incomplete (K: 9).**
+
+**Relabel verification:** 176/176 chunks, no failures. **Rows 255,292 → 255,292; row keys identical and
+in the same order; every non-label column identical.** Rows changed: `flared_M1_next_24h` 4,003,
+`n_C_prev_48h` 35,828, `n_M_prev_48h` 13,338, `n_X_prev_48h` 975, `history_incomplete` 250;
+`n_flares_prev_48h` 0 (all-class total is scale-independent — as expected).
+**New SHA-256 labelled file:** `d25304cf4b1fc7ee22808da3c6bc015f45f2114510d55f384003c010b35811d9`.
+Raw file unchanged: `2a65e05ba070dec1aca9bad546ba4825503eff04deb56774b964b1e542a8b28f`.
+
+**Per year** (K2 [K]):
+
+| year | M1+ flares | positive rows | % positive | events changed class K→K2 |
+|------|-----:|------:|------:|-----:|
+| 2010 |  11 [8]   |    86 [81]    |  1.10% [1.04%]  |  53 |
+| 2011 | 189 [119] |   917 [747]   |  3.83% [3.12%]  | 345 |
+| 2012 | 201 [136] | 1,012 [781]   |  4.38% [3.38%]  | 396 |
+| 2013 | 169 [111] | 1,143 [790]   |  4.08% [2.82%]  | 315 |
+| 2014 | 346 [223] | 1,731 [1,273] |  6.79% [5.00%]  | 264 |
+| 2015 | 194 [127] | 1,031 [715]   |  4.22% [2.93%]  | 333 |
+| 2016 |  28 [16]  |    98 [67]    |  1.84% [1.26%]  | 188 |
+| 2017 |  56 [43]  |   146 [124]   |  2.79% [2.37%]  | 109 |
+| 2018 |   1 [0]   |     0 [0]     |  0.00% [0.00%]  |  27 |
+| 2019 |   2 [0]   |     0 [0]     |  0.00% [0.00%]  |  35 |
+| 2020 |   2 [1]   |     0 [0]     |  0.00% [0.00%]  | 119 |
+| 2021 |  29 [16]  |   259 [178]   |  2.09% [1.44%]  | 469 |
+| 2022 | 195 [117] | 1,019 [695]   |  4.13% [2.82%]  | 587 |
+| 2023 | 365 [202] | 2,108 [1,337] |  6.51% [4.13%]  | 432 |
+| 2024 | 935 [545] | 4,599 [3,358] | 14.16% [10.34%] | 493 |
+
+**Checks on K2 labels:** CHECK 1 PASS (X1.2 = true 1.71e-4; all 21 rows in [t0−24h, t0) = 1).
+CHECK 2 PASS (median ratio USFLUX 13.90×, TOTUSJH 17.09×). CHECK 3 descriptive (23 HARPs, 5 positive).
+CHECK 4 PASS (unchanged). **CHECK 5 FAIL — 2020 and 2022.**
+- 2020: 2 M1+, both no region → 0% (was 0 of 1 under K; decision L already excludes 2020).
+- **2022: 195 M1+, 20 no region → 89.7% usable, below the pre-registered 90%** (K: 117 M1+, 11 no region,
+  90.6% — passed). The additional true-scale M1+ flares include proportionally more without a region.
+  **2022 is a test year. It is NOT excluded and the rule is NOT changed — user decision pending.**
+  By the precedent of decision L, the fixed rule would exclude it.
+- All other years pass (93.0–100%); 2018 and 2019 now have 1 and 2 M1+ flares (all joined), but 0
+  positive rows — the HARPs holding them have no rows passing the filters in those windows.
+
+**Split** (`frozen/split.csv` unchanged, SHA-256 `f3ab4056…`; per-set rows identical to before, only
+positives moved; 2020 rows excluded per L). Note: the val stratification was drawn under K labels;
+under K2 it still contains 21 single-region-positive HARPs.
+
+| set | subset | rows | positive rows | HARPs | positive HARPs |
+|-----|--------|-----:|------:|----:|---:|
+| train | single |  87,115 | 2,460 | 742 |  65 |
+| train | <= 2   | 103,553 | 3,384 | 860 |  91 |
+| train | all    | 111,991 | 4,697 | 913 | 118 |
+| val   | single |  28,053 |   712 | 244 |  21 |
+| val   | <= 2   |  34,487 | 1,032 | 290 |  30 |
+| val   | all    |  36,911 | 1,467 | 305 |  40 |
+| test  | single |  71,998 | 2,384 | 605 |  71 |
+| test  | <= 2   |  86,981 | 4,039 | 709 | 110 |
+| test  | all    | 101,909 | 7,985 | 801 | 172 |
+
+**Fallback rule (M re-applied):** single-region positive test HARPs = **71 >= 40 → single-region.**
+Without 2022 (if the user excludes it): **55 >= 40 → still single-region.** (Without 2022: single 53,462 rows /
+1,978 pos / 55 pos HARPs; <= 2 64,763 / 3,404 / 87; all 77,224 / 6,966 / 142.)
+
+**Thinned dev (TAI {4,10,16,22}):** 148,902 → 27,482 rows (18.5%, unchanged).
+
+| subset | rows | positive rows | natural N/P | positive HARPs |
+|--------|-----:|------:|------:|---:|
+| single | 21,237 | 587 | **35.2** (K: 45.7) | 83 |
+| <= 2   | 25,469 | 818 | **30.1** (K: 39.2) | 118 |
+| all    | 27,482 | 1,142 | **23.1** (K: 31.2) | 154 |
+
+Not re-run under K2 (report-only, not requested): the March 2011–2019 completeness check; its thresholds
+now match K2's M1 = 1.0e-5.
+**No model trained.**

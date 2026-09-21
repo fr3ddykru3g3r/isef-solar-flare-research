@@ -13,6 +13,7 @@ Rules, each applied identically to every year:
     (e.g. G16 and G18); one physical flare must count once.
 """
 import os, calendar, urllib.request, urllib.error
+from decimal import Decimal
 from concurrent.futures import ThreadPoolExecutor
 import pandas as pd
 from flares import parse_goes
@@ -90,12 +91,14 @@ def to_noaa(reg):
     return reg + 10000 if reg < 10000 else reg
 
 
-# Decision K (user, 2026-09-21): everything on the OLD operational scale.  GOES-16+ fluxes are true
-# irradiance, so they are multiplied by 0.7 (the SWPC XRS-B scaling factor, NCEI readme sec. 3.1);
-# GOES-13/14/15 events are already on the old scale and are used as reported.
+# Decision K2 (user, 2026-09-21; supersedes K): everything on the TRUE irradiance scale, per NOAA/NCEI.
+# GOES-13/14/15 operational fluxes carried SWPC's 0.7 scaling (NCEI readme sec. 3.1), so they are
+# DIVIDED by 0.7; GOES-16+ fluxes are already true irradiance and are used as reported.
 TRUE_SCALE_SATS = {"G16", "G17", "G18", "G19"}
 OLD_SCALE_SATS = {"G13", "G14", "G15"}
-# XRA events SWPC attributes to SDO (5 in 2010-2024, none M1+): decision K does not cover them and
+SCALE = 0.7
+
+# XRA events SWPC attributes to SDO (5 in 2010-2024, none M1+): neither K nor K2 covers them and
 # no source gives their scale.  Kept AS REPORTED and counted as scale_unverified (me, 2026-09-21).
 UNVERIFIED_SCALE_OBS = {"SDO"}
 SCALE = 0.7
@@ -120,7 +123,7 @@ def _valid_hhmm(t):
 
 
 def parse_day(day):
-    """All XRA events in one cached daily report -> list of dicts (flux on the old scale)."""
+    """All XRA events in one cached daily report -> list of dicts (flux on the TRUE scale, K2)."""
     out = []
     if not os.path.exists(_path(day)):
         return out
@@ -142,9 +145,12 @@ def parse_day(day):
         if letter is None:
             continue
         obs = tok[i - 2] if i >= 2 else ""
-        if obs in TRUE_SCALE_SATS:
-            flux = flux_rep * SCALE
-        elif obs in OLD_SCALE_SATS or obs in UNVERIFIED_SCALE_OBS:
+        if obs in OLD_SCALE_SATS:
+            # K2: remove SWPC's 0.7 -> true flux.  Exact decimal division: binary floating point gives
+            # e.g. X1.4 / 0.7 = 1.9999999999999998e-04 instead of 2.0e-04 (also X2.8, X5.6), so exact
+            # class values could land just below a boundary.  Decimal keeps them exact.
+            flux = float(Decimal(repr(flux_rep)) / Decimal("0.7"))
+        elif obs in TRUE_SCALE_SATS or obs in UNVERIFIED_SCALE_OBS:
             flux = flux_rep
         else:
             raise ValueError(f"{day:%Y-%m-%d}: XRA event from unknown satellite {obs!r}: {line.strip()}")
@@ -156,7 +162,7 @@ def parse_day(day):
             tp += pd.Timedelta(days=1)                              # peak after midnight
         out.append({"start": t0, "peak": tp,
                     "goes_class": cls, "flux_reported": flux_rep,   # as SWPC printed it
-                    "flux": flux, "cls": class_of(flux),            # harmonised, old scale
+                    "flux": flux, "cls": class_of(flux),            # harmonised, true scale (K2)
                     "noaa_ar": to_noaa(reg) if reg is not None else pd.NA, "obs": obs})
     return out
 
@@ -198,16 +204,16 @@ def fetch(lo, hi, verbose=True):
 
 
 def conversion_report(lo, hi):
-    """Decision K audit: events whose letter class changed under the x0.7 conversion."""
+    """Decision K2 audit: events whose letter class changed under the /0.7 conversion."""
     fl, _ = load(lo, hi)
-    conv = fl[fl["obs"].isin(TRUE_SCALE_SATS)]
+    conv = fl[fl["obs"].isin(OLD_SCALE_SATS)]
     rep_cls = conv["goes_class"].str[0]
     changed = conv[rep_cls != conv["cls"]]
-    return {"events": len(fl), "converted_x0.7": len(conv), "class_changed": len(changed),
-            "M_to_C": int(((rep_cls == "M") & (conv["cls"] == "C")).sum()),
-            "X_to_M": int(((rep_cls == "X") & (conv["cls"] == "M")).sum()),
-            "C_to_B": int(((rep_cls == "C") & (conv["cls"] == "B")).sum()),
-            "B_to_A": int(((rep_cls == "B") & (conv["cls"] == "A")).sum()),
+    return {"events": len(fl), "converted_div0.7": len(conv), "class_changed": len(changed),
+            "C_to_M": int(((rep_cls == "C") & (conv["cls"] == "M")).sum()),
+            "M_to_X": int(((rep_cls == "M") & (conv["cls"] == "X")).sum()),
+            "B_to_C": int(((rep_cls == "B") & (conv["cls"] == "C")).sum()),
+            "A_to_B": int(((rep_cls == "A") & (conv["cls"] == "B")).sum()),
             "scale_unverified": int(fl["obs"].isin(UNVERIFIED_SCALE_OBS).sum()),
             "M1plus_reported": int((fl["flux_reported"] >= 1e-5).sum()),
             "M1plus_harmonised": int((fl["flux"] >= 1e-5).sum())}

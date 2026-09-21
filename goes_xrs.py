@@ -2,7 +2,7 @@
 whose SWPC event report is empty ('NO EVENT REPORTS.').  Decision E (user, 2026-09-21):
     max >= M1 -> day MISSING for labels
     max >= C1 -> day INCOMPLETE for flare history
-  with M1 = 1.43e-5, C1 = 1.43e-6 W/m^2 in true (science) flux -- decision K
+  with M1 = 1.0e-5, C1 = 1.0e-6 W/m^2 in true (science) flux -- decision K2
     otherwise              -> genuine zero
 
 Primary satellite: NCEI "GOES 1-15 XRS Science-Quality Data Readme", Appendix A, Table 11
@@ -34,9 +34,9 @@ BASE = {13: "https://www.ncei.noaa.gov/data/goes-space-environment-monitor/acces
         17: "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/goes17/l2/data/xrsf-l2-avg1m_science/",
         18: "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/goes18/l2/data/xrsf-l2-avg1m_science/"}
 CACHE = "data/goes_xrs"
-# Decision K (user, 2026-09-21): labels are on the OLD operational scale, and GOES science data is true
-# flux, so the class boundaries in true flux are M1 = 1.43e-5 and C1 = 1.43e-6 (1/0.7 = 1.43), all years.
-M1, C1 = 1.43e-5, 1.43e-6
+# Decision K2 (user, 2026-09-21; supersedes K): labels are on the TRUE irradiance scale, the same scale
+# as the GOES science data, so the class boundaries apply directly: M1 = 1.0e-5, C1 = 1.0e-6, all years.
+M1, C1 = 1.0e-5, 1.0e-6
 
 
 def segments(day):
