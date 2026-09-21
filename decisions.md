@@ -976,3 +976,8 @@ Fallback rule on the primary test: **55 >= 40 → single-region** (unchanged).
 2022-included test (sensitivity only): single 71, <= 2 110, all 172 positive HARPs.
 `split_report.py` prints both the 2022-included (sensitivity) and 2022-excluded (primary) tables.
 **No model trained.**
+
+## 2026-09-21 — SWPC M1+ completeness at K2 (summary, per user)
+**SWPC M1+ completeness at K2 = 134/137 in the sampled months** (March 2011–2019): of 137 distinct GOES
+M1+ flares, SWPC lists 134. **The misses are near-threshold** (true M1.1–M1.3), two beside eclipse-season
+data gaps. **Reported as label noise; labels unchanged.**
