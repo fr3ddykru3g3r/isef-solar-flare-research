@@ -217,3 +217,22 @@ Note (me): the rule as specified covers the forward 24h label window. The backwa
 (`n_*_prev_48h` features) can also overlap a missing day, which would *undercount* prior flares.
 That is a feature, not a label, and I have not changed it — flagged for your decision.
 PENDING: excluded rows per year.
+
+## 2026-09-21 — fallback timing, and incomplete flare history  (decided by: user)
+
+**Fallback (Decision B).** Applied by the user when choosing the split, from the per-year
+`region_group` counts, **before any model is trained**. Not applied in this dataset build.
+
+**Decision D — `history_incomplete` column.**
+`history_incomplete = True` if the backward window `(t-48h, t]` overlaps a day with no SWPC report.
+In those rows `n_flares_prev_48h` and `n_C/M/X_prev_48h` may be undercounted.
+- **Rows are kept** — they remain usable for **gate training on SHARP features only**.
+- **Excluded from the cohort analysis**, because flare history is its mandatory control.
+Reason: a missing report makes the history unknown, not zero; keeping the SHARP features avoids
+throwing away magnetic data that is unaffected.
+Implementation (me): overlap of `(t-48h, t]` with day `[D, D+1d)` is `t-48h < D+1d and t >= D`.
+The counting window itself is `[t-48h, t)`; the two differ only when `t` falls exactly on midnight,
+which cannot happen here (hourly `T_REC` converts to `hh:59:2x` UTC), so the flag and the counts
+cover the same span. HEK comparison labels carry `history_incomplete = False` — the missing-day
+rules apply to the SWPC source only.
+PENDING: `history_incomplete` rows per year.

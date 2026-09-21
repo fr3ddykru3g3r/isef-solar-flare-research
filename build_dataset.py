@@ -145,8 +145,44 @@ else:
     # a chunk can be legitimately empty (e.g. May 2016: every record carries QUALITY bit 0x80)
     for c in LABEL_COLS:
         df[c] = pd.Series(dtype=int)
+# region_group: the dataset is NOT filtered by region count; each analysis selects its subset.
+#   primary = "1" (single region), fallback = "1"+"2", robustness = all  (user, 2026-09-21)
+df["region_group"] = np.where(df["noaa_ar_count"] == 1, "1",
+                      np.where(df["noaa_ar_count"] == 2, "2", "3+"))
+
+if FLARE_SOURCE == "swpc":
+    # A day with no SWPC report means "flares unknown", not "no flares". Any row whose label
+    # window (t, t+24h] overlaps such a day has an unknown label and is excluded (user, 2026-09-21).
+    # Overlap with day D = [D, D+1d):  t < D+1d  and  t+24h > D.
+    unknown = pd.Series(False, index=df.index)
+    for d in swpc.missing_days():
+        D = pd.Timestamp(d)
+        unknown |= (df["t_rec_utc"] < D + pd.Timedelta(days=1)) & \
+                   (df["t_rec_utc"] + pd.Timedelta(hours=24) > D)
+    # history_incomplete: the backward window (t-48h, t] overlaps a missing SWPC day, so the
+    # n_*_prev_48h counts may be undercounted. Rows are KEPT (usable for gate training on SHARP
+    # features only); the cohort analysis excludes them, since flare history is its mandatory
+    # control (user, 2026-09-21).  Overlap of (t-48h, t] with [D, D+1d): t-48h < D+1d and t >= D.
+    hist = pd.Series(False, index=df.index)
+    for d in swpc.missing_days():
+        D = pd.Timestamp(d)
+        hist |= (df["t_rec_utc"] - pd.Timedelta(hours=48) < D + pd.Timedelta(days=1)) & \
+                (df["t_rec_utc"] >= D)
+    df["history_incomplete"] = hist
+    df.loc[unknown, ["harpnum", "t_rec_utc"]].to_csv(f"data/excluded_missing_swpc_{TAG}.csv", index=False)
+    print(f"label window overlaps a day with no SWPC report: {int(unknown.sum())} rows -> label unknown, excluded")
+    df = df[~unknown]
+    print(f"history_incomplete (prev-48h window overlaps a missing SWPC day): "
+          f"{int(df['history_incomplete'].sum())} rows kept, flagged")
+else:
+    df["history_incomplete"] = False    # HEK comparison labels: missing-day rule not applied
+
 npos = int(df["flared_M1_next_24h"].sum())
 print(f"positives: {npos} / {len(df)}  ({npos/max(len(df),1):.2%})")
+for g in ["1", "2", "3+"]:
+    sub = df[df["region_group"] == g]
+    print(f"  region_group {g:2s}: rows {len(sub):6d}  positives {int(sub['flared_M1_next_24h'].sum()):5d}"
+          f"  positive HARPs {sub.loc[sub['flared_M1_next_24h'] == 1, 'harpnum'].nunique()}")
 
 # ---------------------------------------------------------------- STEP 7
 step("STEP 7  missing values")
@@ -158,7 +194,7 @@ for col in feat:
 for col in feat:
     print(f"  {col:9s} {df[col].isna().mean()*100:6.2f}% missing")
 
-out = ["harpnum","t_rec_tai","t_rec_utc","noaa_ars","noaa_ar_count","noaa_mapping_status",
+out = ["harpnum","t_rec_tai","t_rec_utc","noaa_ars","noaa_ar_count","noaa_mapping_status","region_group","history_incomplete",
        "usflux","totusjh","totpot","meanshr","r_value","absnjzh","savncpp","area_acr",
        "lat_fwt","lon_fwt","quality","flared_M1_next_24h","n_flares_prev_48h",
        "n_C_prev_48h","n_M_prev_48h","n_X_prev_48h"]
