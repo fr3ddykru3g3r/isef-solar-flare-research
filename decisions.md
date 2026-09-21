@@ -1027,3 +1027,42 @@ stage. Labels = K2. Primary test years = 2021, 2023, 2024 (2022 sensitivity only
 **Scaling (user; supersedes the StandardScaler in amended decision S):** follow B&C (2015) §5 —
 "we subtract from every feature its median value and divide by its standard deviation."
 Median and standard deviation are **fitted inside each training fold only**.
+
+## 2026-09-21 — STAGE 2 RESULTS: gate (dev only) — CHECKPOINT 2
+
+`stage2_gate.py`. Dev = train+val HARPs of `frozen/split.csv`, rows 2010–2019 (2020 excluded). **Test HARPs
+never loaded** (asserted in code: no test HARP, no row after 2019).
+- **Unscorable rows (implementation choice, me):** 21 dev hourly rows (1 positive) lack MEANPOT and SHRGT45
+  together; an SVM cannot score a missing input and imputation is ruled out, so these rows get **no gate
+  score** — excluded from training and metrics, and cannot alarm. (Test has 34 such rows, 0 positive;
+  the same rule will apply there.)
+- Features: the 10 of decision Q. Training rows: single-region, thinned to TAI {4,10,16,22}.
+  Scaling: B&C §5 median / standard deviation, per training fold. SVM: RBF, C=4, γ=0.075, tol=1e-8,
+  class weight positive:negative = 2.0:1.0. No tuning.
+- Folds: 5, grouped by HARPNUM, stratified by 3 HARP strata **from K2 labels**, seed 20260921; built by
+  shuffling each stratum and dealing HARPs round-robin. HARPs per fold 245/244/243/243/243; single-region
+  positive HARPs per fold 18/17/17/17/17. Grouping asserted (no HARP in two folds).
+- Fits: 16,705–17,127 training rows per fold (443–499 positive), 909–1,023 support vectors, ~1 s each;
+  **total 2.8 s** (limit 3 h). **Rerun reproduces the out-of-fold scores byte-for-byte.**
+- Score = SVM decision function, every hourly dev row out-of-fold (115,147 primary-subset rows).
+- **Threshold = −0.992496** (max TSS on pooled out-of-fold hourly scores, primary subset).
+
+Primary subset, hourly, at the pooled threshold:
+
+| fold | rows | pos rows | HARPs | pos HARPs | TSS | HSS | TPR | FPR | FAR | own optimal threshold | TSS at own optimum |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 24,586 | 754 | 209 | 18 | 0.788 | 0.473 | 0.837 | 0.049 | 0.648 | −0.9920 | 0.788 |
+| 1 | 22,197 | 739 | 193 | 17 | 0.785 | 0.531 | 0.825 | 0.040 | 0.586 | −0.9800 | 0.787 |
+| 2 | 22,343 | 479 | 191 | 17 | 0.662 | 0.381 | 0.702 | 0.040 | 0.720 | −0.9940 | 0.665 |
+| 3 | 22,421 | 505 | 195 | 17 | 0.392 | 0.329 | 0.414 | 0.022 | 0.701 | −1.0057 | 0.416 |
+| 4 | 23,600 | 694 | 198 | 17 | 0.663 | 0.392 | 0.715 | 0.052 | 0.705 | −0.9962 | 0.665 |
+| **pooled** | **115,147** | **3,171** | **986** | **86** | **0.679** | **0.434** | **0.720** | **0.041** | **0.667** | −0.9925 | 0.679 |
+
+Artefacts (in `data/`, not tracked): `data/stage2/oof_scores_dev.csv`, `stage2_metrics.csv`,
+`stage2_result.json`; fold models `data/stage2/models/fold{0..4}.joblib`, SHA-256:
+fold0 `d283c18bfe242518d0389c33c2e94bfe25405b0bc9ebd3f42030592ec09ee00a`,
+fold1 `1dbc5a7908903d4cb9d9c03d14e3c51945b2712333a1b2dbcd556779b7769c20`,
+fold2 `9e6f233705d9490f830b439a5debd215dc856f3879fd51e142b7f7a8df164d7c`,
+fold3 `7aeae7f67c858889c249089e7f0af54832490e190e158e4b731cfb36ac87970c`,
+fold4 `49e7c9597746e1398990b13c65a311aa8f16de12780900878cc0b7cd91ac8f48`.
+**Test years not touched.** Awaiting approval of CHECKPOINT 2.
