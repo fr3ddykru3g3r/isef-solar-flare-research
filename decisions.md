@@ -2053,3 +2053,31 @@ waiting and retrying (no source switch).
 - **JSOC export address:** JSOC's registration check returned "invalid or not registered" for the address the user
   supplied. This may be genuine or an effect of the outage (the check uses the same failing JSOC services). Registering
   the address is the user's action (JSOC sends a confirmation email); not done by me.
+
+## 2026-09-21 — EUV PILOT DOWNLOAD decisions  (decided by: user; recorded BEFORE downloading)
+**Scope: the 3 pilot episodes only** (HARP 4231, 6975, 3248; t as recorded).
+**Items per episode:**
+1. `hmi.sharp_720s` LoS **magnetogram** at the record nearest <= t (TAI), plus **bitmap**.
+2. AIA **94 Å**, 12-min cadence, (t−24h, t], cutout around the HARP, tracked.
+3. AIA **1600 Å**, 12-min cadence, (t−24h, t], cutout, tracked.
+4. AIA **94 Å, 12-s cadence, (t−6h, t]**, cutout, tracked — cost test; process-and-delete allowed (per-frame results and
+   overlays kept).
+**Source rules:**
+- Primary: **JSOC export** (drms, the email on record), method url, protocol FITS; AIA via **im_patch** cutouts, box = HARP
+  bounding box + **50″ margin**, tracking on, reference time t. Keep the retry loop; start as soon as JSOC responds.
+- **Fallback, AIA items 2–3 ONLY:** if JSOC is still failing **12 hours from this entry** (entry time 2026-09-21 22:43:34 IST; deadline
+  **2026-09-22 10:43:34 IST**), fetch level-1 full-disk AIA via SunPy Fido from a VSO provider (e.g. SDAC), crop locally to the same box,
+  delete the full-disk files; record the provider per file. **Not for item 4, not for HMI item 1 (JSOC only).**
+- Never mix sources within one episode's item without recording it.
+**Download discipline:** resumable (skip present and verified files); `data/euv_pilot/<HARP>/<item>/` (untracked);
+manifest CSV (file, T_OBS, wavelength, exposure, source, size, SHA-256); checker (count vs expected — 12 min ~120, 12 s
+~1,800 —, wavelength, time coverage, cutout contains the HARP box, gaps listed); wall time and bytes per item and episode.
+**After download:** run the pilot (P1–P6 as approved; P2 amended; P4 raw-DN cut): overlays, time series, cost table with
+projected totals for 547 dev + ~400 2025+ episodes. **No true-vs-false conclusions. Stop at CHECKPOINT 2.**
+
+Notes (me):
+- "Record nearest <= t (TAI)": each episode's t is the UTC form (hh:59:2x) of an hourly T_REC at hh+1:00:00 TAI, so the
+  record at t is the episode row's own T_REC.
+- **Gap in the fallback rule:** it triggers on "JSOC still failing". JSOC's registration check currently rejects the export
+  address. If JSOC recovers but exports fail because the address is unregistered, that is not "JSOC failing"; **I will
+  stop and ask** rather than use the fallback.
