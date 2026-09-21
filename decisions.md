@@ -1755,3 +1755,17 @@ confirmation set = **T_REC from 2025-01-01 00:00 TAI up to but not including 202
 history window at the start uses 2024-12-30/31 reports, already cached). The JSOC query will use an end of
 2026-08-16_23:00_TAI, because JSOC ranges include both ends (see the month-boundary duplicate fix). Calendar years for
 CHECK 5: 2025 (full) and 2026 (2026-01-01 → 2026-08-16, partial).
+
+## 2026-09-21 — CONFIRMATION SET FROZEN  (decided by: user; recorded before any 2025+ fetch beyond the checks)
+**Confirmation set = T_REC 2025-01-01 00:00 TAI → 2026-08-16 23:00 TAI.** The JSOC query end is inclusive at 23:00, to
+avoid boundary duplicates. Approved by the user; frozen from this entry.
+
+**`NOAA_ARS` (user):** SHARP `NOAA_ARS` appears to be filled retroactively. It is used **only for flare–region
+linking** (labels, history, the single-region/mapping status that defines subsets), **never as a model input**.
+(The gate uses the 10 SHARP features; models A/B/C use the gate score, n_C/n_M/n_X, and trends/R.)
+
+**STEP 1 (data only; no gate scoring, no cohort, no R):** fetch SHARP keywords (original set + the 10 extras) in
+resumable monthly chunks with the same record-set pattern and a boundary-duplicate check; fetch SWPC reports and GOES
+XRS for the period (+48 h before, +24 h after where available); build labels with identical rules (K2, missing-day,
+empty-day, history_incomplete, region_group); run CHECKS 1–5, CHECK 5 per calendar year (2025; 2026 partial) with the
+90% rule, excluding failing years per L; report per year and hash the new raw and labelled files. STOP after Step 1.
