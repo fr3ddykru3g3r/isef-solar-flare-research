@@ -285,3 +285,32 @@ HEK flare counts on SWPC-empty days are reported **as a sanity check against the
 used to flag days or set labels. PENDING: HEK-on-empty-days vs GOES-rule comparison.
 
 Then: relabel all 176 chunks. PENDING: post-relabel tables.
+
+## 2026-09-21 — GOES data gaps and the flare-history control  (decided by: user)
+
+Context (me): testing the GOES rule on 2017-03-14 (SWPC report empty, HEK lists 32 flares at
+B2–B5) — GOES-15 and GOES-16 both show an A-level day (max 1.9e-8 and 2.6e-8 W/m², all minutes,
+flagged or not), ~10x below B2. The SWPC empty report was correct; HEK's entries for that day do
+not correspond to anything in the X-ray flux. First direct evidence that HEK, used as the
+cross-check, can be wrong in the opposite direction from the gap it was meant to catch.
+
+**Decision H — no primary GOES data on a day.** Fall back to the **secondary** satellite
+(Table 11, secondary column). If **neither** has data, the day is **missing**: label exclusion
+**and** `history_incomplete`.
+
+**Decision I — partial coverage.** Primary gaps are **filled with secondary `good_data` minutes**.
+If combined coverage is **< 90% of the day AND the day would otherwise be "genuine zero"**, the day
+is **missing** (label exclusion + `history_incomplete`). Days reaching M1 or C1 on partial data keep
+that classification — a flare seen in part of a day is still a flare.
+Reason: a quiet reading over part of a day cannot rule out a flare in the unseen part; a flare
+reading over part of a day already establishes one.
+PENDING: coverage distribution, and how many days this rule flags.
+
+**Decision J — `n_flares_prev_48h`.** **Kept in the file, excluded from all analysis.** The flare
+history control is **`n_C_prev_48h`, `n_M_prev_48h`, `n_X_prev_48h` only.**
+Reason: the total includes B flares, which decision F removed from the history control. Keeping the
+column preserves the raw count; excluding it keeps B out of every analysis.
+
+Implementation (me): the secondary column of Table 11 is transcribed alongside the primary; minutes
+are combined per UTC minute (primary where good, else secondary where good), so a minute is never
+counted twice.
