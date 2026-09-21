@@ -51,3 +51,24 @@ def fetch(lo, hi, verbose=True):
         print(f"flares with UNKNOWN region (ar_noaanum <= 0 or NaN), not joined: {n_unknown}  (of which M1+: {n_unknown_m1})")
         print("class counts:", fl["cls"].value_counts().to_dict())
     return fl, m1
+
+
+def fetch_raw_m1(lo, hi):
+    """M1+ flares from HEK/SWPC INCLUDING unknown-region ones. Cross-checks only."""
+    return fetch_raw(lo, hi, min_flux=1e-5)
+
+
+def fetch_raw(lo, hi, min_flux=0.0):
+    """HEK/SWPC flares INCLUDING unknown-region ones (noaa_ar may be 0 or NaN).
+    For cross-checks only -- never use this for labelling."""
+    res = Fido.search(a.Time(lo, hi), a.hek.EventType("FL"), a.hek.FRM.Name == "SWPC")["hek"]
+    if len(res) == 0 or "event_starttime" not in res.colnames:
+        return pd.DataFrame(columns=["start", "noaa_ar", "goes_class", "flux"])
+    st = res["event_starttime"]
+    fl = pd.DataFrame({
+        "start": pd.to_datetime(np.asarray(st.to_datetime() if hasattr(st, "to_datetime") else st)),
+        "noaa_ar": pd.to_numeric(pd.Series(np.asarray(res["ar_noaanum"])), errors="coerce"),
+        "goes_class": pd.Series(np.asarray(res["fl_goescls"])).astype(str).str.strip(),
+    }).drop_duplicates(subset=["start", "noaa_ar", "goes_class"])
+    fl["flux"] = fl["goes_class"].apply(lambda c: parse_goes(c)[1])
+    return fl[fl["flux"] >= min_flux].reset_index(drop=True)

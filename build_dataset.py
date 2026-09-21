@@ -3,12 +3,12 @@
 Usage: python build_dataset.py [START] [END]     e.g. 2014-01-01 2014-02-01
 Keyword queries only; no image segments.
 """
-import sys, re
+import sys, re, os
 from datetime import datetime
 import numpy as np, pandas as pd, drms
 from astropy.time import Time
 import astropy.units as u
-import flares
+import flares, swpc
 
 if len(sys.argv) not in (1, 3):
     sys.exit("usage: python build_dataset.py [START END]   dates as YYYY-MM-DD, START inclusive, END exclusive")
@@ -19,6 +19,13 @@ for d in (START, END):                                    # fail loudly on a typ
 if START >= END:
     sys.exit(f"START ({START}) must be before END ({END})")
 TAG   = f"{START}_{END}".replace("-", "")
+
+# Flare label source. ONE switch for the whole range -- never per year (user, 2026-09-21).
+#   swpc = SWPC original daily event reports (default)   hek = the old HEK/SWPC copy, kept for comparison
+FLARE_SOURCE = os.environ.get("FLARE_SOURCE", "swpc")
+assert FLARE_SOURCE in ("swpc", "hek"), FLARE_SOURCE
+LABEL_DIR = "data" if FLARE_SOURCE == "swpc" else "data/labels_hek"
+os.makedirs(LABEL_DIR, exist_ok=True)
 
 
 def jsoc(d):
@@ -32,6 +39,7 @@ def banner():
     print(f"  START (CLI)   : {START}      END (CLI, exclusive): {END}")
     print(f"  START (JSOC)  : {jsoc(START)}   END (JSOC): {jsoc(END)}")
     print(f"  JSOC record set: hmi.sharp_cea_720s[][{jsoc(START)}-{jsoc(END)}@1h]")
+    print(f"  flare source  : {FLARE_SOURCE}   labels -> {LABEL_DIR}/")
     print("=" * 62)
 
 FEATURES = ["USFLUX","TOTUSJH","TOTPOT","MEANSHR","R_VALUE","ABSNJZH","SAVNCPP","AREA_ACR"]
@@ -44,13 +52,19 @@ def step(msg): print(f"\n=== {msg} ===")
 # ---------------------------------------------------------------- STEP 1
 banner()
 step("STEP 1  SHARP keywords")
-c = drms.Client()
 qs = f"hmi.sharp_cea_720s[][{jsoc(START)}-{jsoc(END)}@1h]"
-print("query:", qs)
-raw = c.query(qs, key=",".join(KEYS))
+RAW = f"data/raw_sharp_{TAG}.csv"
+if os.path.exists(RAW):
+    # relabelling never re-downloads.  NOAA_ARS must stay a string: a month whose regions are
+    # all single numbers would otherwise read back as float ("11944.0") and fail the digit test.
+    raw = pd.read_csv(RAW, dtype={"NOAA_ARS": str, "T_REC": str})
+    print(f"loaded cached {RAW}  (no JSOC query)")
+else:
+    print("query:", qs)
+    raw = drms.Client().query(qs, key=",".join(KEYS))
+    raw.to_csv(RAW, index=False)
+    print(f"saved {RAW}")
 print(f"SHARP rows retrieved: {len(raw)}")
-raw.to_csv(f"data/raw_sharp_{TAG}.csv", index=False)
-print(f"saved data/raw_sharp_{TAG}.csv")
 
 df = raw.copy()
 df.columns = [x.lower() for x in df.columns]
@@ -74,7 +88,11 @@ step("STEP 2  flare catalogue (HEK / SWPC)")
 lo = (df["t_rec_utc"].min() - pd.Timedelta(hours=48)).to_pydatetime()
 hi = (df["t_rec_utc"].max() + pd.Timedelta(hours=24)).to_pydatetime()
 print(f"padded window: {lo} .. {hi}")
-fl, m1 = flares.fetch(lo, hi)
+if FLARE_SOURCE == "swpc":
+    swpc.download_range(lo, hi)                   # no-op for days already cached
+    fl, m1 = swpc.fetch(lo, hi)
+else:
+    fl, m1 = flares.fetch(lo, hi)
 
 # ---------------------------------------------------------------- STEP 4
 step("STEP 4  NOAA mapping")
@@ -144,5 +162,5 @@ out = ["harpnum","t_rec_tai","t_rec_utc","noaa_ars","noaa_ar_count","noaa_mappin
        "usflux","totusjh","totpot","meanshr","r_value","absnjzh","savncpp","area_acr",
        "lat_fwt","lon_fwt","quality","flared_M1_next_24h","n_flares_prev_48h",
        "n_C_prev_48h","n_M_prev_48h","n_X_prev_48h"]
-df[out].to_csv(f"data/labelled_{TAG}.csv", index=False)
-print(f"\nsaved data/labelled_{TAG}.csv  ({len(df)} rows)")
+df[out].to_csv(f"{LABEL_DIR}/labelled_{TAG}.csv", index=False)
+print(f"\nsaved {LABEL_DIR}/labelled_{TAG}.csv  ({len(df)} rows, flare source: {FLARE_SOURCE})")

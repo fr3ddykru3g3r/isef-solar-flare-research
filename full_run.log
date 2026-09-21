@@ -934,3 +934,78 @@ chunk 2020-12-01..2021-01-01 FAILED -- fix and re-run, completed chunks will be 
 [159/176] 2023-07-01 -> 2023-08-01  running...
           SHARP rows retrieved: 11186 | positives: 107 / 2799  (3.82%)
 [160/176] 2023-08-01 -> 2023-09-01  running...
+          SHARP rows retrieved: 12463 | positives: 52 / 2893  (1.80%)
+[161/176] 2023-09-01 -> 2023-10-01  running...
+          SHARP rows retrieved: 11713 | positives: 65 / 3049  (2.13%)
+[162/176] 2023-10-01 -> 2023-11-01  running...
+          SHARP rows retrieved: 14031 | positives: 0 / 2519  (0.00%)
+[163/176] 2023-11-01 -> 2023-12-01  running...
+          SHARP rows retrieved: 11534 | positives: 0 / 2454  (0.00%)
+[164/176] 2023-12-01 -> 2024-01-01  running...
+          SHARP rows retrieved: 10763 | positives: 0 / 2335  (0.00%)
+[165/176] 2024-01-01 -> 2024-02-01  running...
+          SHARP rows retrieved: 12155 | positives: 131 / 2744  (4.77%)
+[166/176] 2024-02-01 -> 2024-03-01  running...
+          SHARP rows retrieved: 10800 | positives: 260 / 2834  (9.17%)
+[167/176] 2024-03-01 -> 2024-04-01  running...
+          SHARP rows retrieved: 11948 | positives: 188 / 2820  (6.67%)
+[168/176] 2024-04-01 -> 2024-05-01  running...
+          SHARP rows retrieved: 11857 | positives: 246 / 3055  (8.05%)
+[169/176] 2024-05-01 -> 2024-06-01  running...
+          SHARP rows retrieved: 10378 | positives: 385 / 2579  (14.93%)
+[170/176] 2024-06-01 -> 2024-07-01  running...
+          SHARP rows retrieved: 11792 | positives: 389 / 2937  (13.24%)
+[171/176] 2024-07-01 -> 2024-08-01  running...
+          SHARP rows retrieved: 11067 | positives: 562 / 2842  (19.77%)
+[172/176] 2024-08-01 -> 2024-09-01  running...
+          SHARP rows retrieved: 10953 | positives: 656 / 2920  (22.47%)
+[173/176] 2024-09-01 -> 2024-10-01  running...
+          SHARP rows retrieved: 11353 | positives: 427 / 2505  (17.05%)
+[174/176] 2024-10-01 -> 2024-11-01  running...
+          SHARP rows retrieved: 11734 | positives: 467 / 2430  (19.22%)
+[175/176] 2024-11-01 -> 2024-12-01  running...
+          SHARP rows retrieved: 11574 | positives: 409 / 2107  (19.41%)
+[176/176] 2024-12-01 -> 2025-01-01  running...
+          SHARP rows retrieved: 12322 | positives: 476 / 2699  (17.64%)
+
+wrote data/raw_sharp_20100501_20250101.csv (1074130) and data/labelled_20100501_20250101.csv (255460)
+
+==============================================================
+FULL SUMMARY  2010-05-01 .. 2025-01-01
+==============================================================
+raw SHARP rows retrieved : 1074130
+mapping status           : {'missing': 524712, 'single': 406636, 'multiple': 142782}
+after QUALITY==0         : 926595
+after |LON_FWT|<=45      : 534124
+after mapping!=missing   : 255460   (labelled file: 255460)
+positives                : 10118 / 255460  (3.96%)
+distinct HARPNUMs        : 2054
+rows per HARPNUM         : mean 124.4  median 141  min 1  max 344
+HARPNUMs with a positive : 235
+
+per-feature missingness (labelled file):
+  usflux      0.00%
+  totusjh     0.00%
+  totpot      0.00%
+  meanshr     0.14%
+  r_value     0.00%
+  absnjzh     0.00%
+  savncpp     0.00%
+  area_acr    0.00%
+  lat_fwt     0.00%
+  lon_fwt     0.00%
+
+positive rate per year:
+Traceback (most recent call last):
+  File "/Users/93i5/isef new/run_all.py", line 94, in <module>
+    y = lab.groupby(lab["t_rec_utc"].dt.year)["flared_M1_next_24h"].agg(["size", "sum"])
+                    ^^^^^^^^^^^^^^^^^^^
+  File "/Users/93i5/isef new/.venv/lib/python3.12/site-packages/pandas/core/generic.py", line 6194, in __getattr__
+    return object.__getattribute__(self, name)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/93i5/isef new/.venv/lib/python3.12/site-packages/pandas/core/accessor.py", line 230, in __get__
+    return self._accessor(obj)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/Users/93i5/isef new/.venv/lib/python3.12/site-packages/pandas/core/indexes/accessors.py", line 698, in __new__
+    raise AttributeError("Can only use .dt accessor with datetimelike values")
+AttributeError: Can only use .dt accessor with datetimelike values. Did you mean: 'at'?

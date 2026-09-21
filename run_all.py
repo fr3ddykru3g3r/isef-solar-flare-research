@@ -4,23 +4,12 @@ Usage: python run_all.py [START END]      default 2010-05-01 2025-01-01
 A chunk is skipped if its labelled CSV already exists, so re-running resumes.
 """
 import sys, subprocess, time, os
-from datetime import date
 import numpy as np, pandas as pd
+from chunks import months
 
 START = sys.argv[1] if len(sys.argv) > 1 else "2010-05-01"
 END   = sys.argv[2] if len(sys.argv) > 2 else "2025-01-01"
 PY    = sys.executable
-
-
-def months(start, end):
-    """[(chunk_start, chunk_end), ...] month boundaries, half-open."""
-    s, e = date.fromisoformat(start), date.fromisoformat(end)
-    out, cur = [], s
-    while cur < e:
-        nxt = date(cur.year + cur.month // 12, cur.month % 12 + 1, 1)
-        out.append((cur.isoformat(), min(nxt, e).isoformat()))
-        cur = nxt
-    return out
 
 
 chunks = months(START, END)

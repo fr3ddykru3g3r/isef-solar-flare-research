@@ -4,7 +4,7 @@ Bit meanings quoted verbatim from the JSOC/HMI QUALITY documentation:
   http://jsoc.stanford.edu/doc/data/hmi/Quality_Bits/QUALITY.txt  (NB: UPDATED ON MAY 24, 2013)
 The filter QUALITY == 0 is NOT changed here; this only reports what is being excluded.
 """
-import glob
+import chunks
 import pandas as pd
 
 # verbatim from the JSOC doc above, "Line-of-Sight and Vector field data products
@@ -26,11 +26,8 @@ BITS = {
 
 def main():
     per_month, seen = [], {}
-    for f in sorted(glob.glob("data/raw_sharp_*.csv")):
-        stem = f.split("raw_sharp_")[1][:8]
-        if len(stem) != 8 or not stem.isdigit():
-            continue
-        month = f"{stem[:4]}-{stem[4:6]}"
+    for a, f in chunks.files("raw_sharp"):
+        month = a[:7]
         q = pd.to_numeric(pd.read_csv(f, usecols=["QUALITY"], low_memory=False)["QUALITY"], errors="coerce").dropna().astype(int)
         per_month.append({"month": month, "rows": len(q), "quality_zero": int((q == 0).sum()),
                           "top_values": dict(q.value_counts().head(4))})
