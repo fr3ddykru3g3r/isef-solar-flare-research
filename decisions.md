@@ -1364,3 +1364,14 @@ Same OOF scores and threshold (−0.992496). 697 episodes (T1) in 220 HARPs; 6,8
   with only false episodes; 24 are not in the cohort — **16 never alarmed**, 8 alarmed but had no eligible episode.
 Artefacts replaced: `data/stage3/cohort_dev.csv` (adds `episode_onset`, `hours_onset_to_t`), `exclusions_dev.csv`,
 `episodes_dev.csv`. **No trend comparison computed or viewed; no model fitted. Test years untouched.**
+
+## 2026-09-21 — STAGE 4 ON HOLD; full-fidelity B&C reproduction D7  (decided by: user; diagnostic, dev data only)
+- **Stage 4 is on hold until the user approves.**
+- **Step 1:** protocol audit table from the paper (location for each item), each item marked MATCHABLE /
+  NOT MATCHABLE (why) / NOT STATED IN PAPER.
+- **Step 2 — D7 "closest possible reproduction":** match every MATCHABLE item (their period, QUALITY rule rebuilt
+  from raw, longitude limit, old K scale, sample definitions and N/P, random 70/30 split by example, 1,000 repeats),
+  with the 10 available features; NOT STATED items take the most literal reading, listed as assumptions. Report mean
+  ± sd TSS over 1,000 repeats (comparable to their 0.610 ± 0.048), min/max, TPR, FPR, positive/negative counts.
+- **Step 3 — D7b:** our own pipeline (baseline) restricted to the same period, with a region-bootstrap 95% CI.
+Table only, no interpretation.
