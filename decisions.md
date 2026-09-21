@@ -521,3 +521,26 @@ ANY-rule positives.
 HARP counts differ across subsets because `noaa_ar_count` is per row: a HARP can be single-region in
 some hours and multi-region in others, so it appears in every subset whose rows it has.
 **No model trained.** Waiting on the signed research plan.
+
+## 2026-09-21 — Decision N2: model selection by grouped CV  (decided by: user; before any model is trained)
+
+- **Threshold and hyperparameters are chosen by grouped 5-fold cross-validation over ALL 2010–2019
+  HARPs** — train and val from `split.csv` **pooled**.
+- **Folds: GroupKFold on HARPNUM**, **stratified by the same three HARP strata** as the split
+  (positive in single-region rows / positive only in multi-region rows / negative), **fixed seed**.
+- **Decision threshold = the one maximising TSS on the pooled out-of-fold scores.**
+- **`split.csv` test assignment is unchanged**: 2021–2024 stays untouched until final evaluation.
+- **Not implemented yet** — waiting on the signed research plan.
+
+Notes (me), recorded for when this is implemented; none changes the decision:
+- Under N2 the `train` / `val` labels in `split.csv` no longer separate data used for selection;
+  both feed the CV pool. The file (and its SHA-256 above) is left exactly as written, so the test
+  assignment it certifies is unaffected.
+- Seed: the decision says "fixed seed" without a value. Unless told otherwise I will use the split's
+  seed, **20260921**, and record the per-fold HARP and positive-HARP counts before any fitting.
+- Expected fold size for the primary subset: 64 single-region-positive HARPs in 2010–2019 → about
+  13 per fold, so each fold's TSS rests on ~13 independent positive regions.
+- Pooling out-of-fold scores to pick one threshold assumes the five fold models produce scores on a
+  comparable scale. If the models are poorly calibrated relative to each other, the pooled
+  threshold can differ from each fold's own optimum; worth reporting the per-fold optimal thresholds
+  alongside the pooled one when this runs.
