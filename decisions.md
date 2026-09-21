@@ -2006,3 +2006,30 @@ conclusions. Stop at CHECKPOINT 2.**
 - **P6 episode choice:** from the frozen dev cohort, candidate triples (one true, one false, one delayed) whose gate
   scores lie within the caliper (0.0747) of each other and whose |LON_FWT| <= 30° at t; among them, the triple with the
   smallest gate-score spread, ties broken by earliest t. Chosen **before** any EUV data is seen.
+
+### EUV pilot — pre-download results (me)
+**Pilot episodes chosen by rule P6 (before any EUV data):** |LON_FWT| <= 30° at t: 62 true, 29 delayed, 296 other-false
+episodes eligible. Smallest gate-score spread, three different HARPs (`data/euv_pilot_episodes.csv`):
+
+| role | HARP | NOAA AR | t (UTC) | gate score | LON_FWT | LAT_FWT |
+|---|---:|---:|---|---:|---:|---:|
+| true | 4231 | 12089 | 2014-06-12 12:59:25 | −0.9917 | −9.3° | 17.5° |
+| delayed | 6975 | 12645 | 2017-03-31 06:59:23 | −0.9917 | −11.4° | −9.9° |
+| false | 3248 | 11856 | 2013-10-08 11:59:25 | −0.9917 | 2.2° | 8.3° |
+Score spread 0.0001 (caliper 0.0747). Why these: the rule's minimum spread; all three are within 12° of disk centre.
+
+**AARP metadata check (decision 5; no data downloaded).** Sources: data.gov record "NWRA AIA Active Region Patches
+(AARP) Database"; SDAC directory listing `umbra.nascom.nasa.gov/contributed/AIA_AARPS/`; Dissauer et al. 2023, ApJ
+(arXiv:2212.11251).
+- **Coverage: 2010-06 → 2018-12** (103 month directories). **No 2019; no 2025+.**
+- **Sampling:** daily, **11 images at 72-s cadence (13 min) per channel, centred at 15:48, 16:48, … 21:48 UT** (7 samples a
+  day, one hour apart). Only that 6-hour daytime window is covered each day.
+- **Channels:** 94, 131, 171, 193, 211, 304, 335, 1600 Å (1700 Å omitted).
+- **Boxes:** HARP-based, with extended bounding boxes for coronal loops; full spatial sampling kept.
+- **Files:** one FITS per AARP per day per channel (e.g. `2014.03.01_15:48:00_7h@1h_AARP3766_94.fits`), **58–90 MB each**
+  in 2014-03; total ~9 TB; last updated 2026-09-08.
+- Facts relevant to the brief: AARP cannot supply (t−24h, t] at 12-min cadence (daily 6-h window only), does not cover
+  2019 or 2025+, and its cadence within a sample is 72 s.
+
+**JSOC outage (decision 6):** the metadata call failed again with the same database disk-full error; per the decision,
+waiting and retrying (no source switch).
