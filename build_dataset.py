@@ -43,6 +43,8 @@ def banner():
     print("=" * 62)
 
 FEATURES = ["USFLUX","TOTUSJH","TOTPOT","MEANSHR","R_VALUE","ABSNJZH","SAVNCPP","AREA_ACR"]
+# decision O: Bobra & Couvidat (2015) keywords that exist in hmi.sharp_cea_720s (see fetch_extra.py)
+EXTRA_COLS = ["TOTUSJZ","MEANPOT","SHRGT45","MEANGAM","MEANGBT","MEANGBZ","MEANGBH","MEANJZH","MEANJZD","MEANALP"]
 KEYS = ["HARPNUM","T_REC","NOAA_ARS","NOAA_NUM","QUALITY","LAT_FWT","LON_FWT"] + FEATURES
 
 
@@ -65,6 +67,23 @@ else:
     raw.to_csv(RAW, index=False)
     print(f"saved {RAW}")
 print(f"SHARP rows retrieved: {len(raw)}")
+
+# Decision O: the extra Bobra & Couvidat keywords, fetched separately for the same record set
+# (fetch_extra.py).  Merged 1:1 on HARPNUM + T_REC; anything but an exact match stops the build.
+EXTRA_FILE = f"data/raw_sharp_extra_{TAG}.csv"
+if os.path.exists(EXTRA_FILE):
+    ex = pd.read_csv(EXTRA_FILE, dtype={"T_REC": str})
+    assert not ex.duplicated(["HARPNUM", "T_REC"]).any(), "duplicate HARPNUM+T_REC in extras"
+    n_raw = len(raw)
+    raw = raw.merge(ex, on=["HARPNUM", "T_REC"], how="left", validate="one_to_one", indicator=True)
+    unmatched = int((raw["_merge"] != "both").sum())
+    assert unmatched == 0 and len(ex) == n_raw, \
+        f"extras do not match raw 1:1: raw {n_raw}, extras {len(ex)}, unmatched {unmatched}"
+    raw = raw.drop(columns="_merge")
+    print(f"merged {len(EXTRA_COLS)} extra keywords from {EXTRA_FILE}: 1:1, {n_raw} rows")
+else:
+    EXTRA_COLS = []
+    print(f"(no {EXTRA_FILE}; extra keywords absent from this chunk's output)")
 
 df = raw.copy()
 df.columns = [x.lower() for x in df.columns]
@@ -186,7 +205,7 @@ for g in ["1", "2", "3+"]:
 
 # ---------------------------------------------------------------- STEP 7
 step("STEP 7  missing values")
-feat = [f.lower() for f in FEATURES] + ["lat_fwt", "lon_fwt"]
+feat = [f.lower() for f in FEATURES + EXTRA_COLS] + ["lat_fwt", "lon_fwt"]
 for col in feat:
     df[col] = pd.to_numeric(df[col], errors="coerce")
 # drms already returns JSOC MISSING as NaN for float keywords; to_numeric above catches the rest.
@@ -198,5 +217,6 @@ out = ["harpnum","t_rec_tai","t_rec_utc","noaa_ars","noaa_ar_count","noaa_mappin
        "usflux","totusjh","totpot","meanshr","r_value","absnjzh","savncpp","area_acr",
        "lat_fwt","lon_fwt","quality","flared_M1_next_24h","n_flares_prev_48h",
        "n_C_prev_48h","n_M_prev_48h","n_X_prev_48h"]
+out += [c.lower() for c in EXTRA_COLS]
 df[out].to_csv(f"{LABEL_DIR}/labelled_{TAG}.csv", index=False)
 print(f"\nsaved {LABEL_DIR}/labelled_{TAG}.csv  ({len(df)} rows, flare source: {FLARE_SOURCE})")

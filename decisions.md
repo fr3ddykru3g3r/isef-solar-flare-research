@@ -583,3 +583,45 @@ Consistency with earlier decisions (me, no change made):
 - "Complete follow-up" for delayed alarms needs the (t+24h, t+48h] window free of label-missing days;
   the current missing-day rule (C) only checks (t, t+24h]. To be implemented as an extra condition
   for the exploratory analysis only — the labelled file is not changed.
+
+## 2026-09-21 — Decision O: findings (me) — two items need a user decision
+
+Source: Bobra & Couvidat (2015), arXiv:1411.1405, **Table 1** (25 SHARP parameters, F-score ranked);
+§5.1: the SVM uses **the first 13** ("Included"), chosen where a cubic fit to TSS vs feature count peaks.
+
+| B&C 13 (Included) | have | | B&C Discarded (12) | have |
+|---|---|---|---|---|
+| TOTUSJH  | yes | | MEANSHR | **yes** (in our 8, but B&C discard it) |
+| TOTBSQ   | **not a JSOC keyword** | | MEANGAM | fetched |
+| TOTPOT   | yes | | MEANGBT | fetched |
+| TOTUSJZ  | fetched | | MEANGBZ | fetched |
+| ABSNJZH  | yes | | MEANGBH | fetched |
+| SAVNCPP  | yes | | MEANJZH | fetched |
+| USFLUX   | yes | | TOTFY   | **not a JSOC keyword** |
+| AREA_ACR | yes | | MEANJZD | fetched |
+| TOTFZ    | **not a JSOC keyword** | | MEANALP | fetched |
+| MEANPOT  | fetched | | TOTFX   | **not a JSOC keyword** |
+| R_VALUE  | yes | | EPSY    | **not a JSOC keyword** |
+| EPSZ     | **not a JSOC keyword** | | EPSX    | **not a JSOC keyword** |
+| SHRGT45  | fetched | | | |
+
+**Item 1 — BLOCKING for decision Q.** The 7 Lorentz-force parameters (TOTBSQ, TOTFX, TOTFY, TOTFZ,
+EPSX, EPSY, EPSZ) are **not keywords in `hmi.sharp_cea_720s` or `hmi.sharp_720s`** (checked against the
+live JSOC key lists, 2026-09-21). B&C describe them as adapted from Fisher et al. (2012); they are
+computed from the vector-field image data. Three are in the 13-feature SVM set (TOTBSQ, TOTFZ, EPSZ).
+Reproducing the 13-feature gate exactly therefore conflicts with the keyword-only constraint.
+Options put to the user: (1) compute the 3 from image segments — faithful, breaks keyword-only, large
+download; (2) reproduce with the **10 of 13** available as keywords and document the deviation;
+(3) other. SWAN-SF carries the parameters but ends in 2018 (no 2021–2024 test coverage) and is
+cross-check only. **No option acted on.**
+
+**Item 2 — reproduction difference, flagged, not acted on.** B&C (§5) discard SHARP entries with
+**QUALITY > 65536** (0x10000). This dataset keeps **QUALITY == 0** (user decision, retained after the
+May 2016 finding). The gate will therefore be trained on a stricter subset than B&C used. Recorded so the
+"reproduction" claim can state it; the filter is not changed.
+
+**Done under O (data only):** the **10 missing keywords that exist** are being re-queried for the
+existing record sets (`fetch_extra.py` → `data/raw_sharp_extra_<chunk>.csv`; original raw files
+untouched), merged 1:1 on HARPNUM + T_REC with an assert. Pre-O labelled file SHA-256 (for the
+"labels unchanged" check): `d69ecbc46f3150d149915178a5d533d80156f83372287c56b09e7d280a55f632`.
+PENDING: fetch completion, row-count and label verification.
