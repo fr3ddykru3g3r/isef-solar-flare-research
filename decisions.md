@@ -2081,3 +2081,12 @@ Notes (me):
 - **Gap in the fallback rule:** it triggers on "JSOC still failing". JSOC's registration check currently rejects the export
   address. If JSOC recovers but exports fail because the address is unregistered, that is not "JSOC failing"; **I will
   stop and ask** rather than use the fallback.
+- `euv_download.py` written (JSOC path only; the approved AIA fallback is not implemented yet): resumable (skips items whose
+  manifest files verify by SHA-256), manifest (`data/euv_pilot/manifest.csv`: file, T_OBS, wavelength, exposure, source,
+  size, SHA-256), per-item download log (files, bytes, wall time, JSOC request id). HMI record = the episode row's own
+  T_REC (4231: 2014.06.12_13:00:00_TAI; 6975: 2017.03.31_07:00:00_TAI; 3248: 2013.10.08_12:00:00_TAI).
+  The AIA box is computed from item 1's WCS, so AIA items run only after item 1.
+- The JSOC retry loop now runs until JSOC answers or the fallback deadline (2026-09-22 10:43:34 IST).
+- **Open question raised with the user (fallback geometry):** the approved fallback crops to "the same box" (HARP bounding
+  box + 50″). That box comes from JSOC (the item-1 WCS or the patch-extent keywords, never fetched). If JSOC stays down,
+  the box cannot be computed; the cache holds only the HARP's flux-weighted centre. Not resolved by me.
