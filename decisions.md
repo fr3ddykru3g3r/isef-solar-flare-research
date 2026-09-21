@@ -770,3 +770,34 @@ T_REC hour is taken in **TAI** (the native slots; the UTC equivalent is hh:59:2x
    For reference only (not a proposal) — verified in B&C (2015) §5: a single setting, not a grid:
    RBF kernel, C = 4, γ = 0.075, tolerance 1e-8 on the relative change in the cost function, class-
    imbalance ratio N/P = 16.5 in both training and testing sets, penalty ratio C1/C2 = 2.0 (positive/negative).
+
+## 2026-09-21 — Decision S amended  (decided by: user; before any model; supersedes the S grid and timing step)
+
+**1. Thinning grid = T_REC TAI hours {4, 10, 16, 22}** (gate training only; scoring, alarms and cohort
+stay hourly). Chosen to avoid the QUAL_LOWINTERPNUM slots 06/18 and the depleted 07–09 / 19.
+**Documented: QUALITY == 0 systematically excludes TAI 06:00 and 18:00 (99.5% of records there fail it);
+kept deliberately.**
+Result (dev = 2010–2019, 2020 excluded):
+- rows **148,902 → 27,482 (18.5%)**; HARPs 1,218 → 1,213
+  (18.5% rather than 1/6 because 06/18 are almost empty, so the surviving rows sit in ~22 usable hours)
+
+| subset | rows | positive rows | negatives | **natural N/P** | positive HARPs |
+|--------|-----:|------:|-------:|------:|---:|
+| single (primary) | 21,237 | 455 | 20,782 | **45.7** | 63 (of 64 in dev) |
+| <= 2 | 25,469 | 633 | 24,836 | **39.2** | 93 |
+| all | 27,482 | 853 | 26,629 | **31.2** | 123 |
+
+**2. Hyperparameters: B&C (2015) fixed values, no grid.** RBF kernel, **C = 4, γ = 0.075, tol = 1e-8,
+class-weight ratio C1/C2 = 2.0** (positive / negative). **StandardScaler fitted inside each training fold
+only.** Documented differences from B&C:
+- **γ is not retuned for 10 vs 13 features.** With fewer features the typical squared distance between
+  scaled points is smaller, so the same γ gives a relatively wider kernel than B&C's.
+- **No negative subsampling to N/P = 16.5.** Natural N/P after thinning is used (table above: 45.7 for
+  the primary subset — ~2.8× B&C's).
+- Scaling (noted by me): B&C subtract the **median** and divide by the standard deviation (§5);
+  StandardScaler subtracts the **mean**. B&C remark the median "appears to slightly improve the results".
+  Recorded as a difference; not changed.
+
+**3. Timing-fit step dropped.** Guard kept: **if the 5-fold run exceeds 3 hours, stop and report.**
+
+**Train nothing until the user confirms the research plan is signed.**
