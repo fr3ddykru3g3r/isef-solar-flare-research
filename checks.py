@@ -1,7 +1,7 @@
 """Sanity checks on a labelled SHARP file.  Usage: python checks.py [START END]"""
 import sys, re
 import numpy as np, pandas as pd
-import flares
+import flares, swpc
 
 START = sys.argv[1] if len(sys.argv) > 1 else "2014-01-01"
 END   = sys.argv[2] if len(sys.argv) > 2 else "2014-02-01"
@@ -17,8 +17,8 @@ def verdict(n, ok, why=""):
 
 # ---------------------------------------------------------------- CHECK 1
 print("\n" + "=" * 70 + "\nCHECK 1  label correctness against a known X-class event")
-fl, _ = flares.fetch(lab["t_rec_utc"].min() - pd.Timedelta(hours=48),
-                     lab["t_rec_utc"].max() + pd.Timedelta(hours=24), verbose=False)
+fl, _ = swpc.fetch(lab["t_rec_utc"].min() - pd.Timedelta(hours=48),       # label source (decision A)
+                   lab["t_rec_utc"].max() + pd.Timedelta(hours=24), verbose=False)
 xf = fl[fl["goes_class"].str.startswith("X")].dropna(subset=["noaa_ar"]).sort_values("start")
 print(xf.to_string(index=False))
 ev = xf.iloc[0]
@@ -88,11 +88,11 @@ verdict(4, ok4, "missing-mapping HARPs are systematically smaller" if ok4
 # ---------------------------------------------------------------- CHECK 5
 print("\n" + "=" * 70 + "\nCHECK 5  per-year flare->HARP join coverage")
 import os, join_report
-if os.path.exists("data/join_report.csv"):
-    jr = pd.read_csv("data/join_report.csv")
-    print("(using cached data/join_report.csv -- delete it to recompute)")
+if os.path.exists(join_report.OUT):
+    jr = pd.read_csv(join_report.OUT)
+    print(f"(using cached {join_report.OUT} -- delete it to recompute)")
 else:
-    jr = join_report.build(); jr.to_csv("data/join_report.csv", index=False)
+    jr = join_report.build(); jr.to_csv(join_report.OUT, index=False)
 bad = join_report.show(jr)
 ok5 = len(bad) == 0
 verdict(5, ok5, "" if ok5 else

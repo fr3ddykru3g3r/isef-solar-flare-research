@@ -55,7 +55,34 @@ def download_range(lo, hi, workers=8):
 
 
 def missing_days():
-    return set(open(MISSING).read().split()) if os.path.exists(MISSING) else set()
+    """Days the archive has no report for at all (404). Currently none in 2010-04-29..2025-01-02."""
+    return {d for d in open(MISSING).read().split() if d} if os.path.exists(MISSING) else set()
+
+
+GOES_TABLE = "data/goes_empty_days.csv"     # written by goes_xrs.py
+
+
+def _goes_status():
+    """{day: status} for every empty-report day, from the GOES XRS rules (decisions E, H, I)."""
+    if not os.path.exists(GOES_TABLE):
+        raise SystemExit(f"{GOES_TABLE} missing -- run goes_xrs.py first. Refusing to treat empty "
+                         "SWPC reports as confident zeros.")
+    t = pd.read_csv(GOES_TABLE)
+    return dict(zip(t["day"].str[:10], t["status"]))
+
+
+MISSING_STATUSES = ("missing_M1", "missing_nodata", "missing_lowcov")
+
+
+def label_missing_days():
+    """MISSING for labels: 404 days + empty reports that are M1 (E), have no GOES data (H),
+    or are quiet on < 90% coverage (I)."""
+    return missing_days() | {d for d, s in _goes_status().items() if s in MISSING_STATUSES}
+
+
+def history_incomplete_days():
+    """INCOMPLETE for history: every label-missing day, plus empty reports that reach C1 (E)."""
+    return label_missing_days() | {d for d, s in _goes_status().items() if s == "incomplete_C1"}
 
 
 def to_noaa(reg):

@@ -86,3 +86,33 @@ y = lab.groupby(lab["t_rec_utc"].dt.year)["flared_M1_next_24h"].agg(["size", "su
 y["rate"] = y["sum"] / y["size"]
 for yr, row in y.iterrows():
     print(f"  {yr}  rows {int(row['size']):7d}  pos {int(row['sum']):6d}  {row['rate']:7.2%}")
+
+# ------------------------------------------------------------------ region groups (decision B)
+print("\nper year by region subset (primary = single; fallback = <=2; robustness = all)")
+print("year   | single: rows   pos  posHARPs | <=2: rows   pos  posHARPs | all: rows   pos  posHARPs")
+lab["year"] = lab["t_rec_utc"].dt.year
+subsets = {"single": lab["noaa_ar_count"] == 1, "le2": lab["noaa_ar_count"] <= 2,
+           "all": pd.Series(True, index=lab.index)}
+for yr, g in lab.groupby("year"):
+    cells = []
+    for name, m in subsets.items():
+        s = g[m.loc[g.index]]
+        cells.append(f"{len(s):7d} {int(s['flared_M1_next_24h'].sum()):5d} "
+                     f"{s.loc[s['flared_M1_next_24h'] == 1, 'harpnum'].nunique():8d}")
+    print(f"{yr}   | " + " | ".join(cells))
+
+# ------------------------------------------------------------------ missing-day rules (C, D)
+if "history_incomplete" in lab:
+    exc = []
+    for a, b in chunks:
+        f = f"data/excluded_missing_swpc_{a}_{b}.csv".replace("-", "")
+        if os.path.exists(f):
+            e = pd.read_csv(f, parse_dates=["t_rec_utc"])
+            if len(e):
+                exc.append(e)
+    exc = pd.concat(exc) if exc else pd.DataFrame(columns=["harpnum", "t_rec_utc"])
+    ey = exc["t_rec_utc"].dt.year.value_counts() if len(exc) else pd.Series(dtype=int)
+    hy = lab.groupby("year")["history_incomplete"].sum()
+    print("\nper year: rows EXCLUDED (label window hits a label-missing day) | rows history_incomplete (kept)")
+    for yr in sorted(set(lab["year"]) | set(ey.index)):
+        print(f"  {yr}   excluded {int(ey.get(yr, 0)):6d}   history_incomplete {int(hy.get(yr, 0)):6d}")

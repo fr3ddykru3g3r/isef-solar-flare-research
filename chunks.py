@@ -18,5 +18,5 @@ def months(start=RANGE[0], end=RANGE[1]):
 
 
 def files(kind):
-    """kind = 'raw_sharp' or 'labelled' -> [(chunk_start, path), ...] for the full range."""
+    """kind = 'raw_sharp', 'labelled' or 'labels_hek/labelled' -> [(chunk_start, path), ...]."""
     return [(a, f"data/{kind}_{a}_{b}.csv".replace("-", "")) for a, b in months()]

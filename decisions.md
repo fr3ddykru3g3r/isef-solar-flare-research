@@ -314,3 +314,49 @@ column preserves the raw count; excluding it keeps B out of every analysis.
 Implementation (me): the secondary column of Table 11 is transcribed alongside the primary; minutes
 are combined per UTC minute (primary where good, else secondary where good), so a minute is never
 counted twice.
+
+## 2026-09-21 — RESULTS: GOES empty-day table and HEK sanity check (fills PENDING for E, H, I, G)
+
+`goes_xrs.py` → `data/goes_empty_days.csv`; 835 empty-report days, 1,510 GOES files.
+**No empty-report day reaches M1** — no M1+ flare is hidden behind an empty SWPC report in 2010–2024.
+
+| year | empty | genuine zero | incomplete C1 | missing: no data (H) | missing: low cov (I) | label-missing | history-incomplete |
+|------|------:|-----:|---:|---:|---:|---:|---:|
+| 2010 |  39 |  34 | 0 | 5 | 0 | 5 | 5 |
+| 2011 |   2 |   2 | 0 | 0 | 0 | 0 | 0 |
+| 2012 |   2 |   1 | 1 | 0 | 0 | 0 | 1 |
+| 2013 |   2 |   2 | 0 | 0 | 0 | 0 | 0 |
+| 2016 |  25 |  24 | 0 | 0 | 1 | 1 | 1 |
+| 2017 |  79 |  78 | 1 | 0 | 0 | 0 | 1 |
+| 2018 | 196 | 195 | 0 | 0 | 1 | 1 | 1 |
+| 2019 | 236 | 235 | 0 | 0 | 1 | 1 | 1 |
+| 2020 | 193 | 192 | 1 | 0 | 0 | 0 | 1 |
+| 2021 |  61 |  61 | 0 | 0 | 0 | 0 | 0 |
+| **all** | **835** | **824** | **3** | **5** | **3** | **8** | **11** |
+
+- **H (no data):** 2010-06-15, 08-22, 08-23, 12-18, 12-25 — all inside 2010 windows where Table 11 lists
+  **no secondary satellite**, so no fallback existed.
+- **I (coverage):** 27 days had primary coverage < 90%; the secondary fill brought 19 above 90%, leaving 8
+  (the 5 above + 2016-09-12 at 89.9%, 2018-07-27 at 38.0%, 2019-09-25 at 87.6% — all quiet, so missing).
+  Coverage distribution: 756 days >= 99%, 49 at 95–99%, 22 at 90–95%, 2 at 80–90%, 6 below 50%.
+- **C1 days:** 2012-01-29, 2017-07-20, 2020-09-26.
+
+**HEK sanity check (decision G):** HEK lists flares on only 3 empty days (2017-03-08, 03-09, 03-14),
+45 B-class, 0 C, 0 M1+. On all three GOES has 100% coverage and daily maxima 9.6e-8, 7.1e-8, 2.6e-8 —
+**all below B1.0**, so HEK's B2–B5 entries are inconsistent with the measured flux. Conversely, GOES
+finds C1+ on 3 days where HEK lists nothing. The two agree on the result that matters (0 M1+ on
+empty days); where they disagree, the X-ray flux shows HEK is wrong. Supports keeping HEK
+cross-check only.
+
+## 2026-09-21 — OPEN: SWPC flare-class scale changes at end of 2019 (found by me; awaiting user)
+NCEI readme §3.1: pre-GOES-16 operational fluxes carried SWPC scaling factors (0.7 for XRS-B) that
+the science data removes; "flare indices for the operational data were reported as 42% (1.0/0.7)
+smaller than for the science GOES 13-15 and GOES-R data". SWPC's own `Obs` column shows its XRA events
+came from **GOES-13/14/15 through 2019-11** and **GOES-16/18 from 2019-12**. So "SWPC class >= M1.0"
+means **1.43e-5 W/m² true flux before 2019-12 and 1.0e-5 after** — a 30% drop in the label threshold
+across the chronological split. (Table 11's GOES-16 primary date, 2017-02-07, is for science data,
+not SWPC's operational source.)
+Not affected: decision E — no empty day reached even 1.0e-5, so the result above holds on either scale.
+Options put to the user: (a) harmonise to true irradiance per event from its `Obs` satellite
+[recommended by me]; (b) harmonise to the old scale; (c) leave as reported.
+**Relabel is on hold until decided.**

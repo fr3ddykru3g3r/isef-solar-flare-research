@@ -9,7 +9,13 @@ carry a usable region number.  Set 2026-09-21, before any results were seen.
 """
 import os, sys
 import pandas as pd
-import flares, chunks
+import flares, chunks, swpc
+
+# which catalogue the report describes; one source for all years (decision A)
+SOURCE = os.environ.get("FLARE_SOURCE", "swpc")
+assert SOURCE in ("swpc", "hek"), SOURCE
+OUT = "data/join_report.csv" if SOURCE == "hek" else "data/join_report_swpc.csv"
+LABELS = "labelled" if SOURCE == "swpc" else "labels_hek/labelled"
 
 THRESHOLD = 0.90
 YEARS = range(2010, 2025)
@@ -29,7 +35,7 @@ def sharp_noaa_by_year():
 def label_stats_by_year():
     """{year: (positive rows, distinct HARPs with a positive)} from the labelled chunk files."""
     out = {}
-    for _, f in chunks.files("labelled"):
+    for _, f in chunks.files(LABELS):
         d = pd.read_csv(f, usecols=["harpnum", "t_rec_utc", "flared_M1_next_24h"], low_memory=False)
         if not len(d):
             continue
@@ -50,12 +56,12 @@ def year_window(y):
 
 def m1_for_year(y):
     """Joinable M1+ flares and the unknown-region M1+ count for year y, cached on disk."""
-    path = f"data/hek_m1_{y}.csv"
+    path = f"data/{SOURCE}_m1_{y}.csv"
     if os.path.exists(path):
         m1 = pd.read_csv(path)
         unknown = int(open(path + ".unknown").read())
     else:
-        _, m1 = flares.fetch(*year_window(y), verbose=False)
+        _, m1 = (swpc if SOURCE == "swpc" else flares).fetch(*year_window(y), verbose=False)
         unknown = m1.attrs.get("n_unknown_m1", 0)
         m1.to_csv(path, index=False)
         open(path + ".unknown", "w").write(str(unknown))
@@ -73,7 +79,10 @@ def build():
         known = sharp.get(y, set())
         joined = int(m1["noaa_ar"].isin(known).sum()) if len(m1) else 0
         npos, pos_harps = labels.get(y, (0, set()))
-        rows.append({"year": y, "m1_total": total, "m1_unknown_region": unknown,
+        dups = swpc.load(*year_window(y))[1] if SOURCE == "swpc" else None   # all classes, per year
+        with_region = total - unknown
+        rows.append({"year": y, "m1_total": total, "m1_unknown_region": unknown, "dups_removed": dups,
+                     "pct_region_in_sharp": joined / with_region if with_region else float("nan"),
                      "pct_usable_region": (total - unknown) / total if total else float("nan"),
                      "m1_joined": joined,
                      "pct_joining_harp": joined / total if total else float("nan"),
@@ -89,15 +98,20 @@ def show(df):
     if "m1_joined" not in df:     # older cached csv: recover the exact integer from the fraction
         df["m1_joined"] = (df["pct_joining_harp"].fillna(0) * df["m1_total"]).round().astype(int)
     print(f"\nper-year M1+ flare join report (threshold: >= {THRESHOLD:.0%} usable region)")
-    print("M1+ only.  unknown = M1+ flares HEK gives no NOAA number for; never joined, so they")
+    print("M1+ only.  unknown = M1+ flares the catalogue gives no NOAA number for; never joined, so they")
     print("are label noise (missed positives) even in passing years.")
     print("joined = M1+ flares whose region appears in >= 1 HARP's NOAA_ARS that year.\n")
-    print("year   M1+  unknown  %usable  joined  %joined  pos_rows  pos_HARPs  verdict")
+    print("%in_SHARP = of M1+ flares WITH a region, the share whose region is in some HARP's NOAA_ARS.")
+    print("dups = flares removed by dedup on (begin, class), all classes, that year.\n")
+    has_extra = "pct_region_in_sharp" in df
+    print("year   M1+  unknown  %usable  joined  %joined  %in_SHARP  dups  pos_rows  pos_HARPs  verdict")
+    f = lambda v: "    n/a" if pd.isna(v) else f"{v:7.1%}"
     for _, r in df.iterrows():
-        pu = "    n/a" if pd.isna(r["pct_usable_region"]) else f"{r['pct_usable_region']:7.1%}"
-        pj = "    n/a" if pd.isna(r["pct_joining_harp"]) else f"{r['pct_joining_harp']:7.1%}"
-        print(f"{r['year']}  {r['m1_total']:4d}  {r['m1_unknown_region']:7d}  {pu:>7}  {r['m1_joined']:6d}"
-              f"  {pj:>7}  {r['pos_rows']:8d}  {r['pos_harps']:9d}  {r['verdict']}")
+        ins = f(r["pct_region_in_sharp"]) if has_extra else "    n/a"
+        dp = "   -" if (not has_extra or pd.isna(r.get("dups_removed"))) else f"{int(r['dups_removed']):4d}"
+        print(f"{r['year']}  {r['m1_total']:4d}  {r['m1_unknown_region']:7d}  {f(r['pct_usable_region']):>7}"
+              f"  {r['m1_joined']:6d}  {f(r['pct_joining_harp']):>7}  {ins:>9}  {dp}"
+              f"  {r['pos_rows']:8d}  {r['pos_harps']:9d}  {r['verdict']}")
     bad = df[df["verdict"] == "UNUSABLE"]
     print(f"\nyears below threshold: {list(bad['year']) or 'none'}")
     return bad
@@ -105,5 +119,6 @@ def show(df):
 
 if __name__ == "__main__":
     d = build()
-    d.to_csv("data/join_report.csv", index=False)
+    d.to_csv(OUT, index=False)
+    print(f"source: {SOURCE}   -> {OUT}")
     show(d)

@@ -155,7 +155,7 @@ if FLARE_SOURCE == "swpc":
     # window (t, t+24h] overlaps such a day has an unknown label and is excluded (user, 2026-09-21).
     # Overlap with day D = [D, D+1d):  t < D+1d  and  t+24h > D.
     unknown = pd.Series(False, index=df.index)
-    for d in swpc.missing_days():
+    for d in swpc.label_missing_days():          # 404 days + empty reports with GOES max >= M1
         D = pd.Timestamp(d)
         unknown |= (df["t_rec_utc"] < D + pd.Timedelta(days=1)) & \
                    (df["t_rec_utc"] + pd.Timedelta(hours=24) > D)
@@ -164,15 +164,15 @@ if FLARE_SOURCE == "swpc":
     # features only); the cohort analysis excludes them, since flare history is its mandatory
     # control (user, 2026-09-21).  Overlap of (t-48h, t] with [D, D+1d): t-48h < D+1d and t >= D.
     hist = pd.Series(False, index=df.index)
-    for d in swpc.missing_days():
+    for d in swpc.history_incomplete_days():     # 404 days + empty reports with GOES max >= C1
         D = pd.Timestamp(d)
         hist |= (df["t_rec_utc"] - pd.Timedelta(hours=48) < D + pd.Timedelta(days=1)) & \
                 (df["t_rec_utc"] >= D)
     df["history_incomplete"] = hist
     df.loc[unknown, ["harpnum", "t_rec_utc"]].to_csv(f"data/excluded_missing_swpc_{TAG}.csv", index=False)
-    print(f"label window overlaps a day with no SWPC report: {int(unknown.sum())} rows -> label unknown, excluded")
+    print(f"label window overlaps a label-missing day: {int(unknown.sum())} rows -> label unknown, excluded")
     df = df[~unknown]
-    print(f"history_incomplete (prev-48h window overlaps a missing SWPC day): "
+    print(f"history_incomplete (prev-48h window overlaps a history-incomplete day): "
           f"{int(df['history_incomplete'].sum())} rows kept, flagged")
 else:
     df["history_incomplete"] = False    # HEK comparison labels: missing-day rule not applied
