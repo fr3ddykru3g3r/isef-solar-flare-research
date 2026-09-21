@@ -801,3 +801,38 @@ only.** Documented differences from B&C:
 **3. Timing-fit step dropped.** Guard kept: **if the 5-fold run exceeds 3 hours, stop and report.**
 
 **Train nothing until the user confirms the research plan is signed.**
+
+## 2026-09-21 — STOP instruction: check for running training / model output (me)
+The user ordered all training stopped and any model output recorded as discarded unseen.
+**Checked: nothing to stop and nothing to discard.** No project process was running (the only
+processes were the ChatGPT/Codex desktop app and MCP servers, none working in this repository); no
+model artefacts exist in the project (`*.pkl`, `*.joblib`, `*.model`, fold / OOF / prediction / score
+files); no file newer than commit `b423ca4`; working tree clean. No training has been run in this
+repository by Claude at any point. (The only model outputs in the repository remain the Codex
+exploratory run in `verification/`, recorded above.)
+
+## 2026-09-21 — Decision K2: TRUE irradiance scale  (decided by: user; SUPERSEDES K; before any results seen)
+
+**Switch to option (a) — true irradiance scale, per the NOAA/NCEI recommendation.**
+Reasons (user):
+- NOAA states the pre-GOES-16 0.7 scaling was incorrect (NCEI GOES 1–15 XRS readme §3.1).
+- Recent practice divides old values by 0.7 (Hudson et al. 2023, arXiv:2310.11457;
+  SWSC 2025, doi:10.1051/swsc/2025007).
+- It increases positive regions in both periods.
+**Trade-off (recorded): labels are no longer on the same scale as Bobra & Couvidat (2015) or SWAN-SF;
+comparisons with them are approximate.** (This reverses K's stated reason — comparability with B&C,
+SWAN-SF and SWPC verification — in favour of physical correctness.)
+
+Implementation (as specified):
+1. SWPC events from **GOES-13/14/15** (per each event's `Obs` column): **flux / 0.7** before assigning
+   class. **GOES-16/18 events: as reported.** SDO-observed events: kept as reported, flagged
+   `scale_unverified` (unchanged rule).
+2. Applies to **labels AND n_C/n_M/n_X history features**.
+3. GOES empty-day rule thresholds (true flux): **M1 = 1.0e-5, C1 = 1.0e-6**. Empty-day flags re-derived
+   from the cached GOES files; changes vs K reported.
+4. Relabel all 176 chunks from cache. Verify rows unchanged (255,292) and all non-label columns
+   identical; only label/history columns may differ. New SHA-256 recorded.
+5. Checks 1–5 rerun. 6. Per-year report incl. events whose class changed K → K2.
+7. Per set × subset table under the unchanged `frozen/split.csv`. 8. Fallback rule re-applied.
+9. Thinned training set (TAI {4,10,16,22}) re-reported.
+**Train nothing until the user confirms.**
