@@ -450,3 +450,74 @@ Positive rate, all rows: 2014 5.00%, 2024 10.34% (was 14.15% on HEK before harmo
 **Per-year join table (SWPC)** (`data/join_report_swpc.csv`): %usable 93.8–100% in every year with
 >= 8 M1+ flares; `%in_SHARP` 100% except 2014 (91.7%: 16 M1+ flares with a region no HARP contains)
 and 2024 (99.6%); dups removed per year 0–5.
+
+## 2026-09-21 — RESULT: completeness check, GOES M1+ peaks vs SWPC (report only; no label changes)
+
+`completeness_check.py`, March 2011–2019. Rules fixed before running (me): a GOES M1+ peak is a run of
+good minutes >= 1.43e-5 W/m² true flux (old-scale M1, decision K), primary with secondary fill; runs
+<= 5 min apart are merged; a match is an SWPC harmonised M1+ event whose peak (begin if peak missing)
+is within ±30 min.
+
+| month | GOES M1+ peaks | matched | unmatched | SWPC M1+ | GOES coverage |
+|-------|---:|---:|---:|---:|---:|
+| 2011-03 | 24 | 22 | 2 | 22 | 94.6% |
+| 2012-03 | 21 | 21 | 0 | 22 | 86.3% |
+| 2013-03 |  3 |  3 | 0 |  3 | 87.5% |
+| 2014-03 | 22 | 22 | 0 | 23 | 94.4% |
+| 2015-03 | 29 | 29 | 0 | 29 | 97.9% |
+| 2016–2019-03 | 0 | 0 | 0 | 0 | 95.8–100% |
+| **total** | **99** | **97** | **2** | | |
+
+The 2 unmatched peaks (2011-03-08 21:41 and 22:23, both old-scale M1.0) lie on the decay of SWPC's
+M1.4 in AR 11165 (begin 19:46, peak 20:16, end 21:19): the old-scale flux drifts from 1.36e-5 at 20:30
+to ~9e-6 by 22:00 and re-crosses the threshold twice, > 5 min after the previous crossing. My merge rule
+split one decay into extra "peaks"; SWPC treats it as one event. **Interpretation (me): no distinct GOES
+M1+ flare is missing from SWPC in this sample.** Caveat: 2012-03 and 2013-03 have 86–88% GOES coverage;
+a peak inside a gap where neither satellite has data is invisible to this check.
+
+## 2026-09-21 — Decisions L, M, N  (decided by: user)
+
+**L. 2020 excluded entirely.** It fails CHECK 5 under the pre-registered rule (1 M1+ flare, no region,
+0% usable). **The rule is unchanged**; the year is dropped rather than the threshold adjusted.
+
+**M. Region rule, from the fallback test (decision B).** Positive HARPs, single-region, 2021–2024 =
+5 + 9 + 15 + 16 = **45 >= 40**, so **primary = single-region** (`noaa_ar_count == 1`).
+**Robustness = `<= 2` regions and all HARPs (ANY rule).** The fallback is not triggered.
+
+**N. Split.**
+- **Test = 2021–2024, untouched until final evaluation.**
+- **Train + validation = 2010–2019.**
+- **Validation = random 25% of the 2010–2019 HARPs, assigned at HARP level, fixed seed, stratified so
+  it contains positive HARPs.**
+- **Assert: no HARPNUM in more than one set.**
+- Written to `data/split.csv` (HARPNUM → train / val / test), SHA-256 recorded below.
+- **No model is trained** — waiting on the signed research plan.
+
+### RESULT: split (decision N) — `make_split.py` → `data/split.csv`
+**SHA-256 `f3ab4056dd7b123aa8116b5d76650ddd916805139ee262381f9a7ffda728d145`** (rerun reproduces it).
+Seed 20260921. 2020 removed first: 255,292 → 250,811 rows (−4,481); 34 HARPs exist only in 2020 and
+are not in the split. 2,019 HARPs: train 913, val 305, test 801.
+**Assert passed: no HARPNUM in more than one set; every HARP assigned.** No HARP has rows in both
+2010–2019 and 2021–2024 (asserted in code). One HARP spans 2020→2021: its 2020 rows are dropped, its
+2021 rows are in test; its early-2021 `n_*_prev_48h` still count late-2020 flares — decision L drops
+2020 *rows*, not 2020 flares from the catalogue.
+Stratification (me, fixed before running): three HARP strata from 2010–2019 rows — positive in
+single-region rows (64 HARPs → 16 val), positive only in multi-region rows (62 → 16), negative
+(1,092 → 273); 25% of each, rounded. This guarantees primary-subset positives in validation, not only
+ANY-rule positives.
+
+| set | subset | rows | positive rows | HARPs | positive HARPs | positive rate |
+|-----|--------|-----:|------:|----:|---:|------:|
+| train | single |  87,115 | 1,862 | 742 |  48 | 2.14% |
+| train | <= 2   | 103,553 | 2,608 | 860 |  71 | 2.52% |
+| train | all    | 111,991 | 3,480 | 913 |  94 | 3.11% |
+| val   | single |  28,053 |   581 | 244 |  16 | 2.07% |
+| val   | <= 2   |  34,487 |   787 | 290 |  23 | 2.28% |
+| val   | all    |  36,911 | 1,098 | 305 |  32 | 2.97% |
+| test  | single |  71,998 | 1,466 | 605 |  45 | 2.04% |
+| test  | <= 2   |  86,981 | 2,688 | 709 |  73 | 3.09% |
+| test  | all    | 101,909 | 5,568 | 801 | 128 | 5.46% |
+
+HARP counts differ across subsets because `noaa_ar_count` is per row: a HARP can be single-region in
+some hours and multi-region in others, so it appears in every subset whose rows it has.
+**No model trained.** Waiting on the signed research plan.
