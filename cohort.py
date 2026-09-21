@@ -43,6 +43,7 @@ def build(scored, lab, thr, missing_days):
     """scored: hourly primary-subset rows with a score.  lab: the full labelled file for the same HARPs
     (all subsets; the trend window uses every labelled row of the HARP).  Returns (cohort, exclusions)."""
     eps = episodes(scored, thr)
+    score_at = scored.set_index(["harpnum", "t_rec_utc"])["score"]
     lab = lab.sort_values(["harpnum", "t_rec_utc"])
     by_harp = {h: g for h, g in lab.groupby("harpnum")}
     fl, _ = swpc.fetch(scored["t_rec_utc"].min(), scored["t_rec_utc"].max() + pd.Timedelta(hours=48), verbose=False)
@@ -72,7 +73,7 @@ def build(scored, lab, thr, missing_days):
         follow_ok = not any((D < t + pd.Timedelta(hours=48)) and (D + pd.Timedelta(days=1) > t + pd.Timedelta(hours=24))
                             for D in missing)
         true = int(on["flared_M1_next_24h"])
-        rows.append({"harpnum": h, "t": t, "episode_hours": int(e["hours"]), "score": float(on["score"]),
+        rows.append({"harpnum": h, "t": t, "episode_hours": int(e["hours"]), "score": float(score_at[(h, t)]),
                      "true_alarm": true, "n_C": int(on["n_C_prev_48h"]), "n_M": int(on["n_M_prev_48h"]),
                      "n_X": int(on["n_X_prev_48h"]), "rel_slope_usflux": su, "rel_slope_totusjh": sj,
                      "delayed": int(true == 0 and len(later) > 0 and follow_ok),

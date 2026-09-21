@@ -1105,3 +1105,40 @@ FAR −0.0003; positive HARPs unchanged. Approved CHECKPOINT 2 results otherwise
 902 (−0.996; 67 positive rows), 1990 (−0.997), 4760 (−0.999), 1464 (−1.004), 1558 (−1.005), 3344 (−1.005),
 6972 (−1.024), 2887 (−1.073), 3258 (−1.270; alarmed at other times, max over all rows 1.728).
 Six of the nine misses lie within 0.013 of the threshold.
+
+## 2026-09-21 — STAGE 3 RESULTS: dev alarm cohort — CHECKPOINT 3
+
+`cohort.py` (rules; reused unchanged for test in Stage 5) + `stage3_cohort.py`. Dev 2010–2019, primary subset,
+Stage 2 out-of-fold scores, threshold −0.992496. Implementation details fixed before results (me):
+episode = alarm hours of one HARP exactly 1 h apart (any gap ends it); eligible = onset row labelled,
+`history_incomplete` False, >= 18 of 24 points in (t−24h, t] with USFLUX and TOTUSJH present; first eligible
+episode per HARP; history via existing `n_*_prev_48h` ([t−48h, t) ≡ (t−48h, t] here — t is always hh:59:2x
+UTC, flare starts are whole minutes); trend = least-squares slope vs hours / window mean; delayed = false
+alarm with >= 1 M1+ from the HARP's region in (t+24h, t+48h] and that window free of label-missing days.
+
+- Alarm hours: 6,836; **episodes: 1,311 in 220 HARPs**.
+- Exclusions while searching each HARP's first eligible episode: **231 episodes skipped, all for
+  "trend window < 18 points"**; 0 for `history_incomplete`; 0 label-missing.
+- **41 HARPs** alarmed but had **no eligible episode** (all: trend window < 18 points).
+
+| | regions |
+|---|---:|
+| **cohort (one episode per region)** | **179** |
+| true alarms | **25** |
+| false alarms | **154** |
+| delayed (exploratory; subset of false, complete follow-up) | **16** |
+| false with a flare in (t+24h, t+48h] but incomplete follow-up | 0 |
+
+Diagnostics (me, report only):
+- **Episode fragmentation by the 06/18 TAI gap.** Episode length median 4 h, max **11 h**, 375 single-hour
+  episodes; median 3 episodes per HARP (max 23). QUALITY == 0 removes almost all 06:00 and 18:00 TAI records, so
+  the "exactly 1 h apart" rule **breaks every alarm run at least every 12 h**. For the 67 regions whose chosen
+  episode is not their first, the "onset" may be a restart after a 06/18 gap rather than a true onset.
+  Whether a single systematic missing hour should break an episode is a user decision — **not changed**.
+- **Why true alarms are few:** 60 HARPs have >= 1 detected positive hour; 55 are in the cohort; for **30** of
+  them the first eligible episode began > 24 h before the flare, so it is a false alarm by definition.
+- Selection: onset is at a median 48 h after the HARP's first labelled row (the 24-h trend window and the
+  18-point rule push onsets later).
+
+Artefacts: `data/stage3/cohort_dev.csv`, `exclusions_dev.csv`, `episodes_dev.csv`.
+**Test years not touched.** Awaiting approval of CHECKPOINT 3.
