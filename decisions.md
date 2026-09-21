@@ -1429,3 +1429,9 @@ location proxy; nearest hourly record (±30 min) instead of 12-min; negatives un
 scaling on the whole catalogue; C2 = C = 4, C1 = 8; threshold = decision value 0; stratified split; examples with
 missing features dropped; NOAA-mapped patches only; no missing-SWPC-day rule (B&C have none).
 **Stage 4 remains on hold.**
+
+## 2026-09-21 — DIAGNOSTIC D7t, pre-declared  (decided by: user; dev only)
+Identical to D7, except **the threshold is chosen within each 70/30 split by max TSS on the TRAINING 70% only**,
+then applied to the 30% test. Report mean ± sd, min, max TSS over 1,000 repeats. Table only. **Stage 4 stays on hold.**
+Note (me, factual): the training-set decision values used to choose the threshold are in-sample (the SVM is fitted
+on those same examples) — as specified.
