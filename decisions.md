@@ -1948,3 +1948,16 @@ origin for it; Zenodo has no record matching "BADPIT"; the arXiv abstract page l
 **Conflict:** validating against AR 13186 would read 2023 data, which the pilot instruction forbids. AR 11429 is usable.
 Also: AR 11429 lies at ~E27 at the start of its window, i.e. inside ±30°.
 **No downloads made. Stopped at CHECKPOINT 1.**
+
+## 2026-09-21 — EUV PILOT decisions, part 1  (decided by: user; recorded BEFORE any EUV download)
+**Exploratory; dev data (2010–2019) only for all EUV development.**
+- **D8 conclusion (user, verbatim):** "Same-period reproduction with C1/C2 = 15: D8 TSS 0.716 ± 0.040 vs B&C Table 3
+  0.761 ± 0.039, with the same recall/precision trade-off; together with D7 (0.527 vs 0.610), our reproduction is
+  consistently 0.05–0.08 lower, plausibly from 3 unavailable features, catalogue, and flare-location differences."
+- **JSOC export email:** provided by the user for JSOC export requests.
+- **U1–U10 approved as proposed.**
+- **BADPIT power-law threshold dropped** (not algorithmic); **3σ only.**
+- **Magnetic data for PIL masks: line-of-sight, as BADPIT.** The user asked to confirm that `hmi.sharp_720s` has a LoS
+  magnetogram segment — answered below.
+- **The user's message was cut off** after that sentence; the remaining decisions are not yet received. No EUV download
+  until they are.
