@@ -1554,3 +1554,9 @@ Marked in `frozen/frozen_spec.json` (only the `models.test_prediction` field cha
   built with T1–T4 from alarms in that subset's rows; models A and B (fold models, no refit) score it.
 - **Run once:** the code is first exercised end-to-end on a DEV-period stand-in (2014, dev HARPs; outputs discarded, not
   test data) to remove coding errors; then the test run is executed exactly once.
+- **Recorded before the test run (me):** cohort alarms/episodes are restricted to rows in the evaluation years; the
+  24-h trend window at t uses every labelled row of the HARP, so an alarm early in an evaluation year can use SHARP
+  features from the end of an excluded year (e.g. 2022-12-31 for a 2023-01-01 alarm). Features only — never labels —
+  come from outside the evaluation years.
+- **Dry run completed** (`stage5_test.py dryrun`: dev HARPs, 2013–2014, outputs in /tmp, discarded): every code path
+  ran without error. Its numbers are a code check, not results.
