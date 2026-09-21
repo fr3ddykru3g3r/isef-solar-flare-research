@@ -360,3 +360,30 @@ Not affected: decision E — no empty day reached even 1.0e-5, so the result abo
 Options put to the user: (a) harmonise to true irradiance per event from its `Obs` satellite
 [recommended by me]; (b) harmonise to the old scale; (c) leave as reported.
 **Relabel is on hold until decided.**
+
+## 2026-09-21 — Decision K: flare-class scale harmonised to the OLD operational scale  (decided by: user)
+
+Resolves the open item above. **Option (b).**
+Reason (user): comparability with Bobra & Couvidat (2015), SWAN-SF, and published SWPC forecast
+verification, all of which use the old operational scale for 2010–2019.
+
+- **SWPC events from GOES-16/17/18/19 (per each event's `Obs` column): flux × 0.7 before classifying.**
+  Events from GOES-13/14/15 are used **as reported**. The satellite is read per event, never inferred
+  from the date.
+- **Applies to labels AND to the `n_C/M/X_prev_48h` history features** — one scale for everything.
+- **GOES science-flux thresholds (true flux), all years:** **M1 = 1.43e-5 W/m², C1 = 1.43e-6 W/m²** —
+  used by decision E (empty-day rule) and by the March 2011–2019 completeness check.
+  Empty-day C1 flags re-derived at 1.43e-6.
+- **Report per year how many events changed class under the conversion.**
+
+Implementation notes (me):
+- The reported class and flux are kept alongside the harmonised ones (`goes_class_reported`,
+  `flux_reported`), so the conversion is auditable per event.
+- Dedup stays on (begin time, **reported** class), as specified earlier — dedup identifies the same
+  physical listing, which is a property of the report, not of the scale.
+- Consequence worth knowing: on the harmonised scale a GOES-16/18-era event needs a reported class of
+  **>= M1.5** to be M1+ (M1.4 × 0.7 = 9.8e-6 = C9.8; M1.5 × 0.7 = 1.05e-5 = M1.0). The same applies
+  at the C1 boundary for history counts.
+- The thresholds are used exactly as given (1.43e-5, 1.43e-6); 1e-5/0.7 = 1.4286e-5, so the given
+  value is 0.1% above the exact conversion. Stated for completeness; no effect on any class boundary,
+  since SWPC reports one decimal place.
