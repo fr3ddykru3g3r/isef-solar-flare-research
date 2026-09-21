@@ -1221,3 +1221,15 @@ that move TSS in both directions. Reported alongside our number:
 The random 70/30 split lets one region's samples fall on both sides, which tends to inflate B&C's TSS;
 our stricter QUALITY and ±45° cut change the population. Neither direction is assumed in advance.
 **Stopped: awaiting approval of the protocol and of revised CHECKPOINT 3.**
+
+## 2026-09-21 — DIAGNOSTIC ABLATION, pre-declared as diagnostic  (decided by: user)
+Dev 2010–2019 only. **Does not change the primary pipeline. Test years untouched.** Same SVM settings and the
+same 10 features throughout. Baseline = current Stage 2 gate (pooled OOF TSS 0.679). Change ONE factor per run;
+report TSS, TPR, FPR; single table; no interpretation.
+- **D1** threshold = SVM decision value 0 (B&C rule) instead of max-TSS
+- **D2** K labels (old ×0.7 scale, file `85b88518…`) instead of K2
+- **D3** B&C's longitude limit instead of ±45°, rebuilt from raw
+- **D4** B&C's positive/negative sample definition instead of all hourly rows
+- **D5** random row-level split instead of HARP-grouped
+- **D6** D1–D5 together ("B&C-like pipeline")
+Each change is to be traced to a quoted B&C sentence.
