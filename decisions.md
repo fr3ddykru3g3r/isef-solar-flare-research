@@ -644,11 +644,9 @@ as SHARP keywords, in Table 1 rank order:
 **Not in the gate:** MEANSHR and every other SHARP parameter, including B&C's 12 "Discarded".
 The gate's test TSS will be reported against B&C's published TSS later, as a check.
 
-**Conflict flagged by me, awaiting confirmation:** the instruction's examples of features to exclude
-("not MEANSHR, R_VALUE, AREA_ACR etc.") include **R_VALUE and AREA_ACR, which are two of the 10**
-(B&C Table 1: "Included", ranks 11 and 8). Recorded as **exactly the 10 above**, following the
-operative rule "exactly the 10 of their 13". If R_VALUE and AREA_ACR are meant to be excluded too,
-the gate would have 8 features — nothing is trained, so this costs nothing to correct.
+**Correction (user, 2026-09-21):** the instruction's examples of features to exclude named R_VALUE and
+AREA_ACR; **those examples were an error by the user**. The gate is **exactly the 10 listed above,
+including R_VALUE and AREA_ACR.** (The conflict flag previously recorded here is withdrawn.)
 
 **3. QUALITY: keep == 0.** Documented as a **stricter-than-B&C difference**: B&C (2015, §5) discard only
 QUALITY > 65536 (0x10000); this dataset keeps QUALITY == 0. The gate is trained on a stricter subset.
@@ -670,3 +668,50 @@ QUALITY > 65536 (0x10000); this dataset keeps QUALITY == 0. The gate is trained 
   `data/`, including the 137 MB raw CSV, so pushing this repository to GitHub would still be rejected
   (100 MB file limit). Fixing that requires rewriting history (e.g. `git filter-repo`), which is
   destructive — not done; the user's call.
+
+## 2026-09-21 — Repository policy, and the pre-registration exploratory run  (decided by: user)
+
+**Git history is not rewritten.** Commit hashes cited in this log are the audit trail.
+**137 MB raw CSV remains in history; repo is not to be pushed; a separate clean code-only repo will
+be made if sharing is needed.** The repository stays local.
+
+### Pre-registration exploratory run — `verification/` (AI-generated, run via Codex)
+Recorded for transparency and for the **AI-use disclosure**. Not part of the final analysis.
+
+- **What:** `verification/freeze.py` fits comparators and freezes predictions; `verification/evaluate.py`
+  scores the frozen predictions under three views (row-mapped, per flare episode, first alert per
+  episode) with a bootstrap (10,000 draws, seed 20260921). Models: `xgb_joint`
+  (XGBClassifier, 300 trees, depth 4, lr 0.05, 5 seeds), `xgb_nohist`, `proxy_pastflare`
+  (rule: any M/X flare in the previous 48h), `climatology` (constant).
+- **Who / how:** AI-generated, run via **Codex**, concurrently with this session's chunk run. I (Claude)
+  did not write or run it; my `git add -A` swept it into commits `fce77b9` and `82198fa`, which is how
+  it entered the repository.
+- **When (file mtimes, 2026-09-21):** `freeze.py` 01:27:53, `frozen.csv` 01:28:09, `evaluate.py` and the
+  three tables 01:28:55 — while the chunk run had reached about April 2016, which is where the data stops.
+- **Labels:** the **HEK-era** labels (since superseded by SWPC originals, decision A).
+- **Features:** the original 8 SHARP keywords (**including MEANSHR**), LAT_FWT, LON_FWT, and
+  **`n_flares_prev_48h`**, n_C/n_M/n_X_prev_48h — several since excluded (decisions J, Q).
+- **Data period:** 2010-05-01 → 2016-04-13 (137,991 rows). **Chronological split:** fit 2010-05 → 2014-07,
+  threshold 2014-07 → 2015-04, **score 2015-04 → 2016-04**.
+- **Results were seen by the user.** Table 1 (score period, row-mapped TSS): xgb_joint 0.808,
+  xgb_nohist 0.829, proxy_pastflare 0.495, climatology 0.000. Full tables in `verification/out/`.
+- **Test set (2021–2024) not touched:** 0 rows from 2021–2024 in `frozen.csv` (verified).
+- **Results are not used in the final analysis.** Note: the score period now lies inside the
+  2010–2019 development pool used for grouped CV (N2), so these numbers are an earlier look at data
+  that will be cross-validated on — disclosed here, test set unaffected.
+- **Files (SHA-256):**
+  - `verification/freeze.py` `e83033ae8bcd0c6080bee0a5d2087315029490e32395b58a0f723d2f548c4fc7`
+  - `verification/evaluate.py` `91b7cb5ca60b1112aa45a50bf92494c1ade86466d1aa499da503ee319307ed6d`
+  - `verification/out/frozen.csv` `041d7a6f964630ff629748ef7a4915773a2d1bb25d33bc9378283aa249a35710`
+    — **untracked from git, kept on disk** (23 MB)
+  - `verification/out/table1_views.csv` `936dd8a3c17048e4573e41b67b43b700eaa64d88d3443e28bee873e29ffdbb3c`
+  - `verification/out/table2_decomposition.csv` `155fa607a7e03f8ff6d9040c2c227c3f65b2fa7da9058a83de7a7349ee51dd9f`
+  - `verification/out/table3_bootstrap.csv` `542e475019c4ac3fa4bb2d4238093dbd14f4f7a10ca0d5cd79e823e3e11d0f50`
+- **Code stays tracked** (`verification/*.py`, and the three small tables).
+
+### AI-use disclosure — running list (me)
+- **Claude (Anthropic), via Claude Code:** wrote and ran the data pipeline in this repository
+  (`build_dataset.py`, `swpc.py`, `goes_xrs.py`, `run_all.py`, `checks.py`, `join_report.py`,
+  `make_split.py`, `fetch_extra.py` and the audit/validation scripts) and drafted the non-decision
+  entries in this log. Every scientific decision is recorded above as the user's.
+- **Codex:** generated and ran `verification/` (exploratory run above).

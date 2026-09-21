@@ -2,3 +2,4 @@
 __pycache__/
 data/swpc_events/
 data/
+verification/out/frozen.csv
