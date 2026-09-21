@@ -1263,3 +1263,12 @@ Notes (me, factual only):
 - Diagnostic code paths are off by default: `FLARE_SCALE` defaults to K2, `LON_LIMIT` to 45, and `build_dataset.py`
   refuses to write diagnostic settings into the primary `data/` files. A default rebuild of 2014-01 is
   byte-identical to the primary file.
+
+## 2026-09-21 — DIAGNOSTIC: uncertainty for the ablation  (decided by: user; dev only; diagnostic)
+1. Verify the comparator for D6: what B&C Table 2's ± represents (sd over how many runs, what varied) and which
+   threshold rule produced it; say so if unclear.
+2. Baseline and D1–D6 repeated with 20 fold seeds (region-grouped for all except D5, which keeps its random split);
+   report mean, sd, min, max TSS.
+3. Baseline and D6: region-level bootstrap 95% CI on TSS (1,000 resamples of HARPs) at fixed fold assignment.
+4. D2 vs baseline: besides TSS, how many rows, positive HARPs and alarm episodes differ.
+Table only, no interpretation. Test years untouched.
