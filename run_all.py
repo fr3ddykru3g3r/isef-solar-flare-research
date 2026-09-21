@@ -53,6 +53,8 @@ raw = pd.concat([pd.read_csv(f"data/raw_sharp_{a}_{b}.csv".replace("-", ""), low
                  for a, b in chunks], ignore_index=True)
 lab = pd.concat([pd.read_csv(f"data/labelled_{a}_{b}.csv".replace("-", ""), parse_dates=["t_rec_utc"],
                              low_memory=False) for a, b in chunks], ignore_index=True)
+# empty chunks (e.g. May 2016) make pandas fall back to an object column; re-parse explicitly
+lab["t_rec_utc"] = pd.to_datetime(lab["t_rec_utc"])
 raw.to_csv(f"data/raw_sharp_{TAG}.csv", index=False)
 lab.to_csv(f"data/labelled_{TAG}.csv", index=False)
 print(f"\nwrote data/raw_sharp_{TAG}.csv ({len(raw)}) and data/labelled_{TAG}.csv ({len(lab)})")
