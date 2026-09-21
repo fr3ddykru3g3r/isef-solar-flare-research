@@ -1142,3 +1142,25 @@ Diagnostics (me, report only):
 
 Artefacts: `data/stage3/cohort_dev.csv`, `exclusions_dev.csv`, `episodes_dev.csv`.
 **Test years not touched.** Awaiting approval of CHECKPOINT 3.
+
+## 2026-09-21 — Checkpoint 3 decisions T1, T2, T3  (decided by: user)
+**Made after seeing the cohort sizes, before any trend or model result.**
+Note (me): the Stage 3 cohort file contains per-episode trend slopes (computed to apply the 18-point rule),
+but **no trend comparison between true and false alarms was computed, printed or viewed**, and no cohort
+model has been fitted.
+
+**T1. Episode merging.** Consecutive alarm hours stay in one episode across **up to 3 consecutive
+missing/unscorable hours**. An episode ends only at a **scored hour below threshold**, or at a **gap of more
+than 3 missing hours**. Reason (user): missing ≠ below threshold; the 06/18 TAI QUALITY gap fragments episodes.
+Implementation (me): "missing/unscorable" = any hour with no primary-subset score for that HARP (no SHARP
+record, removed by a filter, unscorable, or a multi-region hour). Walking a HARP's scored hours in time order,
+a new episode starts at an alarm hour if the previous scored hour was below threshold, or if the previous
+scored hour is more than 4 h earlier (> 3 missing hours between).
+
+**T2. Unit = all eligible alarm episodes** (not first-per-region). Each episode is weighted
+**1 / (number of eligible episodes in its HARP)**, so each region contributes equally. Grouped CV and the
+bootstrap stay grouped by HARP. **Sensitivity: first-episode-per-region.**
+
+**T3. The 18-of-24 trend rule is unchanged.**
+
+Also requested: the Bobra & Couvidat replication check (skipped so far) — **protocol report first, then stop**.
