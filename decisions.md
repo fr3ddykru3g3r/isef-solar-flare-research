@@ -1967,3 +1967,42 @@ Also: AR 11429 lies at ~E27 at the start of its window, i.e. inside ±30°.
   `magnetogram_bscale`), followed by `bitmap`, `dopplergram`, `continuum` and the inversion segments (`field`,
   `inclination`, `azimuth`, …). To be confirmed with a clean metadata call once JSOC recovers.
   **JSOC was returning database disk-full errors at this time** — relevant to export feasibility.
+
+## 2026-09-21 — EUV PILOT decisions, part 2  (decided by: user; recorded BEFORE any EUV download)
+1. **Primary EUV measure = "PIL-localised EUV variability" at 12-min cadence** (not BADPIT's 12-s transient detection).
+   For (t−24h, t]: AIA **94 Å** cutouts (**1600 Å secondary**) covering the HARP; PIL-area mask from the
+   **`hmi.sharp_720s` LoS magnetogram at t** (±150 G, 16 px dilation; 30 G AR mask), mapped to the AIA frames with
+   differential rotation. Per episode: mean intensity and the SD of the **detrended** intensity, inside the PIL mask and
+   in the whole HARP box; frames during a GOES flare already in progress excluded; **>= 80% of frames required**.
+   **Primary feature = PIL variability / whole-HARP variability.** Described as **"motivated by BADPIT and Leka et al."**,
+   not as BADPIT.
+2. **Cadence cost test:** in the pilot, **also run 12 s over (t−6h, t]** on the same 3 episodes, **process-and-delete**
+   (keep only per-frame results and overlays). Record download time, size and processing time per episode for both
+   cadences, and projected totals for **547 dev + ~400 2025+ episodes**. **The full-study cadence will be chosen on cost
+   only, before any true-vs-false comparison.**
+3. **Baseline: trailing (past frames only) for everything used in forecasting.** BADPIT's whole-window baseline only
+   for the validation reproduction.
+4. **AR 13186 (2023-01-16): exception allowed for method validation only** (reproducing BADPIT's flaring vs quiescent TB
+   counts at 12 s). Reason (user): 2021–2024 was reserved for the magnetic test, which is complete; the EUV
+   confirmatory test will use 2025+. **No alarms, labels or hypotheses from 2021–2024 are used.** The validation
+   reproduction can wait until after the pilot.
+5. **AARP (NWRA AIA Active Region Patches): metadata check only** — date coverage, times, channels, file sizes.
+6. **JSOC outage:** confirm the LoS segment with a clean metadata call when JSOC recovers. **If exports fail, wait and
+   retry; do not switch data sources without asking.**
+**Pilot:** 3 dev episodes (1 true, 1 false, 1 delayed; gate scores within the caliper; |LON| <= 30° if possible).
+Deliver overlays (for the user's visual alignment check), time series and the cost table. **No true-vs-false
+conclusions. Stop at CHECKPOINT 2.**
+
+### Pilot implementation details fixed by me before any download — **for the user's approval**
+- **P1 detrending:** for each mask (PIL, whole HARP box), the per-frame **mean** intensity series over (t−24h, t] minus
+  its least-squares **linear** fit; variability = SD of the residuals. Primary feature = SD(PIL) / SD(HARP box).
+- **P2 "flare already in progress":** a frame is excluded if its time lies inside the begin–end interval of **any SWPC
+  XRA event of class >= C1.0 (K2 true scale), from any region** (GOES is disk-integrated).
+- **P3 12-s cost test:** **94 Å only** (the primary channel); 1600 Å only at 12 min.
+- **P4 AIA processing:** `aia.lev1_euv_12s` / `aia.lev1_uv_24s` exported as cutouts, registered to level 1.5 with
+  `aiapy`, exposure-normalised (DN/s); pixels > 12,000 DN excluded and the frame flagged (U4).
+- **P5 pilot metric (Step 4 of the pilot brief):** per frame, the fraction of mask pixels above a **trailing** per-pixel
+  mean + 3 SD computed from **earlier frames only** (U1); needs >= 12 earlier frames before it is reported.
+- **P6 episode choice:** from the frozen dev cohort, candidate triples (one true, one false, one delayed) whose gate
+  scores lie within the caliper (0.0747) of each other and whose |LON_FWT| <= 30° at t; among them, the triple with the
+  smallest gate-score spread, ties broken by earliest t. Chosen **before** any EUV data is seen.
