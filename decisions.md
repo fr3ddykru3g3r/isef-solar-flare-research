@@ -1481,3 +1481,55 @@ only. Also the first-episode sensitivity cohort. Write `frozen/frozen_spec.json`
 8. **First-episode sensitivity:** items 1–5 repeated on the first-eligible-episode cohort (weights 1).
 9. **Stage 5 prediction rule for A and B (proposed; flagged for approval at CHECKPOINT 4):** by analogy with N2, test
    probabilities = mean of the 5 fold models' predicted probabilities; no refit on the full dev cohort.
+
+## 2026-09-21 — STAGE 4 RESULTS (dev only) — CHECKPOINT 4
+`stage4_models.py` (pre-registered details above). Rerun reproduces the out-of-fold cohort predictions byte-for-byte.
+Test HARPs and years never loaded (asserted).
+
+**PRIMARY cohort** (T1–T4; 547 episodes, 98 true; 180 HARPs, 41 with a true episode; weighted true 24.13 of 180):
+
+| fold | episodes | true | HARPs | true HARPs | log-loss A | log-loss B | AUC A | AUC B | Δ = A − B |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 97 | 14 | 37 | 9 | 0.3377 | 0.3056 | 0.8209 | 0.8693 | 0.0320 |
+| 1 | 93 | 17 | 36 | 8 | 0.2906 | 0.3228 | 0.8813 | 0.7956 | −0.0322 |
+| 2 | 110 | 21 | 36 | 8 | 0.3924 | 0.3933 | 0.5884 | 0.6094 | −0.0009 |
+| 3 | 132 | 30 | 36 | 8 | 0.3897 | 0.3573 | 0.6683 | 0.8178 | 0.0324 |
+| 4 | 115 | 16 | 35 | 8 | 0.2551 | 0.2661 | 0.8841 | 0.7708 | −0.0110 |
+| **pooled** | **547** | **98** | **180** | **41** | **0.3336** | **0.3293** | **0.7432** | **0.7695** | **0.0043** |
+
+**Δ log-loss (A − B), pooled: 0.0043; HARP-bootstrap 95% CI [−0.0114, 0.0253]** (1,000 resamples).
+
+**SENSITIVITY — first eligible episode per region** (180 episodes, 25 true, 180 HARPs):
+
+| fold | episodes | true | log-loss A | log-loss B | AUC A | AUC B | Δ |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 36 | 5 | 0.3352 | 0.3674 | 0.7548 | 0.6903 | −0.0322 |
+| 1 | 36 | 5 | 0.3844 | 0.3440 | 0.6581 | 0.8129 | 0.0404 |
+| 2 | 36 | 5 | 0.3626 | 0.3273 | 0.7032 | 0.8258 | 0.0352 |
+| 3 | 36 | 5 | 0.6270 | 0.6553 | 0.4839 | 0.4903 | −0.0283 |
+| 4 | 36 | 5 | 0.3008 | 0.2690 | 0.8000 | 0.8516 | 0.0317 |
+| **pooled** | **180** | **25** | **0.4020** | **0.3926** | **0.6521** | **0.7272** | **0.0094** |
+
+**Δ pooled 0.0094; HARP-bootstrap 95% CI [−0.0162, 0.0435].**
+
+**Score-matched pairs (supporting):** caliper **0.0747** (0.2 × SD of gate score over 547 episodes, fixed from scores
+only before trends were examined); **83 pairs** from 98 true episodes (15 unmatched); max |score difference| 0.0733;
+35 true HARPs. Paired difference (true − false), 95% CI clustered by true HARP (1,000 resamples):
+- rel. slope USFLUX: mean 2.832e-3, median 1.858e-3, CI [−4.238e-3, 1.037e-2]
+- rel. slope TOTUSJH: mean 3.294e-3, median 2.777e-3, CI [−3.848e-3, 1.188e-2]
+
+**Exploratory, descriptive only** — weighted mean [median]:
+
+| group | episodes | HARPs | weight | gate score | n_C | n_M | n_X | rel. slope USFLUX | rel. slope TOTUSJH |
+|---|---:|---:|---:|---|---|---|---|---|---|
+| true | 98 | 41 | 24.13 | −0.331 [−0.81] | 5.23 [4] | 1.46 [0] | 0.134 [0] | 0.0131 [0.00245] | 0.0164 [0.00218] |
+| delayed | 47 | 26 | 13.04 | −0.724 [−0.936] | 4.37 [2] | 1.13 [0] | 0.115 [0] | 0.0129 [0.00497] | 0.0158 [0.00655] |
+| other false | 402 | 160 | 142.83 | −0.916 [−0.973] | 2.10 [1] | 0.157 [0] | 0.00933 [0] | 0.00948 [0.000401] | 0.0109 [0.000123] |
+
+**Frozen specification:** `frozen/frozen_spec.json` (tracked),
+**SHA-256 `598be4fa9dc21eb309f9a3e89162f4d62e3c7d2e3c631ff1e119b79a7f964632`**. It fixes the labelled-file and split
+hashes, gate features / scaling / SVM / threshold (−0.992496) / fold-model hashes, cohort rules T1–T4 (with the
+`cohort.py` hash), models A and B, the caliper, the seeds, and the Stage 5 metrics.
+**Awaiting approval.** Open item for approval: pre-registered item 9 — Stage 5 predictions for A and B = mean of the
+5 fold models' probabilities, no refit.
+**Test years untouched.**
