@@ -25,6 +25,13 @@ TAG   = f"{START}_{END}".replace("-", "")
 FLARE_SOURCE = os.environ.get("FLARE_SOURCE", "swpc")
 assert FLARE_SOURCE in ("swpc", "hek"), FLARE_SOURCE
 LABEL_DIR = "data" if FLARE_SOURCE == "swpc" else "data/labels_hek"
+# DIAGNOSTIC ONLY (ablation): LON_LIMIT changes the longitude cut; DIAG_DIR sends every output elsewhere so the
+# primary files can never be overwritten.  Defaults reproduce the primary pipeline exactly.
+LON_LIMIT = float(os.environ.get("LON_LIMIT", "45"))
+if os.environ.get("DIAG_DIR"):
+    LABEL_DIR = os.environ["DIAG_DIR"]
+assert LABEL_DIR != "data" or (LON_LIMIT == 45 and os.environ.get("FLARE_SCALE", "K2") == "K2"), \
+    "diagnostic settings must write to DIAG_DIR"
 os.makedirs(LABEL_DIR, exist_ok=True)
 
 
@@ -130,7 +137,7 @@ print(df["noaa_mapping_status"].value_counts().to_dict())
 step("STEP 6  filtering")
 print(f"in: {len(df)}")
 df = df[df["quality"].astype(int) == 0];              print(f"after QUALITY==0: {len(df)}")
-df = df[df["lon_fwt"].abs() <= 45];                   print(f"after |LON_FWT|<=45: {len(df)}")
+df = df[df["lon_fwt"].abs() <= LON_LIMIT];            print(f"after |LON_FWT|<={LON_LIMIT:g}: {len(df)}")
 nmiss = (df["noaa_mapping_status"] == "missing").sum()
 df = df[df["noaa_mapping_status"] != "missing"];      print(f"after mapping!=missing: {len(df)}  (excluded {nmiss} missing-mapping rows)")
 
@@ -188,7 +195,7 @@ if FLARE_SOURCE == "swpc":
         hist |= (df["t_rec_utc"] - pd.Timedelta(hours=48) < D + pd.Timedelta(days=1)) & \
                 (df["t_rec_utc"] >= D)
     df["history_incomplete"] = hist
-    df.loc[unknown, ["harpnum", "t_rec_utc"]].to_csv(f"data/excluded_missing_swpc_{TAG}.csv", index=False)
+    df.loc[unknown, ["harpnum", "t_rec_utc"]].to_csv(f"{LABEL_DIR}/excluded_missing_swpc_{TAG}.csv", index=False)
     print(f"label window overlaps a label-missing day: {int(unknown.sum())} rows -> label unknown, excluded")
     df = df[~unknown]
     print(f"history_incomplete (prev-48h window overlaps a history-incomplete day): "

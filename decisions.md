@@ -1233,3 +1233,33 @@ report TSS, TPR, FPR; single table; no interpretation.
 - **D5** random row-level split instead of HARP-grouped
 - **D6** D1–D5 together ("B&C-like pipeline")
 Each change is to be traced to a quoted B&C sentence.
+
+### DIAGNOSTIC ABLATION — RESULTS (dev 2010–2019 only; test HARPs never loaded; primary pipeline unchanged)
+`diag_ablation.py`, `diag_build.py` → `data/diag/ablation.csv`. Primary subset (single-region), 10 features, same
+SVM throughout. Folds held fixed from Stage 2; HARPs that exist only in the ±68° variants dealt into folds by the
+same stratified seeded procedure. Unscorable rows excluded (user rule). All TSS are pooled out-of-fold.
+
+| run | source in B&C (2015) | TSS | TPR | FPR | threshold | eval rows | eval positives | pos. HARPs |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| baseline (Stage 2) | — | 0.6793 | 0.7200 | 0.0407 | −0.9925 | 114,952 | 3,168 | 86 |
+| D1 threshold = decision value 0 | no threshold selection described; scikit-learn `SVC` used (p.16) — **inferred**, not stated | 0.3354 | 0.3453 | 0.0099 | 0 | 114,952 | 3,168 | 86 |
+| D2 K labels (old scale, file `85b88518…`) | flares from NGDC GOES catalogues, operational scale (p.6) | 0.6773 | 0.7189 | 0.0416 | −0.9999 | 114,952 | 2,440 | 64 |
+| D3 longitude ±68° | ARs outside ±68° of central meridian rejected (p.6, p.10) | 0.6456 | 0.6907 | 0.0451 | −0.9979 | 160,223 | 4,821 | 107 |
+| D4 B&C samples | positive sample 24 h before GOES peak; random quiet times; 303 pos / 5,000 neg (p.7) | 0.8119 | 0.8697 | 0.0578 | −0.9888 | 4,165 | 238 | 71 |
+| D5 random row-level split | examples randomly divided 70/30 (p.21) | 0.7901 | 0.8318 | 0.0417 | −1.0010 | 114,952 | 3,168 | 86 |
+| D6 all of D1–D5 | all of the above | 0.6865 | 0.6992 | 0.0128 | 0 | 4,655 | 266 | 74 |
+
+Notes (me, factual only):
+- **Baseline reproduced** through the ablation code: TSS 0.6793, identical to Stage 2.
+- **Scale switch validated:** `FLARE_SCALE=K` rebuild at ±45° reproduces file `85b88518…` (dev rows, deduplicated)
+  in every column except `history_incomplete` (183 rows; the GOES empty-day table is at K2 thresholds; not a gate input).
+- D4: B&C's sample definition includes the class ratio (303 positives, 5,000 random negatives), so D4 changes the
+  sample construction and N/P = 16.5 together — inseparable as specified. 1,138 K2 M1+ flares in the window;
+  238 have a single-region row within 30 min of peak − 24 h (887 do not; 13 flares share a row with another).
+  Trained on the sampled rows (no 6-hourly thinning; the sample definition replaces it).
+- D6 = K labels + ±68° + D4 samples + random row split + threshold 0. K flare list: 753 M1+ in the window, 266 sampled.
+- **Bug found and fixed before reporting (me):** D6's sample builder first drew positives from the K2 flare list
+  while using K labels; corrected to the K list. D1–D5 were unaffected and are unchanged by the fix.
+- Diagnostic code paths are off by default: `FLARE_SCALE` defaults to K2, `LON_LIMIT` to 45, and `build_dataset.py`
+  refuses to write diagnostic settings into the primary `data/` files. A default rebuild of 2014-01 is
+  byte-identical to the primary file.

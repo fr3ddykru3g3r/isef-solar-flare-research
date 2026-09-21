@@ -97,6 +97,9 @@ def to_noaa(reg):
 TRUE_SCALE_SATS = {"G16", "G17", "G18", "G19"}
 OLD_SCALE_SATS = {"G13", "G14", "G15"}
 SCALE = 0.7
+# Primary pipeline = K2.  FLARE_SCALE=K reproduces the superseded old-scale labels for the diagnostic ablation.
+FLARE_SCALE = os.environ.get("FLARE_SCALE", "K2")
+assert FLARE_SCALE in ("K2", "K"), FLARE_SCALE
 
 # XRA events SWPC attributes to SDO (5 in 2010-2024, none M1+): neither K nor K2 covers them and
 # no source gives their scale.  Kept AS REPORTED and counted as scale_unverified (me, 2026-09-21).
@@ -145,7 +148,9 @@ def parse_day(day):
         if letter is None:
             continue
         obs = tok[i - 2] if i >= 2 else ""
-        if obs in OLD_SCALE_SATS:
+        if FLARE_SCALE == "K":                                     # DIAGNOSTIC ONLY (ablation D2/D6)
+            flux = flux_rep * SCALE if obs in TRUE_SCALE_SATS else flux_rep
+        elif obs in OLD_SCALE_SATS:
             # K2: remove SWPC's 0.7 -> true flux.  Exact decimal division: binary floating point gives
             # e.g. X1.4 / 0.7 = 1.9999999999999998e-04 instead of 2.0e-04 (also X2.8, X5.6), so exact
             # class values could land just below a boundary.  Decimal keeps them exact.
