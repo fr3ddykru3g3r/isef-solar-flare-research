@@ -715,3 +715,28 @@ Recorded for transparency and for the **AI-use disclosure**. Not part of the fin
   `make_split.py`, `fetch_extra.py` and the audit/validation scripts) and drafted the non-decision
   entries in this log. Every scientific decision is recorded above as the user's.
 - **Codex:** generated and ran `verification/` (exploratory run above).
+
+## 2026-09-21 — RESULT: decision O keyword merge (fills PENDING under O)
+
+- `fetch_extra.py`: **176 / 176 chunks**, no failures; same record-set strings as the original query,
+  keywords only. Original raw chunk files untouched.
+- Merged in `build_dataset.py` on HARPNUM + T_REC with `validate="one_to_one"` and an assert that every
+  raw row matches and the extras have the same row count. **The assert held in all 176 chunks** (a
+  mismatch stops the build). Example: 2024-05 — "1:1, 10378 rows"; rerunning that chunk reproduces the
+  file byte-for-byte.
+- **Verification against the pre-O file** (SHA-256 `d69ecbc4…`):
+  - rows: **255,292 → 255,292**
+  - **every pre-existing column identical — every value, every row, same order** (not only labels);
+    positives 10,146 unchanged
+  - 10 new columns appended: totusjz, meanpot, shrgt45, meangam, meangbt, meangbz, meangbh, meanjzh,
+    meanjzd, meanalp
+  - missingness of new columns: totusjz 0.000%, meanpot / shrgt45 / meangam 0.022%, the rest 0.029%.
+    Not filled or dropped (unchanged policy).
+- **New SHA-256, combined labelled file (post-O):**
+  `85b88518e4672e676c451aa8f5fe78d5b1b08ed2e40e9cb70a02520f74bee245`
+- Combined raw file **unchanged**: `2a65e05ba070dec1aca9bad546ba4825503eff04deb56774b964b1e542a8b28f`
+  (extras live in `data/raw_sharp_extra_<chunk>.csv`, not in the raw files).
+- All 10 gate features (decision Q) are now in the labelled file: TOTUSJH, TOTPOT, TOTUSJZ, ABSNJZH,
+  SAVNCPP, USFLUX, AREA_ACR, MEANPOT, R_VALUE, SHRGT45.
+- `frozen/split.csv` is unaffected: HARP set and assignment depend only on rows, which did not change.
+**No model trained.**
