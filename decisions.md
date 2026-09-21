@@ -544,3 +544,42 @@ Notes (me), recorded for when this is implemented; none changes the decision:
   comparable scale. If the models are poorly calibrated relative to each other, the pooled
   threshold can differ from each fold's own optimum; worth reporting the per-fold optimal thresholds
   alongside the pooled one when this runs.
+
+## 2026-09-21 — N2 details approved; decisions O, Q, R  (decided by: user; before any model is trained)
+
+**N2 details (approved):**
+- Seed **20260921**.
+- **Per-fold optimal thresholds are reported alongside the pooled out-of-fold threshold.**
+- **Test scores = mean of the 5 fold models' scores. No refit on the full 2010–2019 set.**
+
+**Decision O — expand SHARP keywords to the Bobra & Couvidat (2015) feature set.**
+List their features from the paper (arXiv:1411.1405); show which are missing from the current 8;
+re-query **only the missing keywords** for the **existing rows** (same record set, same filters);
+merge on HARPNUM + T_REC; **verify row counts and labels unchanged.** Data only.
+
+**Decision Q (final) — the gate.**
+**Primary gate = reproduction of the Bobra & Couvidat (2015) SVM with their feature set.**
+SolarMonitor = optional robustness gate only. **No further gate changes.**
+
+**Decision R — research question and analysis plan (supersedes P).**
+Note (me): no decision P appears in this log. R is recorded as superseding a "P" that was not written
+down here; if P was decided elsewhere, its content should be added for the record.
+
+*Question:* does 24h magnetic evolution add information beyond current magnetic risk and recent flare
+history for separating M1+ **true alarms** from **false alarms**?
+- **Trends:** fitted 24h slope of **USFLUX** and **TOTUSJH**; window **strictly before** the alarm time;
+  **relative slope = slope / window mean**; **require >= 18 of 24 hourly points, else exclude.**
+- **Primary analysis:** within the alarm cohort, logistic model **(gate score + n_C, n_M, n_X)** vs the
+  **same + the 2 trends**. Fit on 2010–2019 (grouped CV, per N2), **evaluate once on 2021–2024.**
+  **Metric: held-out log-loss difference, region-level bootstrap 95% CI.**
+- **Supporting:** score-matched pairs.
+- **Exploratory:** delayed alarms = no M1+ in (t, t+24h] and >= 1 M1+ in (t+24h, t+48h];
+  **complete follow-up required.**
+- **Pre-stated: a wide or inconclusive CI is an expected possible outcome.**
+
+Consistency with earlier decisions (me, no change made):
+- The history control is n_C, n_M, n_X only (J); cohort rows with `history_incomplete = True` are
+  excluded from this analysis (D).
+- "Complete follow-up" for delayed alarms needs the (t+24h, t+48h] window free of label-missing days;
+  the current missing-day rule (C) only checks (t, t+24h]. To be implemented as an extra condition
+  for the exploratory analysis only — the labelled file is not changed.
