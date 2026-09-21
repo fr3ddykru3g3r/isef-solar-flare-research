@@ -1882,3 +1882,69 @@ wording for D8 has been provided by the user**, so none is recorded here. To be 
 - **CHECKPOINT 2 (final): GO/NO-GO facts only**; no interpretation of true vs false (n = 3).
 - JSOC export email: the message gives "YOUR_EMAIL" — a placeholder. **A registered JSOC address is needed before
   Step 2**; none is assumed.
+
+## 2026-09-21 — EUV PILOT STEP 1: BADPIT specification (paper only) — CHECKPOINT 1
+Source: André-Hoffmann, Korsós, Nindos, Patsourakos, Georgoulis & Erdélyi, "Brightenings AnD Polarity Inversion
+Tracking (BADPIT) method…", arXiv:2604.26036 (22 pp., SOLA manuscript dated 26 June 2026). Page numbers are the
+manuscript's. Content paraphrased with page references (not quoted at length).
+
+### Official code
+The paper links a GitHub repository for BADPIT and its desaturation tool (p.7, footnote 2:
+`github.com/aandre-hoffmann/BADPIT`). **Checked 2026-09-21: the URL returns HTTP 404; Software Heritage has no archived
+origin for it; Zenodo has no record matching "BADPIT"; the arXiv abstract page lists no ancillary files.**
+**No official copy is available; no code of any kind was downloaded or used.**
+
+### Specification table
+
+| item | what the paper states (page) |
+|---|---|
+| magnetic data | **HMI line-of-sight magnetogram cutouts**, 0.5″/px, 12-min cadence (pp.4–5, Table 1); LoS is used because ARs are restricted to ±45° central-meridian distance (pp.4, 11) |
+| EUV/UV data | AIA **Level 1.5**, co-aligned, cutouts via the JSOC export service following P. Young's procedure (p.4); 94, 131, 171, 193, 1600 Å (p.4) |
+| channel used for the analysis | **94 Å** (p.13), chosen because TBs concentrate at the PIL there and the power-law TBs appear most consistently |
+| AIA cadence | **12 s** (24 s for 1600 Å) (Table 1, p.5) |
+| pre-processing | exposure-time normalisation → DN/s (p.4) |
+| saturation | saturation = ≥ 16,000 DN; **pixels > 12,000 DN are flagged** (conservative, following Schwartz et al. 2015), together with saturation trails (detector y-axis streaks) and diffraction arms (along the PSF axes at ±40°, ±50°); flagged pixels are **replaced by linear interpolation in time, with a sinusoidal component added** so the corrected points do not trigger detection (pp.6–7) |
+| candidate pixels | intensity peaks in each pixel's light curve over the field of view (p.8) |
+| spatial rule | patch larger than **3 contiguous pixels** (> 5.67×10⁵ km²) (p.8) |
+| temporal rule | persists for **more than five consecutive frames** (at least one minute at 12 s) (p.8) |
+| 3σ threshold | per pixel, from the Gaussian distribution of that pixel's intensities **over the full observation period** (pp.8–9); the paper notes this makes it not directly usable for near-real-time monitoring (p.9) |
+| power-law threshold | one global threshold per AR and channel, from the AR's intensity histogram over the whole period: the intensity where the histogram departs from a fitted power law y = a x^(−α) at high intensity, identified **qualitatively** from the residuals (increased spread or a high-intensity rollover) (pp.9–10); values in Table 2 (p.11) |
+| PIL area (PIA) | two masks where \|B_LoS\| > **150 G** (one per polarity), each **dilated by 16 HMI pixels (8″)**; their overlap = PIA (p.12); following Schrijver (2007) |
+| AR mask | \|B\| > **30 G**, chosen empirically to separate AR from quiet-Sun fields; applied to the AIA data (p.12) |
+| magnetogram timing | Fig. 6 shows masks on an HMI magnetogram **averaged over 3 hours** (p.12) |
+| counting | TBs counted per **1-hour** interval over the 24-hour window (pp.14–16) |
+| alignment | data described as co-aligned Level 1.5 (p.4); **no registration or HMI→AIA mapping procedure described** |
+
+### Unstated details — one proposed choice each, **for the user's approval** (none acted on)
+
+| # | unstated detail | proposed choice |
+|---|---|---|
+| U1 | 3σ threshold form (μ + 3σ? Gaussian fit or sample moments?) | per-pixel **mean + 3 × sample SD** |
+| U2 | contiguity of "> 3 contiguous pixels" | **8-connectivity; >= 4 pixels** |
+| U3 | what must persist "> 5 consecutive frames" (a pixel, or a patch that moves) | a patch whose pixels **overlap by >= 1 pixel between consecutive frames**, for **>= 6 frames** |
+| U4 | desaturation sinusoid (amplitude, period) and the geometry used to flag trails and diffraction arms | **do not interpolate**: exclude pixels > 12,000 DN, and flag the frame if any pixel in the HARP box exceeds 12,000 DN |
+| U5 | power-law fit range and the deviation point (qualitative in the paper) | **not used in the pilot** (Step 4 uses a trailing 3σ only); if needed later: fit between the median and 99th percentile, deviation = first bin above the range with residual > 3 × residual RMS |
+| U6 | dilation structuring element for 16 px | **disk of radius 16 px** |
+| U7 | single magnetogram vs a 3-hour average for the masks | **the single magnetic record at t** (as in the pilot brief) |
+| U8 | HMI→AIA mapping | reproject the mask with the WCS headers (`reproject`), after **differential rotation** from the magnetogram time to each AIA frame time; AIA registered to level 1.5 with `aiapy` |
+| U9 | how the 30 G AR mask is applied ("through visual inspection") | not used in the pilot: the **HARP box** is used as the region (as in the brief) |
+| U10 | cutout tracking (fixed box vs following rotation) | JSOC cutouts **tracked** with solar rotation, centred on the HARP at t |
+
+### Differences between the pilot brief and BADPIT (flagged, not resolved — the user's call)
+1. **Magnetic data:** the brief uses **SHARP CEA Br**; BADPIT uses **HMI LoS** magnetogram cutouts at 0.5″/px. The 150 G / 30 G
+   thresholds and the 16-px dilation were set on LoS data.
+2. **Cadence:** the brief uses AIA at **12 min**; BADPIT uses **12 s**. "> 5 consecutive frames" means ~1 minute at 12 s but
+   ~1 hour at 12 min, and the per-pixel intensity distributions differ. At 12 s, a 24-hour window is ~7,200 frames per
+   channel per episode (60× the 12-min volume).
+3. **Baseline:** the brief's trailing 3σ baseline is causal; BADPIT's 3σ uses the full period, including frames after t.
+4. **Channel:** BADPIT's analysis channel is 94 Å (the brief says "BADPIT's channel").
+
+### BADPIT's 2 active regions (for later validation)
+
+| NOAA AR | role | window (UT) | position | period in this project |
+|---|---|---|---|---|
+| 11429 | flaring (C, M; two X flares starting just after the window) | 2012-03-06T00:00 → 2012-03-07T00:00 | N17E27 at 03-06 00:00 | **dev (2010–2019)** |
+| 13186 | non-flaring (no ≥ C1 in the window or ±48 h) | 2023-01-16T00:00 → 2023-01-17T00:00 | N25W15 at 01-16 18:58 | **2023 — inside the 2021–2024 test years** |
+**Conflict:** validating against AR 13186 would read 2023 data, which the pilot instruction forbids. AR 11429 is usable.
+Also: AR 11429 lies at ~E27 at the start of its window, inside ±30°–45°.
+**No downloads made. Stopped at CHECKPOINT 1.**
