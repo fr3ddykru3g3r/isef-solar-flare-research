@@ -740,3 +740,31 @@ Recorded for transparency and for the **AI-use disclosure**. Not part of the fin
   SAVNCPP, USFLUX, AREA_ACR, MEANPOT, R_VALUE, SHRGT45.
 - `frozen/split.csv` is unaffected: HARP set and assignment depend only on rows, which did not change.
 **No model trained.**
+
+## 2026-09-21 — Decision S: 6-hourly thinning for gate training; parallelism; timing  (decided by: user)
+
+- **For gate training only**, thin dev (2010–2019) rows to **one per HARP every 6 hours
+  (T_REC hour ∈ {0, 6, 12, 18})**. **Scoring, alarms and the cohort stay hourly.**
+- CV folds / grid points run in parallel, **n_jobs = performance cores − 1**. This machine (Apple M5):
+  4 performance + 6 efficiency cores → **n_jobs = 3**.
+- **Time one SVM fit on one fold and report before launching the grid; if the full grid would exceed
+  ~3 hours, stop and report.**
+
+### Finding (me) — the {0, 6, 12, 18} grid hits two systematically bad hours. NOT implemented; awaiting user.
+Raw SHARP records exist at every hour, but **at 06:00 and 18:00 TAI 99.5% fail QUALITY == 0**
+(hour 06: 216 of 45,181 pass; hour 18: 220 of 44,312; every other hour 84–95%). Their QUALITY is
+dominated by **0x00010000 `QUAL_LOWINTERPNUM`** — JSOC QUALITY.txt: "the number of averaging points is
+lower than TempIntNum, AND/OR 2 interpolation points were separated by more than the cadence" — often
+with 0x400 `QUAL_NOCOSMICRAY` (values 65536, 66560). Hours 07–09 and 19 are mildly depleted (84–93%).
+Consequence: the specified grid keeps 00 and 12 and almost nothing at 06 and 18 — **9.5% of dev rows
+survive instead of ~16.7%**, and the sampling is effectively 12-hourly.
+Side note: B&C's cutoff QUALITY > 65536 keeps exactly the 0x10000-only records that QUALITY == 0
+drops — plausibly why they chose it. Decision 3 (keep == 0) is unchanged.
+T_REC hour is taken in **TAI** (the native slots; the UTC equivalent is hh:59:2x of the previous hour).
+
+### Blocking questions (me)
+1. **The timing fit is a model fit.** Standing instruction since decision N: "Train nothing — waiting on
+   the signed research plan." S asks for one SVM fit to time it. Not run until the user confirms it is
+   authorised (the fitted model would be discarded, used for timing only).
+2. **No hyperparameter grid has been specified**, so the full-grid time cannot be estimated.
+   For reference only (not a proposal): B&C (2015) report a single RBF-kernel setting, not a grid.
