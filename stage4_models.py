@@ -75,48 +75,49 @@ def report(c, label, save=False):
     return t, (lo, hi), pA, pB
 
 
-# ---------------------------------------------------------------- primary + sensitivity
-t_pri, ci_pri, pA, pB = report(coh, "PRIMARY cohort (T1-T4, all eligible episodes, region-weighted)", save=True)
-first = coh[coh["first_eligible"]].copy(); first["weight"] = 1.0
-t_sen, ci_sen, _, _ = report(first.reset_index(drop=True), "SENSITIVITY: first eligible episode per region")
-t_pri.to_csv(f"{OUT}/cv_primary.csv", index=False); t_sen.to_csv(f"{OUT}/cv_first_episode.csv", index=False)
-coh.assign(p_A=pA, p_B=pB, fold=folds_for(coh)).to_csv(f"{OUT}/oof_cohort_dev.csv", index=False)
+if __name__ == "__main__":
+    # ---------------------------------------------------------------- primary + sensitivity
+    t_pri, ci_pri, pA, pB = report(coh, "PRIMARY cohort (T1-T4, all eligible episodes, region-weighted)", save=True)
+    first = coh[coh["first_eligible"]].copy(); first["weight"] = 1.0
+    t_sen, ci_sen, _, _ = report(first.reset_index(drop=True), "SENSITIVITY: first eligible episode per region")
+    t_pri.to_csv(f"{OUT}/cv_primary.csv", index=False); t_sen.to_csv(f"{OUT}/cv_first_episode.csv", index=False)
+    coh.assign(p_A=pA, p_B=pB, fold=folds_for(coh)).to_csv(f"{OUT}/oof_cohort_dev.csv", index=False)
 
-# ---------------------------------------------------------------- score-matched pairs (supporting)
-caliper = 0.2 * coh["score"].std(ddof=1)                             # pre-registered: from gate scores only
-rng = np.random.RandomState(SEED)
-tru = coh[coh["true_alarm"] == 1].iloc[rng.permutation((coh["true_alarm"] == 1).sum())]
-fal = coh[coh["true_alarm"] == 0].copy()
-used, pairs = set(), []
-for _, e in tru.iterrows():
-    cand = fal[(fal["harpnum"] != e["harpnum"]) & ~fal.index.isin(used)]
-    dist = (cand["score"] - e["score"]).abs()
-    if len(dist) and dist.min() <= caliper:
-        j = dist.idxmin(); used.add(j)
-        pairs.append({"true_harp": e["harpnum"], "false_harp": fal.loc[j, "harpnum"],
-                      "score_diff": e["score"] - fal.loc[j, "score"],
-                      **{f"d_{s}": e[s] - fal.loc[j, s] for s in ["rel_slope_usflux", "rel_slope_totusjh"]}})
-pr = pd.DataFrame(pairs)
-pr.to_csv(f"{OUT}/matched_pairs_dev.csv", index=False)
-print(f"\nSCORE-MATCHED PAIRS: caliper {caliper:.4f} (0.2 x SD of gate score over {len(coh)} cohort episodes); "
-      f"{len(pr)} pairs from {len(tru)} true episodes ({len(tru) - len(pr)} unmatched); "
-      f"max |score diff| {pr['score_diff'].abs().max():.4f}; {pr['true_harp'].nunique()} true HARPs")
-g = {x: np.where(pr["true_harp"].to_numpy() == x)[0] for x in pr["true_harp"].unique()}
-keys = np.array(list(g))
-for s in ["rel_slope_usflux", "rel_slope_totusjh"]:
-    v = pr[f"d_{s}"].to_numpy()
-    bs = [v[np.concatenate([g[x] for x in rng.choice(keys, len(keys), replace=True)])].mean() for _ in range(NBOOT)]
-    lo, hi = np.percentile(bs, [2.5, 97.5])
-    print(f"  {s:18s} paired diff (true - false): mean {v.mean():.3e}  median {np.median(v):.3e}  "
-          f"95% CI (mean, clustered by true HARP) [{lo:.3e}, {hi:.3e}]")
+    # ---------------------------------------------------------------- score-matched pairs (supporting)
+    caliper = 0.2 * coh["score"].std(ddof=1)                             # pre-registered: from gate scores only
+    rng = np.random.RandomState(SEED)
+    tru = coh[coh["true_alarm"] == 1].iloc[rng.permutation((coh["true_alarm"] == 1).sum())]
+    fal = coh[coh["true_alarm"] == 0].copy()
+    used, pairs = set(), []
+    for _, e in tru.iterrows():
+        cand = fal[(fal["harpnum"] != e["harpnum"]) & ~fal.index.isin(used)]
+        dist = (cand["score"] - e["score"]).abs()
+        if len(dist) and dist.min() <= caliper:
+            j = dist.idxmin(); used.add(j)
+            pairs.append({"true_harp": e["harpnum"], "false_harp": fal.loc[j, "harpnum"],
+                          "score_diff": e["score"] - fal.loc[j, "score"],
+                          **{f"d_{s}": e[s] - fal.loc[j, s] for s in ["rel_slope_usflux", "rel_slope_totusjh"]}})
+    pr = pd.DataFrame(pairs)
+    pr.to_csv(f"{OUT}/matched_pairs_dev.csv", index=False)
+    print(f"\nSCORE-MATCHED PAIRS: caliper {caliper:.4f} (0.2 x SD of gate score over {len(coh)} cohort episodes); "
+          f"{len(pr)} pairs from {len(tru)} true episodes ({len(tru) - len(pr)} unmatched); "
+          f"max |score diff| {pr['score_diff'].abs().max():.4f}; {pr['true_harp'].nunique()} true HARPs")
+    g = {x: np.where(pr["true_harp"].to_numpy() == x)[0] for x in pr["true_harp"].unique()}
+    keys = np.array(list(g))
+    for s in ["rel_slope_usflux", "rel_slope_totusjh"]:
+        v = pr[f"d_{s}"].to_numpy()
+        bs = [v[np.concatenate([g[x] for x in rng.choice(keys, len(keys), replace=True)])].mean() for _ in range(NBOOT)]
+        lo, hi = np.percentile(bs, [2.5, 97.5])
+        print(f"  {s:18s} paired diff (true - false): mean {v.mean():.3e}  median {np.median(v):.3e}  "
+              f"95% CI (mean, clustered by true HARP) [{lo:.3e}, {hi:.3e}]")
 
-# ---------------------------------------------------------------- delayed vs true (exploratory, descriptive)
-grp = np.where(coh["true_alarm"] == 1, "true", np.where(coh["delayed"] == 1, "delayed", "other false"))
-print("\nEXPLORATORY (descriptive only): weighted mean [median] by group")
-for name in ["true", "delayed", "other false"]:
-    c = coh[grp == name]; w = c["weight"]
-    cells = "  ".join(f"{s}: {np.average(c[s], weights=w):.3g} [{c[s].median():.3g}]"
-                      for s in ["score", "n_C", "n_M", "n_X", "rel_slope_usflux", "rel_slope_totusjh"])
-    print(f"  {name:11s} episodes {len(c):3d}  HARPs {c['harpnum'].nunique():3d}  weight {w.sum():6.2f}  {cells}")
+    # ---------------------------------------------------------------- delayed vs true (exploratory, descriptive)
+    grp = np.where(coh["true_alarm"] == 1, "true", np.where(coh["delayed"] == 1, "delayed", "other false"))
+    print("\nEXPLORATORY (descriptive only): weighted mean [median] by group")
+    for name in ["true", "delayed", "other false"]:
+        c = coh[grp == name]; w = c["weight"]
+        cells = "  ".join(f"{s}: {np.average(c[s], weights=w):.3g} [{c[s].median():.3g}]"
+                          for s in ["score", "n_C", "n_M", "n_X", "rel_slope_usflux", "rel_slope_totusjh"])
+        print(f"  {name:11s} episodes {len(c):3d}  HARPs {c['harpnum'].nunique():3d}  weight {w.sum():6.2f}  {cells}")
 
-json.dump({"primary_ci": ci_pri, "first_episode_ci": ci_sen, "caliper": caliper}, open(f"{OUT}/stage4_result.json", "w"))
+    json.dump({"primary_ci": ci_pri, "first_episode_ci": ci_sen, "caliper": caliper}, open(f"{OUT}/stage4_result.json", "w"))

@@ -1682,3 +1682,31 @@ only, (iii) score + history; same CV, weights and regularisation as Stage 4; wei
 **Step C (report only; fetch nothing):** feasibility of a fresh confirmation set 2025-01-01 → latest available: SHARP
 keyword availability, SWPC report coverage, and whether SWPC 4-digit Reg# → +10000 still holds past region 14000
 (verify against SHARP NOAA_ARS).
+
+### STEP A — RESULTS (dev only, exploratory; table only)
+`stepA_dev.py` (reuses `stage4_models.cv`; `stage4_models.py` given a main guard and verified to reproduce its outputs
+byte-for-byte; all 10 frozen A/B fold models still match their frozen hashes; Step A saves no models).
+
+| cohort | model | episodes | true | weighted log-loss | weighted AUC |
+|---|---|---:|---:|---:|---:|
+| primary (all eligible, region-weighted) | (i) gate score only | 547 | 98 | 0.3260 | 0.7403 |
+| primary (all eligible, region-weighted) | (ii) history only (n_C, n_M, n_X) | 547 | 98 | 0.3764 | 0.7260 |
+| primary (all eligible, region-weighted) | (iii) score + history (= A) | 547 | 98 | 0.3336 | 0.7432 |
+| first eligible episode per region | (i) gate score only | 180 | 25 | 0.3182 | 0.7551 |
+| first eligible episode per region | (ii) history only | 180 | 25 | 0.4552 | 0.6658 |
+| first eligible episode per region | (iii) score + history (= A) | 180 | 25 | 0.4020 | 0.6521 |
+Per-fold log-losses in `data/stage4/stepA_dev.csv`. (iii) reproduces Stage 4's model A exactly.
+
+### STEP C — feasibility of a confirmation set 2025-01-01 → latest (report only; nothing fetched)
+Checked with metadata only: JSOC series description, NCEI directory listings (names/dates), and the local cache.
+
+| item | finding | status |
+|---|---|---|
+| SHARP keywords, `hmi.sharp_cea_720s` | series live on JSOC (prime keys HARPNUM, T_REC); latest T_REC **not checked** — requires a record query | **unverified** without a (one-record, keyword-only) query |
+| SWPC daily event reports (NCEI) | 2025: all 12 month directories; 2026: through **2026-09-20**; spot-checked months complete (2025-01, -02, -03, -06; 2026-01, -08) **except 2025-12: files for the 1st–29th only (12-30 and 12-31 absent)** | available; 2 missing days → the label-missing rule (C) would apply |
+| GOES XRS 1-min science (empty-day rule) | GOES-18: 2022–2026; GOES-19: 2024–2026; GOES-16: to 2025 | available; Table 11 lists **GOES-18 primary / GOES-19 secondary from 2025-04-07** (already transcribed) |
+| SWPC Reg# → +10000 past region 14000 | local cache ends 2025-01-02; highest region seen: SWPC 13947 (Reg# 3947), SHARP `NOAA_ARS` 13960 — **region 14000 is not in the cache** | **unverified** — needs SWPC reports and SHARP `NOAA_ARS` from after ~14000 was assigned |
+| flare scale 2025+ | XRA from GOES-18/19 = true scale; `swpc.py` already treats G16–G19 as true scale (K2: used as reported) | consistent, no change needed |
+Proposed minimal checks, **not run** (each a fetch, awaiting approval): (1) one keyword-only JSOC query for the latest
+`hmi.sharp_cea_720s` T_REC; (2) SWPC reports for a few days around the first region ≥ 14000 plus a keyword-only SHARP
+`NOAA_ARS` query for the same days, to confirm the Reg# rule. **No analysis run on 2021–2024.**
