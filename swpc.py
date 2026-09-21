@@ -90,8 +90,37 @@ def to_noaa(reg):
     return reg + 10000 if reg < 10000 else reg
 
 
+# Decision K (user, 2026-09-21): everything on the OLD operational scale.  GOES-16+ fluxes are true
+# irradiance, so they are multiplied by 0.7 (the SWPC XRS-B scaling factor, NCEI readme sec. 3.1);
+# GOES-13/14/15 events are already on the old scale and are used as reported.
+TRUE_SCALE_SATS = {"G16", "G17", "G18", "G19"}
+OLD_SCALE_SATS = {"G13", "G14", "G15"}
+# XRA events SWPC attributes to SDO (5 in 2010-2024, none M1+): decision K does not cover them and
+# no source gives their scale.  Kept AS REPORTED and counted as scale_unverified (me, 2026-09-21).
+UNVERIFIED_SCALE_OBS = {"SDO"}
+SCALE = 0.7
+
+
+def class_of(flux):
+    """GOES letter class of a flux, e.g. 9.8e-6 -> 'C'."""
+    for letter, lo in (("X", 1e-4), ("M", 1e-5), ("C", 1e-6), ("B", 1e-7), ("A", 1e-8)):
+        if flux >= lo:
+            return letter
+    return "A"
+
+
+# SWPC's own reports contain a few impossible times (3 XRA lines in 2010-2024, all B-class, all 2020,
+# e.g. 2020-04-09 Begin '0091' with Max 0932).  An event with a bad begin time is skipped; a bad peak
+# time is set missing.  Neither is guessed.  Counted here (me, 2026-09-21).
+BAD_TIMES = {"begin": 0, "peak": 0}
+
+
+def _valid_hhmm(t):
+    return len(t) == 4 and t.isdigit() and int(t[:2]) < 24 and int(t[2:]) < 60
+
+
 def parse_day(day):
-    """All XRA events in one cached daily report -> list of dicts."""
+    """All XRA events in one cached daily report -> list of dicts (flux on the old scale)."""
     out = []
     if not os.path.exists(_path(day)):
         return out
@@ -101,18 +130,34 @@ def parse_day(day):
         tok = line.replace("+", " ").split()
         i = tok.index("XRA")
         begin = "".join(ch for ch in tok[1] if ch.isdigit())      # strip B/U/A qualifiers
-        if len(begin) != 4:
-            continue                                                # begin time missing (////)
+        peak = "".join(ch for ch in tok[2] if ch.isdigit())
+        if not _valid_hhmm(begin):
+            BAD_TIMES["begin"] += 1                                 # missing (////) or garbled, e.g. '0091'
+            continue
+        if len(peak) == 4 and not _valid_hhmm(peak):
+            BAD_TIMES["peak"] += 1
+            peak = ""
         cls = tok[i + 2] if len(tok) > i + 2 else ""
-        letter, flux = parse_goes(cls)
+        letter, flux_rep = parse_goes(cls)
         if letter is None:
             continue
+        obs = tok[i - 2] if i >= 2 else ""
+        if obs in TRUE_SCALE_SATS:
+            flux = flux_rep * SCALE
+        elif obs in OLD_SCALE_SATS or obs in UNVERIFIED_SCALE_OBS:
+            flux = flux_rep
+        else:
+            raise ValueError(f"{day:%Y-%m-%d}: XRA event from unknown satellite {obs!r}: {line.strip()}")
         rest = tok[i + 3:]                                          # [flux] [Reg#]
         reg = next((int(t) for t in rest[1:] if t.isdigit()), None)
-        out.append({"start": pd.Timestamp(f"{day:%Y-%m-%d} {begin[:2]}:{begin[2:]}"),
-                    "goes_class": cls, "cls": letter, "flux": flux,
-                    "noaa_ar": to_noaa(reg) if reg is not None else pd.NA,
-                    "obs": tok[i - 2] if i >= 2 else ""})
+        t0 = pd.Timestamp(f"{day:%Y-%m-%d} {begin[:2]}:{begin[2:]}")
+        tp = pd.Timestamp(f"{day:%Y-%m-%d} {peak[:2]}:{peak[2:]}") if len(peak) == 4 else pd.NaT
+        if tp is not pd.NaT and tp < t0:
+            tp += pd.Timedelta(days=1)                              # peak after midnight
+        out.append({"start": t0, "peak": tp,
+                    "goes_class": cls, "flux_reported": flux_rep,   # as SWPC printed it
+                    "flux": flux, "cls": class_of(flux),            # harmonised, old scale
+                    "noaa_ar": to_noaa(reg) if reg is not None else pd.NA, "obs": obs})
     return out
 
 
@@ -120,10 +165,11 @@ def load(lo, hi):
     """All XRA flares with begin in [lo, hi], deduplicated. Returns (flares, n_duplicates)."""
     days = pd.date_range(pd.Timestamp(lo).normalize(), pd.Timestamp(hi).normalize(), freq="D")
     rows = [e for d in days for e in parse_day(d)]
-    fl = pd.DataFrame(rows, columns=["start", "goes_class", "cls", "flux", "noaa_ar", "obs"])
+    fl = pd.DataFrame(rows, columns=["start", "peak", "goes_class", "flux_reported", "flux", "cls",
+                                     "noaa_ar", "obs"])
     fl = fl[(fl["start"] >= pd.Timestamp(lo)) & (fl["start"] <= pd.Timestamp(hi))]
     n0 = len(fl)
-    # dedup on (begin, class); if one copy has a region and the other doesn't, keep the region
+    # dedup on (begin, REPORTED class); if one copy has a region and the other doesn't, keep the region
     fl = (fl.sort_values("noaa_ar", na_position="last")
             .drop_duplicates(subset=["start", "goes_class"]).sort_values("start"))
     return fl.reset_index(drop=True), n0 - len(fl)
@@ -149,3 +195,19 @@ def fetch(lo, hi, verbose=True):
         print(f"days with no SWPC report in window: {len(miss)} {miss[:5]}")
         print("class counts:", fl["cls"].value_counts().to_dict())
     return fl, m1
+
+
+def conversion_report(lo, hi):
+    """Decision K audit: events whose letter class changed under the x0.7 conversion."""
+    fl, _ = load(lo, hi)
+    conv = fl[fl["obs"].isin(TRUE_SCALE_SATS)]
+    rep_cls = conv["goes_class"].str[0]
+    changed = conv[rep_cls != conv["cls"]]
+    return {"events": len(fl), "converted_x0.7": len(conv), "class_changed": len(changed),
+            "M_to_C": int(((rep_cls == "M") & (conv["cls"] == "C")).sum()),
+            "X_to_M": int(((rep_cls == "X") & (conv["cls"] == "M")).sum()),
+            "C_to_B": int(((rep_cls == "C") & (conv["cls"] == "B")).sum()),
+            "B_to_A": int(((rep_cls == "B") & (conv["cls"] == "A")).sum()),
+            "scale_unverified": int(fl["obs"].isin(UNVERIFIED_SCALE_OBS).sum()),
+            "M1plus_reported": int((fl["flux_reported"] >= 1e-5).sum()),
+            "M1plus_harmonised": int((fl["flux"] >= 1e-5).sum())}
