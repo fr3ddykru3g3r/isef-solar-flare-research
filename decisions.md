@@ -1726,3 +1726,32 @@ Proposed minimal checks, **not run** (each a fetch, awaiting approval): (1) one 
 5. **Approved: the two keyword-only checks** (latest SHARP T_REC; SWPC Reg# convention around the first region >= 14000
    vs SHARP NOAA_ARS). Report, then stop.
 **No 2025+ data is fetched until the user approves the frozen end date and the check results.**
+
+### CHECK RESULTS — confirmation-set feasibility (keyword-only; approved checks)
+**Check 1 — coverage end dates**
+- **SHARP (`hmi.sharp_cea_720s`):** latest T_REC = **2026-08-17 00:00:00 TAI**. Found by keyword-only queries (T_REC,
+  HARPNUM): daily sampling finds no records 2026-08-25 → 09-22 and the latest at 08-17 00:00; an hourly query of
+  08-17 → 08-25 returns only the 08-17 00:00 slot (20 records).
+- **SWPC daily reports (NCEI):** through **2026-09-20**; archive lacks **2025-12-30 and 2025-12-31** (the missing-day rule applies).
+- **GOES XRS 1-min science:** GOES-18 and GOES-19 through **2026-09-20** (latest daily files d20260920).
+- **Limiting source: SHARP.**
+
+**Check 2 — SWPC Reg# convention past region 14000** (SWPC reports 2025-02-18 → 02-24 downloaded into the cache; SHARP
+`NOAA_ARS` keyword query, same days, hourly)
+- SHARP: region 14000 first appears 2025-02-20 (daily sampling); neighbours 13995–14005 first appear 02-12 → 02-22.
+  Region 14001 already appears on 2025-02-08, merged with 13989 in HARP 12732 — consistent with `NOAA_ARS` being
+  filled retroactively once NOAA assigns a number (noted, no action).
+- SWPC prints the crossing as **4-digit "4000", "4001"**; +10000 → 14000, 14001, both present in SHARP.
+- XRA events parsed in these 7 days: 66, 63 with a region; **their converted regions (13990, 13991, 13992, 13996, 13997,
+  13998, 14000, 14001) all appear in SHARP `NOAA_ARS`.**
+- **Region column of every XRA and FLA line: 95 of 95 are 4-digit.** The 5-digit values and six unmatched 4-digit
+  values found by a broad last-token scan (1100, 1700, 2000, 2500, 3200, 3600, 14000, 23000) are all **RBR radio-burst
+  fluxes**, not regions; the parser reads XRA lines only, so they cannot reach labels.
+- **Result: the rule Reg# < 10000 → +10000 holds past region 14000.** (It would fail at region 20000; not reached.)
+
+**PROPOSED frozen end date (me; awaiting user approval — NOT yet frozen, nothing fetched beyond the checks):**
+confirmation set = **T_REC from 2025-01-01 00:00 TAI up to but not including 2026-08-17 00:00 TAI** (last full SHARP day
+2026-08-16). SWPC and GOES cover every 24-h label window and 48-h history window in that span (SWPC to 2026-09-20; the
+history window at the start uses 2024-12-30/31 reports, already cached). The JSOC query will use an end of
+2026-08-16_23:00_TAI, because JSOC ranges include both ends (see the month-boundary duplicate fix). Calendar years for
+CHECK 5: 2025 (full) and 2026 (2026-01-01 → 2026-08-16, partial).
