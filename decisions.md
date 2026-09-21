@@ -767,4 +767,6 @@ T_REC hour is taken in **TAI** (the native slots; the UTC equivalent is hh:59:2x
    the signed research plan." S asks for one SVM fit to time it. Not run until the user confirms it is
    authorised (the fitted model would be discarded, used for timing only).
 2. **No hyperparameter grid has been specified**, so the full-grid time cannot be estimated.
-   For reference only (not a proposal): B&C (2015) report a single RBF-kernel setting, not a grid.
+   For reference only (not a proposal) — verified in B&C (2015) §5: a single setting, not a grid:
+   RBF kernel, C = 4, γ = 0.075, tolerance 1e-8 on the relative change in the cost function, class-
+   imbalance ratio N/P = 16.5 in both training and testing sets, penalty ratio C1/C2 = 2.0 (positive/negative).
