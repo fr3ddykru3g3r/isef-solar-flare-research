@@ -1401,3 +1401,31 @@ Table only, no interpretation.
 | metric | TSS = TP/(TP+FN) − FP/(FP+TN) (eq. 17, p.19) | MATCHABLE |
 | missing data | not described | NOT STATED — **assumed: examples with any missing feature dropped before sampling** |
 | NOAA mapping for negatives | not described | NOT STATED — **assumed: patches with a NOAA number only** (otherwise "does not flare" cannot be determined) |
+
+### D7 Step 2 and D7b Step 3 — RESULTS (diagnostic; dev period only; test years untouched)
+`diag_d7.py` → `data/diag/d7_repeats.csv`. Built from raw chunk files with the audit-table choices and assumptions.
+
+**D7 construction counts**
+- Raw rows 2010-05 … 2014-06: 379,600 → QUALITY ≤ 65536: 343,198 → |LON_FWT| ≤ 68: 252,052 → features present and
+  NOAA-mapped: 140,847 (eligible rows restricted to 2010-05-01 … 2014-05-31 for sampling).
+- SWPC M1+ flares, K scale, with a region: 455. Used as positives: **272** (269 distinct records; 3 records serve two
+  flares each, one example per flare as in B&C). Not used: 121 flare-location proxy (patch |LON| > 68 or no record at
+  the peak); 61 no patch record within 30 min of peak − 24 h passing the filters; 1 sample time outside the period;
+  0 without a peak time; 0 region in no patch.
+- Negative pool (eligible records, no M1+ from the patch's regions in (t, t+24h]): 132,939; drawn once:
+  **N = 4,488** (N/P = 16.50).
+- Distinct patches: 90 among positives, 761 among negatives.
+
+| run | TSS | sd | min | max | TPR | FPR | P | N | uncertainty |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| **B&C (2015) Table 2, operational** | **0.610** | 0.048 | — | — | — | — | 303 | 5,000 | sd over 1,000 random 70/30 splits |
+| **D7 closest reproduction** | **0.5267** | **0.0500** | 0.3562 | 0.6969 | 0.5399 ± 0.0505 | 0.0132 ± 0.0032 | 272 | 4,488 | sd over 1,000 random 70/30 splits (stratified; ~82 pos / 1,346 neg per test set) |
+| **D7b our baseline, same period** (2010-05-01 … 2014-05-31) | **0.5861** | — | — | — | 0.6318 | 0.0457 | 57 pos HARPs, 1,863 pos rows | 71,023 rows, 613 HARPs | region bootstrap 95% CI **[0.4665, 0.6800]**, 1,000 resamples |
+
+D7b: Stage 2 baseline machinery (Stage 2 fold map, 6-hourly thinned single-region training, hourly OOF evaluation) on
+rows in the period only; the max-TSS threshold (−0.9918) is re-chosen on this period's OOF scores.
+D7 assumptions in force (from the audit table): end date 2014-05-31; ANY rule; flare→patch via NOAA number; flare-
+location proxy; nearest hourly record (±30 min) instead of 12-min; negatives uniform, without replacement, drawn once;
+scaling on the whole catalogue; C2 = C = 4, C1 = 8; threshold = decision value 0; stratified split; examples with
+missing features dropped; NOAA-mapped patches only; no missing-SWPC-day rule (B&C have none).
+**Stage 4 remains on hold.**
