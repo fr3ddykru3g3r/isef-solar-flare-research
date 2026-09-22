@@ -4,7 +4,7 @@ Items per episode: 1 = hmi.sharp_720s magnetogram + bitmap at t; 2 = AIA 94 A 12
 AIA: im_patch tracked cutouts, box = HARP bounding box (from item 1's WCS) + 50 arcsec margin, reference time t.
 Resumable: an item whose files are already listed in the manifest with a matching SHA-256 is skipped.
 Usage: python euv_download.py <item> [HARP ...]      item in 1 2 3 4 all"""
-import hashlib, os, sys, time, glob
+import hashlib, os, re, sys, time, glob
 import numpy as np, pandas as pd, drms
 from astropy.io import fits
 
@@ -76,8 +76,22 @@ def fetch(item, e):
     ds, proc = spec(item, e)
     c = drms.Client(email=EMAIL)
     t0 = time.time()
-    r = c.export(ds, method="url", protocol="fits", process=proc) if proc else c.export(ds, method="url", protocol="fits")
-    r.wait(sleep=10, timeout=3 * 3600)
+    note = ""
+    try:
+        r = c.export(ds, method="url", protocol="fits", process=proc) if proc else c.export(ds, method="url", protocol="fits")
+        if r.status == 7:                               # drms returns (not raises) status 7 on submit
+            raise drms.DrmsExportError(r._d.get("error", ""))
+    except drms.DrmsExportError as err:                 # JSOC allows 1 pending request per address: attach to it
+        rid = re.search(r"\((JSOC_\d{8}_\d+)\)", str(err))
+        if not rid:
+            raise
+        r = c.export_from_id(rid.group(1)); note = f"attached to pending {rid.group(1)} (submitted earlier)"
+        print(f"HARP {h} item {item}: {note}", flush=True)
+    while True:                                         # ride out transient network timeouts while JSOC prepares
+        try:
+            r.wait(sleep=30, timeout=6 * 3600); break
+        except (TimeoutError, ConnectionError, OSError) as err:
+            print(f"wait: {err!r}; retrying", flush=True); time.sleep(60)
     if not r.has_succeeded():
         raise RuntimeError(f"export failed: {r.status} {ds}")
     got = r.download(d)
@@ -86,7 +100,7 @@ def fetch(item, e):
     rows = manifest_rows(item, h, files)
     append(MAN, pd.DataFrame(rows))
     log = pd.DataFrame([{"harpnum": h, "item": item, "spec": ds, "files": len(files),
-                         "bytes": sum(r_["size"] for r_ in rows), "wall_s": round(dt, 1), "request_id": r.id}])
+                         "bytes": sum(r_["size"] for r_ in rows), "wall_s": round(dt, 1), "request_id": r.id, "note": note}])
     append(LOG, log)
     print(f"HARP {h} item {item}: {len(files)} files, {sum(r_['size'] for r_ in rows)/1e6:.1f} MB, {dt:.0f} s")
 
