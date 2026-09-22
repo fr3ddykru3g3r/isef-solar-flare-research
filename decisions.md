@@ -2322,3 +2322,13 @@ Implementation note (me): the cgem.lorentz query for the negative pool used one 
 Notes (me, recorded before running):
 - **Path A uses 2021–2024.** The standing rule (2026-09-21, "PRIMARY RESULT FINAL") is "No new analysis is to be run on 2021–2024". Path A is the user's explicit, descriptive exception. It does not alter or retest the FINAL primary result.
 - The **"AR mask (|B_LoS| ≥ 30 G)"** here uses ≥; the earlier pilot code used > 30 G. D-CTRL follows the ≥ given here.
+
+### D-CTRL / synoptic / cadence — implementation details (decided by: me, BEFORE any D-CTRL value is computed)
+- **HARP bitmap region** = `hmi.sharp_720s` bitmap ≥ 33. Observed values are 1, 2, 33 and 34; ≥ 33 = inside the HARP, as in Bobra et al. 2014 p. 7. AR mask = |B_LoS| ≥ 30 G.
+- **Draws:** for seed s, the control sample is `RandomState(s).choice(candidates, n, replace=False)`. When ctrl_short, the PIL sample is a separate `RandomState(s).choice(PIL, n, replace=False)`; otherwise the PIL sample is the full PIL mask (n = n_PIL).
+- **Mapping to AIA (all masks in the D-CTRL runs, including the full PIL, box and deterministic ctrl):** each HMI pixel centre is mapped forward to the AIA frame (WCS, with `propagate_with_solar_surface` from the magnetogram time to the frame time) and assigned to the AIA pixel it falls in (nearest). A mask's frame mean is the mean over its HMI pixels of the AIA value at their mapped pixels. Pixels mapping outside the frame or onto NaN are ignored.
+  - Reason: bilinear reprojection thresholded at 0.5 (used for the earlier pilot numbers) drops most isolated single-pixel samples, so the sample sizes would no longer be equal. Forward mapping keeps every sampled HMI pixel.
+  - The earlier pilot results stay as recorded; the D-CTRL numbers use this mapping.
+- **Box** = all pixels of the SHARP patch (U9, unchanged).
+- **Valid frames:** P2 (amended), QUALITY == 0 and the P4 saturation rule, as approved. For **synoptic** frames (4×4-averaged level 1.5, values = DN per original pixel), the 12,000 DN cut is applied to the averaged pixel values. It cannot be applied per raw pixel, so this is a stated deviation. Synoptic frames are already level 1.5, so no update_pointing or registration is applied to them.
+- **Cadence check (b):** the 12-s frames whose T_OBS lies within ±6 s of the 12-min slots t − 6 h + 12 min … t. **Synoptic:** the file at each 12-min slot, `AIAYYYYMMDD_HHMM_{0094,1600}.fits`, with HHMM = the slot rounded to the 2-min grid.
