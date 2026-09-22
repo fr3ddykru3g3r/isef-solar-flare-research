@@ -2384,3 +2384,11 @@ Notes (me, recorded before running):
 - **HARP 4231** continues per file from finished request JSOC_20260922_000545 (886 of 1,800 at the switch). The log now records `prep_s` (submit → ready) and `download_s` separately.
 - **Synoptic** downloads use 6 parallel connections, written to .tmp and renamed. One truncated synoptic file left by the stopped sequential run was found (FITS size check) and removed.
 - **HARP 3248 item 4:** requested after 6975's export has finished (one pending export per address), with whichever method measured faster (operational choice, stated when made).
+
+## 2026-09-22 — Path A follow-up (decided by: user; frozen files and the main result unchanged)
+**Prior work (user, recorded verbatim):** "Prior work = Hu, Jin, Verma, Liu, Manchester, Zhao, Gombosi & Chen, arXiv:2512.13417v3 (2026). They report >3,000 post-2022 SunPy-HEK GOES flares with AR=0 (p.9) and the SWPC x0.7 scaling (Fig.4). They do not quantify the HEK AR=0 effect on alarm FAR. Path A = independent confirmation + FAR quantification, not a discovery."
+Requested:
+- (2) 95% CIs for FAR and precision, HEK vs K2, 2021–24, hourly and region level: 2,000 bootstrap resamples by HARP, seed 0, plus the CI of the difference (HEK − K2) from the same resamples.
+- (3) The 34 phantom alarms → `data/pathA/phantoms_2021_24.csv`.
+- (4) An evidence pack for 3 phantoms from 2023 → `data/pathA/evidence/`.
+- (5) Numbers only.
