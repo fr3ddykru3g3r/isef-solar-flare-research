@@ -2197,3 +2197,24 @@ Notes (me):
   - 2,322 distinct HARPs, 801 of them with ≥ 1 NOAA number; 1,006 distinct NOAA ARs.
   - B&C: "the SHARP database contains 2,071 ARs and 1.5 million active region patches" (arXiv p. 8).
   - Their end date and their definition of "AR" (HARP or NOAA region) are not stated.
+
+### SWAN-SF validation — RESULTS (pre-registered rule; recorded by: me; diagnostic)
+- **Inputs:**
+  - SWAN.tar.gz (Harvard Dataverse file 3642432), 735,206,766 B, **MD5 379da8ba2920a82c81d1c4d3293fc709 = published**. It was re-downloaded from scratch in 8 byte ranges; the earlier partial copy was discarded.
+  - `cgem.lorentz` keyword query for the 4,757 distinct D7 records (`diag_d7_cgem.py` → `data/diag/d7_cgem_lorentz.csv`): 4,757 found, 4,579 with all six values; MASKNAME = conf_disambig and MASKTHRS = 61 on every record.
+- **Matching:** SWAN-SF Timestamp = T_REC without "_TAI". All 763 D7 HARPs are in SWAN-SF, and 4,757 records matched. cgem TOTFZ was converted from 10²⁰ dyne to dyne.
+- **Rule:** PASS iff Spearman ρ ≥ 0.95 AND median |rel diff| ≤ 10%, with rel diff = (cgem − SWAN)/|SWAN|.
+
+| variant | param | n | Spearman ρ | median \|rel diff\| | median ratio cgem/SWAN | PASS |
+|---|---|---:|---:|---:|---:|---|
+| R4a masked | TOTBSQ | 4,639 | 0.9889 | 0.1310 | 1.1182 | no |
+| R4a masked | TOTFZ | 4,639 | 0.9775 | 0.9537 | 0.0463 | no |
+| R4a masked | EPSZ | 4,639 | 0.9852 | 0.0300 | 1.0148 | **yes** |
+| R4b all-pixel | TOTBSQ | 4,579 | 0.9625 | 0.7569 | 1.7569 | no |
+| R4b all-pixel | TOTFZ | 4,579 | 0.8652 | 0.9719 | 0.0281 | no |
+| R4b all-pixel | EPSZ | 4,579 | 0.3391 | 0.5909 | 0.4099 | no |
+
+- **Which variant matches SWAN-SF better:** the **masked variant (R4a)**, which has the higher ρ and the lower median |rel diff| for all three parameters.
+- **Under the rule:** 1 of 6 passes (R4a EPSZ).
+- **Disclosure:** before the validation ran, but after the rule was fixed, I inspected one record (HARP 4201, 2014-06-02 19:24 TAI, not a D7 HARP) to check timestamp format and units.
+- Files: `diag_swansf_validate.py`, `data/diag/swansf_validation.csv`. SWAN.tar.gz is kept in data/swansf/ (untracked).
