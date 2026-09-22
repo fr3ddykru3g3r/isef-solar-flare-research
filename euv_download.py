@@ -1,3 +1,4 @@
+import glob
 """EUV pilot downloads (decisions: EUV PILOT DOWNLOAD).  JSOC export only (the approved fallback is not implemented here).
 Items per episode: 1 = hmi.sharp_720s magnetogram + bitmap at t; 2 = AIA 94 A 12-min (t-24h, t]; 3 = AIA 1600 A 12-min
 (t-24h, t]; 4 = AIA 94 A 12-s (t-6h, t] (cost test; files may be deleted after processing -- manifest keeps the record).
@@ -82,7 +83,7 @@ def fetch(item, e):
         raise RuntimeError(f"export failed: {r.status} {ds}")
     got = r.download(d)
     dt = time.time() - t0
-    files = [f for f in got["download"] if isinstance(f, str) and os.path.exists(f)]
+    files = sorted(glob.glob(f"{d}/*.fits"))  # ponytail: drms "download" paths unreliable; item dir holds only this export
     rows = manifest_rows(item, h, files)
     append(MAN, pd.DataFrame(rows))
     log = pd.DataFrame([{"harpnum": h, "item": item, "spec": ds, "files": len(files),
