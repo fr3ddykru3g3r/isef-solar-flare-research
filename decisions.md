@@ -2099,3 +2099,9 @@ Notes (me):
 ### 2026-09-22 — JSOC parallel-export limit (fact, measured; recorded by: me)
 - Three small exports (item-1 bitmaps, data already held) were submitted back to back. The first was accepted (JSOC_20260922_000476). The others got status 7: "User lc09.11146@gmail.com has 1 pending export requests (JSOC_20260922_000476); please wait until at least one request has completed before submitting a new one."
 - So JSOC allows N = 1 pending export per registered address. The cost projections use N = 1 as the allowed value.
+
+### 2026-09-22 — AIA pilot processing: implementation notes (decided by: me; **for the user's approval at Checkpoint 2**)
+- **Level 1.5 on cutouts:** `aiapy.calibrate.register` refuses non-full-disk input ("Input must be a full disk image"). Its pixel operation is `Map.rotate(scale = cdelt/0.6", order=3)`, i.e. rotate to solar north and rescale to 0.6"/px. The surrounding recentre/crop is specific to full-disk images. I apply that same rotate/rescale to each cutout (euv_run.register_cutout), with missing = NaN.
+- **Frame quality:** some frames are not covered by P1–P6. There is one zero-exposure frame per episode per channel at ~20:59 UTC (QUALITY 0x10000), and HARP 6975 has frames with QUALITY 0x40000/0x60000 on 2017-03-30 14:59–16:35 UTC (SDO eclipse season). Default: **frames with QUALITY != 0 are excluded**, counted separately (`excl_quality`). Zero-exposure frames cannot be normalised in any case.
+- **P5 with moving masks:** the masks are reprojected per frame (differential rotation), so the trailing 3σ fraction for frame i uses frame i's mask. The baseline uses earlier valid frames only; P2- and quality-excluded frames give no metric and do not enter the baseline.
+- **Flare events for P2:** SWPC events with begin in [t−2 d, t], so events that start before the window and end inside it are included.
