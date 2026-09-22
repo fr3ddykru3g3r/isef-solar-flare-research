@@ -1,4 +1,3 @@
-import glob
 """EUV pilot downloads (decisions: EUV PILOT DOWNLOAD).  JSOC export only (the approved fallback is not implemented here).
 Items per episode: 1 = hmi.sharp_720s magnetogram + bitmap at t; 2 = AIA 94 A 12-min (t-24h, t]; 3 = AIA 1600 A 12-min
 (t-24h, t]; 4 = AIA 94 A 12-s (t-6h, t] (cost test; files may be deleted after processing -- manifest keeps the record).
