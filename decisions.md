@@ -2133,5 +2133,5 @@ Notes (me):
 
 ### 2026-09-22 — Item 4 paused (decided by: user)
 - The user paused item 4 to find a faster download method. Files average 0.14 MB and arrive at ~7–8 s each (per-file HTTP overhead, not bandwidth).
-- State at pause: HARP 4231 has the files present from finished request JSOC_20260922_000545 (1,800 files); partial `.part` files were removed. Nothing is processed yet and no raw files are deleted. HARPs 6975 and 3248 have not been requested.
+- State at pause: HARP 4231 has 191 of 1,800 files from finished request JSOC_20260922_000545; partial `.part` files were removed. Nothing is processed yet and no raw files are deleted. HARPs 6975 and 3248 have not been requested.
 - Resume with `JSOC_REQUEST_ID=JSOC_20260922_000545 python euv_run.py item4 4231`, which skips files already present. Items 1–3 and the pilot results are complete.
