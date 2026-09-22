@@ -2135,3 +2135,12 @@ Notes (me):
 - The user paused item 4 to find a faster download method. Files average 0.14 MB and arrive at ~7–8 s each (per-file HTTP overhead, not bandwidth).
 - State at pause: HARP 4231 has 191 of 1,800 files from finished request JSOC_20260922_000545; partial `.part` files were removed. Nothing is processed yet and no raw files are deleted. HARPs 6975 and 3248 have not been requested.
 - Resume with `JSOC_REQUEST_ID=JSOC_20260922_000545 python euv_run.py item4 4231`, which skips files already present. Items 1–3 and the pilot results are complete.
+
+## 2026-09-22 — Reproduction improvement for D7 (decided by: user; DIAGNOSTIC ONLY)
+- **The main gate stays at 10 features.** This work is diagnostic only. It does not change the frozen spec, the gate or the Stage 5 FINAL result.
+- Scope, report only, no downloads:
+  1. Exact formulas, units, pixel masks and constants for TOTBSQ, TOTFZ and EPSZ, from Bobra et al. 2014 (Sol. Phys. 289, 3549) and B&C 2015, quoted with pages.
+  2. A cost estimate for the hmi.sharp_cea_720s vector segments (Br, Bp, Bt, plus bitmap/conf_disambig as needed) for exactly the D7 sample records (272 pos + 4,488 neg): records, size, requests, projected time at N = 1.
+  3. A validation plan: compare our computed values with SWAN-SF's TOTBSQ, TOTFZ and EPSZ for matching HARP/time, with an agreement metric, before using them.
+  4. A catalogue check (metadata only): does the NGDC/NCEI GOES XRS flare report for May 2010 – May 2014 carry flare location and NOAA region, and how many of the 121 location-proxy losses would it recover?
+- Report 1–4, then stop.
