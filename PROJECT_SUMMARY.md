@@ -84,7 +84,6 @@ Held-out split by HARP (`frozen/split.csv`, SHA-256 `f3ab4056…`, seed 20260921
 - **Items 1–3 downloaded from JSOC and checked:**
   - 6 HMI files and 717 AIA 12-min frames.
   - HARP 6975 is missing 3 frames.
-  - One pointing-update note is recorded.
 - **Processing:** approved registration method on cutouts, QUALITY ≠ 0 exclusion and the trailing baseline, plus `aiapy.update_pointing`.
 - **Design fix before scaling:** the primary feature is now CV_PIL − CV_ctrl, decided from method reasoning and not from pilot values.
 - **Item 4 (12-s cost test) is paused** by the user at 191 of 1,800 files for HARP 4231.
