@@ -2337,3 +2337,44 @@ Notes (me, recorded before running):
 - **SDAC is not an AIA full-resolution provider.** `Fido.search` for AIA 94 Å (2014-06-12 00:00–00:05) with Provider = SDAC returned 0 rows. Without a provider filter, VSO lists **only JSOC** (64.6 MiB per level-1 full-disk file). SDAC's `umbra.nascom.nasa.gov/sdo/aia/` holds only a few 2010–2012 event bundles.
 - The 20-file test via VSO→JSOC (6 connections) was started, delivered 0 files in ~25 min, and was **stopped**. VSO stages JSOC data under VSO's own JSOC access, which conflicts with "Never use more than one JSOC account". No file was received.
 - Path (c) "SDAC full-res crop-and-delete" therefore has no measured throughput.
+
+### PATH A — RESULTS (descriptive; not a test of the FINAL primary result; recorded by: me)
+`diag_patha.py` → `data/diag/patha_gate.csv`, `patha_episodes.csv`, `patha_phantom_*.csv`.
+- **Setup:** primary subset (single-region), frozen gate and threshold −0.992496.
+  - All 254,899 K2 rows have HEK and SWPC-K labels (month-boundary duplicates removed from both).
+  - Dev uses the frozen OOF scores; 2021–2024 uses the mean of the frozen fold models, including 2022 as in the sensitivity analysis.
+  - Reproduction checks: dev K2 hour TSS 0.6793 = Stage 2; 2021–2024 K2 hour TSS 0.5224 and 414 episodes = Stage 5's sensitivity row.
+- **Label sets:**
+  - HEK = archived HEK/SWPC labels, classes as reported.
+  - K = SWPC originals, old scale (file 85b88518…).
+  - K2 = final.
+- **Same-scale pairs:** 2010–2019 HEK vs K; 2021–2024 HEK vs K2 (HEK carries GOES-16 fluxes as reported).
+
+**1. Gate under each label set** (TSS 95% CI = HARP bootstrap, 1,000; precision = 1 − FAR)
+
+| period | labels | level | positives | N | TSS [95% CI] | FAR | precision |
+|---|---|---|---:|---:|---|---:|---:|
+| 2010–2019 | HEK | hour | 2,444 | 114,952 | 0.725 [0.642, 0.796] | 0.725 | 0.275 |
+| 2010–2019 | K | hour | 2,440 | 114,952 | 0.722 [0.636, 0.792] | 0.727 | 0.273 |
+| 2010–2019 | K2 | hour | 3,168 | 114,952 | 0.679 [0.586, 0.748] | 0.666 | 0.334 |
+| 2010–2019 | HEK | region | 64 | 986 | 0.680 [0.591, 0.766] | 0.750 | 0.250 |
+| 2010–2019 | K | region | 64 | 986 | 0.664 [0.570, 0.750] | 0.755 | 0.245 |
+| 2010–2019 | K2 | region | 86 | 986 | 0.647 [0.557, 0.726] | 0.682 | 0.318 |
+| 2021–2024 | HEK | hour | 1,299 | 71,862 | 0.579 [0.401, 0.720] | 0.838 | 0.162 |
+| 2021–2024 | K | hour | 1,465 | 71,862 | 0.553 [0.417, 0.679] | 0.825 | 0.175 |
+| 2021–2024 | K2 | hour | 2,381 | 71,862 | 0.522 [0.412, 0.626] | 0.733 | 0.267 |
+| 2021–2024 | HEK | region | 38 | 605 | 0.682 [0.552, 0.785] | 0.763 | 0.237 |
+| 2021–2024 | K | region | 45 | 605 | 0.736 [0.641, 0.815] | 0.705 | 0.295 |
+| 2021–2024 | K2 | region | 71 | 605 | 0.681 [0.584, 0.762] | 0.576 | 0.425 |
+
+**2–3. Episodes (T1–T4 under K2; 961 = 547 dev + 414 test, relabelled at t).** "Phantom" = false under the first set, true under the second; "reverse" = the opposite.
+
+| comparison | 2010–2019 phantom / HEK-or-K false | 2021–2024 phantom / false | all | reverse (all) |
+|---|---|---|---|---|
+| HEK → K2 (both causes) | 18 / 466 | 34 / 386 (8.8%) | 52 / 852 (6.1%) | 1 |
+| HEK → K (dev: same scale) | **0** / 466 | 20 / 386 | 20 / 852 (2.3%) | 14 |
+| K → K2 (scale change only) | 19 / 468 | 26 / 378 | 45 / 846 (5.3%) | 0 |
+
+- **Per year, HEK → K2 phantom:** 2011 3, 2014 4, 2015 8, 2017 3, 2021 2, **2022 15**, **2023 17**, 2024 0, other years 0.
+- **Same-scale view:** 2010–2019 HEK vs K = 0 phantom, so there is no region-loss effect in the dev years. 2021–2024 HEK vs K2 (same scale) = 34 phantom (2021 2, 2022 15, 2023 17, 2024 0).
+- **Literature (links only; not read in full):** arXiv:2512.13417 "Defects and Inconsistencies in Solar Flare Data Sources: Implications for Machine Learning Forecasting"; Angryk et al. 2020, Sci. Data (SWAN-SF); NCEI "GOES Flare Report ReadMe" (Lucas & Machol, 2025); arXiv:2608.04537. **No source found that specifically reports HEK ar_noaanum = 0 after ~2020 [unverified whether 2512.13417 does].**
