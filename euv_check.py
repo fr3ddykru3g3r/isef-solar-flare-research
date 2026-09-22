@@ -16,6 +16,23 @@ def utc(s):
     return s.rstrip("Z")
 
 
+def check1(e):
+    """Item 1: both segments present, HARPNUM and T_REC match the episode, SHA-256 matches manifest."""
+    import hashlib
+    from astropy.io import fits
+    h = int(e.harpnum)
+    man = pd.read_csv(f"{ROOT}/manifest.csv")
+    fs = sorted(glob.glob(f"{ROOT}/{h}/1/*.fits"))
+    hd = [fits.open(f)[-1].header for f in fs]
+    segs = sorted(f.split(".")[-2] for f in fs)
+    sha = all(hashlib.sha256(open(f, "rb").read()).hexdigest() == man.loc[man.file == f, "sha256"].item() for f in fs)
+    trec = {x["T_REC"] for x in hd}
+    return dict(harpnum=h, item=1, files=len(fs), expected=2, wavelengths=segs, wl_ok=segs == ["bitmap", "magnetogram"],
+                first=";".join(trec), last=";".join(trec), n_gaps=0, gaps="", box_inside_at_t=None, shapes=len({(x["NAXIS1"], x["NAXIS2"]) for x in hd}),
+                harp_ok=all(x["HARPNUM"] == h for x in hd), trec_ok=trec == {e.t_rec_tai.replace(":00_TAI", ":00.000_TAI")},
+                sha_ok=sha)
+
+
 def check(h, t, item):
     wl, cad, n_exp = EXP[item]
     fs = sorted(glob.glob(f"{ROOT}/{h}/{item}/*.fits"))
@@ -39,8 +56,9 @@ def check(h, t, item):
 
 
 if __name__ == "__main__":
-    items = [int(x) for x in sys.argv[1:]] or [2, 3]
-    out = pd.DataFrame([check(int(e.harpnum), e.t, it) for e in EP.itertuples() for it in items])
+    items = [int(x) for x in sys.argv[1:]] or [1, 2, 3]
+    out = pd.DataFrame([check1(e) if it == 1 else check(int(e.harpnum), e.t, it)
+                        for e in EP.itertuples() for it in items])
     out.to_csv(f"{ROOT}/check.csv", index=False)
     print(out.drop(columns="gaps").to_string(index=False))
     for r in out[out.n_gaps > 0].itertuples():
