@@ -77,11 +77,12 @@ def fetch(item, e):
     c = drms.Client(email=EMAIL)
     t0 = time.time()
     note = ""
+    method = os.environ.get("JSOC_METHOD", "url")      # "url-tar": whole request as one tar (download-speed test)
     reuse = os.environ.get("JSOC_REQUEST_ID")          # finished request to re-download (no new export)
     try:
         if reuse:
             raise drms.DrmsExportError(f"reuse ({reuse})")
-        r = c.export(ds, method="url", protocol="fits", process=proc) if proc else c.export(ds, method="url", protocol="fits")
+        r = c.export(ds, method=method, protocol="fits", process=proc) if proc else c.export(ds, method=method, protocol="fits")
         if r.status == 7:                               # drms returns (not raises) status 7 on submit
             raise drms.DrmsExportError(r._d.get("error", ""))
     except drms.DrmsExportError as err:                 # JSOC allows 1 pending request per address: attach to it
@@ -97,9 +98,26 @@ def fetch(item, e):
             print(f"wait: {err!r}; retrying", flush=True); time.sleep(60)
     if not r.has_succeeded():
         raise RuntimeError(f"export failed: {r.status} {ds}")
+    t_ready = time.time()
     for p in glob.glob(f"{d}/*.part"):                  # interrupted transfers
         os.remove(p)
     urls = r.urls
+    if method == "url-tar":                             # one archive: download, unpack the FITS, delete the tar
+        import tarfile
+        for k in range(5):
+            try:
+                got = r.download(d, timeout=600); break
+            except (TimeoutError, ConnectionError, OSError) as err:
+                print(f"tar attempt {k + 1}: {err!r}", flush=True); time.sleep(30)
+        else:
+            raise RuntimeError("tar download failed 5 times")
+        for tp in glob.glob(f"{d}/*.tar"):
+            with tarfile.open(tp) as tf:
+                for m in tf.getmembers():
+                    if m.isfile() and m.name.endswith(".fits"):
+                        m.name = os.path.basename(m.name); tf.extract(m, d)
+            os.remove(tp)
+        urls = urls.iloc[:0]
     for i, fn in enumerate(urls["filename"]):           # per file: skip present, retry transient stalls
         if os.path.exists(f"{d}/{fn}"):
             continue
@@ -115,7 +133,8 @@ def fetch(item, e):
     rows = manifest_rows(item, h, files)
     append(MAN, pd.DataFrame(rows))
     log = pd.DataFrame([{"harpnum": h, "item": item, "spec": ds, "files": len(files),
-                         "bytes": sum(r_["size"] for r_ in rows), "wall_s": round(dt, 1), "request_id": r.id, "note": note}])
+                         "bytes": sum(r_["size"] for r_ in rows), "wall_s": round(dt, 1), "request_id": r.id,
+                         "note": (note + f" method={method}; prep_s={t_ready - t0:.0f}; download_s={time.time() - t_ready:.0f}").strip()}])
     append(LOG, log)
     print(f"HARP {h} item {item}: {len(files)} files, {sum(r_['size'] for r_ in rows)/1e6:.1f} MB, {dt:.0f} s")
 

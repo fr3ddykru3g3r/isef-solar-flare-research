@@ -2378,3 +2378,9 @@ Notes (me, recorded before running):
 - **Per year, HEK → K2 phantom:** 2011 3, 2014 4, 2015 8, 2017 3, 2021 2, **2022 15**, **2023 17**, 2024 0, other years 0.
 - **Same-scale view:** 2010–2019 HEK vs K = 0 phantom, so there is no region-loss effect in the dev years. 2021–2024 HEK vs K2 (same scale) = 34 phantom (2021 2, 2022 15, 2023 17, 2024 0).
 - **Literature (links only; not read in full):** arXiv:2512.13417 "Defects and Inconsistencies in Solar Flare Data Sources: Implications for Machine Learning Forecasting"; Angryk et al. 2020, Sci. Data (SWAN-SF); NCEI "GOES Flare Report ReadMe" (Lucas & Machol, 2025); arXiv:2608.04537. **No source found that specifically reports HEK ar_noaanum = 0 after ~2020 [unverified whether 2512.13417 does].**
+
+### 2026-09-22 — Download-speed tests (decided by: user; method only, same data)
+- **HARP 6975 item 4** is requested with JSOC `method="url-tar"`: one archive per request, unpacked into the item folder, tar deleted. The data, box, tracking and t_ref are unchanged; only the delivery method differs.
+- **HARP 4231** continues per file from finished request JSOC_20260922_000545 (886 of 1,800 at the switch). The log now records `prep_s` (submit → ready) and `download_s` separately.
+- **Synoptic** downloads use 6 parallel connections, written to .tmp and renamed. One truncated synoptic file left by the stopped sequential run was found (FITS size check) and removed.
+- **HARP 3248 item 4:** requested after 6975's export has finished (one pending export per address), with whichever method measured faster (operational choice, stated when made).
