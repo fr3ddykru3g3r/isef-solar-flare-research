@@ -2218,3 +2218,24 @@ Notes (me):
 - **Under the rule:** 1 of 6 passes (R4a EPSZ).
 - **Disclosure:** before the validation ran, but after the rule was fixed, I inspected one record (HARP 4201, 2014-06-02 19:24 TAI, not a D7 HARP) to check timestamp format and units.
 - Files: `diag_swansf_validate.py`, `data/diag/swansf_validation.csv`. SWAN.tar.gz is kept in data/swansf/ (untracked).
+
+## 2026-09-22 — Reproduction runs R1–R4 defined (decided by: user; DIAGNOSTIC; main pipeline and gate unchanged)
+- Cumulative runs. Each uses all 1,000 random stratified 70/30 splits, with both C1/C2 = 2 (Table 2 setting) and C1/C2 = 15 (Table 3 setting). Report TSS, recall, precision and FPR as mean ± sd, and whether mean TSS lands in the **pre-registered target: Table 2 0.562–0.658; Table 3 0.722–0.800.**
+  - **R1** = D7/D8 with the exact 12-min SHARP record at each sample time (keywords only).
+  - **R2** = R1 + NGDC catalogue (flare locations; 8 recovered flares under D7 logic).
+  - **R3 = skipped.** Step 0 found that B&C's operational definition (as they report Ahmed et al. 2013) matches D7's.
+  - **R4 (primary)** = R2 + TOTBSQ, TOTFZ, EPSZ from SWAN-SF (13 features).
+  - **R4-cgem (sensitivity)** = R2 + the 3 features from cgem.lorentz, masked variant. Label: "failed pre-registered magnitude validation (TOTBSQ, TOTFZ); ρ ≥ 0.978".
+- **Validation outcome recorded as-is:** the pre-registered rule passed only for masked EPSZ, and the rule is not changed. Likely causes, **hypotheses, not verified**: mask threshold (cgem MASKTHRS 61 vs SHARP convention 90), and a unit or constant difference for TOTFZ (median ratio cgem/SWAN ≈ 0.046).
+- **Region count recorded:** 2,322 HARPs (ours, 2010-05-01 … 2014-05-31) vs B&C's 2,071. B&C's counting unit and end date are unstated.
+- Table only.
+
+### R1–R4 implementation details (decided by: me, before running)
+- **R1 positive sample record:** for each SWPC M1+ flare (K scale, with a region), the T_REC on the 12-min grid nearest to (GOES peak − 24 h, converted to TAI), so |Δ| ≤ 6 min.
+  - It is fetched by keyword query from hmi.sharp_cea_720s, for the patches containing the flare's region, tried in HARPNUM order (as in D7).
+  - If that exact record is missing or fails a filter (QUALITY ≤ 65536, |LON_FWT| ≤ 68, 10 features present, region in NOAA_ARS), that patch gives no positive. There is no fallback to neighbouring records.
+  - The location proxy uses the patch's 12-min record nearest the peak (|LON_FWT| ≤ 68).
+- **R1 negatives:** the D7 construction is unchanged. The hourly eligible records are themselves exact 12-min SHARP records at their own sample times. The pool excludes the positive records (HARP, T_REC) and records with M1+ in (t, t+24h]. N = round(16.5·P), drawn once with the D7 seed.
+- **R2:** a flare that fails the location proxy is admitted if the NCEI GOES XRS report (matched on date and start hhmm) gives a location with |lon| ≤ 68. It still needs a qualifying R1 sample record. No flare is removed by R2. The number recovered under R1 logic is reported (it may differ from 8).
+- **R4 / R4-cgem:** an example needs all 13 features at its (HARP, T_REC); examples without them are dropped **before sampling**, for positives and the negative pool alike (the D7 missing-data assumption). This changes P and N relative to R2, and both are reported. SWAN-SF is matched on HARP + T_REC. cgem.lorentz values come from keyword queries (TOTBSQ1, TOTFZ1, EPSZ1).
+- Everything else is D7/D8: median/SD scaling on the whole catalogue, RBF C = 4, γ = 0.075, tol = 1e-8, class weight positive:negative = 2 or 15, decision value 0, split seeds SEED + i.
