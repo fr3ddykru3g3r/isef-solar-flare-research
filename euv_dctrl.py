@@ -127,7 +127,7 @@ def frames(paths, source, ptab=None):
             r = register_cutout(sunpy.map.Map(raw / exp, m.meta))
         else:
             r = sunpy.map.Map(raw / exp, m.meta)
-        yield pd.Timestamp(m.meta["t_obs"].rstrip("Z")), q, r
+        yield pd.Timestamp(m.meta["t_obs"].rstrip("Z")), q, exp, r
 
 
 def run(e, source, item_or_wl, span="24h"):
@@ -148,15 +148,18 @@ def run(e, source, item_or_wl, span="24h"):
     ev, _ = swpc.load(t - pd.Timedelta("2D"), t)
     regions = {int(x) for x in str(e.noaa_ars).split(",") if x.strip()}
     t0, rows, keep = time.time(), [], None
-    for i, (to, q, r) in enumerate(frames(paths, source, ptab)):
+    for i, (to, q, exp, r) in enumerate(frames(paths, source, ptab)):
         idx = hmi_to_frame(mag, r)
-        rows.append(dict(t_obs=to, quality=q, **frame_means(r.data, idx, S)))
+        rows.append(dict(t_obs=to, quality=q, exptime=exp, **frame_means(r.data, idx, S)))
         if i == len(paths) - 1:
             keep = (r, idx)
     s = pd.DataFrame(rows)
     ex, na, nb_, _ = flare_excluded(s.t_obs, ev, regions)
-    s["valid"] = ~ex & (s.quality == 0) & s.box.notna()
-    info.update(excl_P2a=na, excl_P2b=nb_, excl_quality=int((s.quality != 0).sum()), proc_s=round(time.time() - t0, 1))
+    med = s.loc[(s.quality == 0) & (s.exptime > 0), "exptime"].median()          # exposure rule: >= 50% of the
+    s["exp_ok"] = s.exptime >= 0.5 * med                                          # channel median in this window
+    s["valid"] = ~ex & (s.quality == 0) & s.box.notna() & s.exp_ok
+    info.update(excl_P2a=na, excl_P2b=nb_, excl_quality=int((s.quality != 0).sum()),
+                exptime_median=round(float(med), 4), excl_exposure=int((~s.exp_ok).sum()), proc_s=round(time.time() - t0, 1))
     return s, S, short, n, info, keep, mag
 
 

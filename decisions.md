@@ -2491,3 +2491,15 @@ The 4 with no K2-positive alarm hour: HARPs 9590, 9643, 9822, 10527. The 7 "late
 7. **Summary table:** each choice (source, cadence, exposure rule, slot rule), its rule, the measured numbers, pass/fail, final decision.
 8. **Full-study cost table** for 547 alarms at the chosen source/cadence: files, GB after cropping, estimated hours for 2 channels (and 3 with 131 Å). Wall-clock time per phase.
 9. **Commit and STOP.** Wait for the user's go-ahead before the full download.
+
+### Combined EUV test — implementation details (decided by: me, BEFORE running Phases 2–3)
+- **Selection (Phase 2):** from the frozen dev cohort `data/stage3/cohort_dev.csv` (547 episodes). 8 with true_alarm = 1 and 7 with true_alarm = 0, via `DataFrame.sample(n, random_state=1)` within each label; the 15 are then ordered by `RandomState(1).permutation`. **Seed-1 order** = that permutation; Phase 3 uses its first 10. The selection is written to `data/euv_cad/alarms.csv` before any EUV value is computed. Labels are used for coverage only, never compared.
+- **Masks:** `hmi.sharp_720s` magnetogram + bitmap at each alarm's T_REC, as in item 1. One JSOC export (url-tar) with all 15 record sets comma-separated; if JSOC rejects the multi-set syntax, 15 sequential exports.
+- **Exposure rule** (Phase 1 rule 1): applied to every source, including the Phase 2–3 frames.
+- **Crop-on-download (synoptic):**
+  - Box = the bounding box, in frame pixels, of the HMI patch's edge pixels mapped to that frame (differential rotation to the frame time), padded by **50″** (the item-2/3 cutout margin; 21 synoptic px).
+  - The crop is saved as FITS with its header (EXPTIME, QUALITY, T_OBS and WCS kept), then the full-disk file is deleted.
+  - Verified first on the 3 pilot HARPs: ΔCV from crops vs full disk, |diff| < 1e-6.
+- **Slots (Phase 2):** for cadence c ∈ {2, 3, 6, 12} min, slots = t − 24 h + k·c, k = 1…24h/c. Each slot takes the nearest 2-min synoptic frame within ± c/2. A slot is **filled** if that frame exists and is valid (P2, QUALITY, exposure rule). An alarm is valid at cadence c if ≥ 90% of its slots are filled.
+- **Agreement statistics:** Spearman ρ between ΔCV_c and ΔCV_2min over the alarms valid at both. The bootstrap resamples alarms (2,000, seed 0) for the ρ CI. Median |ΔCV_c − ΔCV_2min| is over the same alarms.
+- **Phase 3 cutouts:** `aia.lev1_euv_12s[t−24h+2m – t @2m][94]{image}`, im_patch as items 2–3 (HARP box + 50″, tracked, t_ref = t), url-tar. The same D-CTRL, P2, QUALITY and exposure rules apply; pointing update and cutout registration as approved. The cutout-vs-synoptic comparison is at the cadence chosen in Phase 2, on the same slots.
