@@ -2126,3 +2126,7 @@ Notes (me):
   - If there are fewer than n_PIL candidates, all are used and the episode is flagged (`ctrl_short`).
   - ctrl is reprojected onto each AIA frame exactly as the PIL mask is.
 - **CV:** for each mask, CV = detrended_sd(mean series over valid frames) / mean(mean series over the same frames). Valid frames are the same as for the other features (not P2-excluded, QUALITY == 0).
+
+### 2026-09-22 — update_pointing applied; ctrl mask observations (recorded by: me)
+- `aiapy.calibrate.update_pointing` runs on the cutouts. It shifts CRPIX by X0_MP_new − X0_MP_old and uses the pointing table `aia.master_pointing3h` from a JSOC keyword query. It is applied to every frame before registration (`pointing_updated` counts frames), and all frames in items 2–3 were updated. `ratio_old` changed by < 1% as a result.
+- Ctrl mask facts: under the fixed rule it is spatially scattered (small >30 G plage/network patches far from the PIL, often near the patch edges). For HARP 6975 there are fewer candidates than PIL pixels (26,688 < 33,031), so `ctrl_short` = True and all candidates are used. The rule is not changed.

@@ -41,6 +41,28 @@ def ar_mask(b):
     return np.abs(np.nan_to_num(b)) > B_AR
 
 
+def ctrl_mask(b, pil):
+    """Control mask (decisions.md, 2026-09-22): n_PIL pixels of the 30 G AR mask outside the dilated PIL, farthest
+    from the PIL (Euclidean px); ties by a fixed permutation (seed 0) + stable sort. Returns (mask, short_flag)."""
+    n = int(pil.sum())
+    cand = ar_mask(b) & ~pil
+    out = np.zeros_like(pil, bool)
+    if n == 0 or not cand.any():
+        return out, True
+    dist = ndimage.distance_transform_edt(~pil)
+    idx = np.flatnonzero(cand)
+    idx = idx[np.random.RandomState(0).permutation(len(idx))]
+    idx = idx[np.argsort(-dist.ravel()[idx], kind="stable")][:n]
+    out.ravel()[idx] = True
+    return out, len(np.flatnonzero(cand)) < n
+
+
+def cv(times, series):
+    """Design fix: CV = SD of the linearly detrended mean series / mean of the series (same valid frames)."""
+    ok = np.isfinite(series)
+    return detrended_sd(np.asarray(times)[ok], np.asarray(series)[ok]) / np.mean(np.asarray(series)[ok]) if ok.sum() >= 3 else np.nan
+
+
 def flare_excluded(times, events, harp_regions):
     """P2: boolean per frame time; also returns how many frames each rule removes."""
     t = pd.to_datetime(pd.Series(times))
@@ -101,4 +123,13 @@ if __name__ == "__main__" and sys.argv[1:] == ["selftest"]:
     assert detrended_sd(pd.date_range("2014-01-01", periods=50, freq="12min"), s) > 0
     n, flag = saturate_then_normalise(np.array([[100, 13000]]), 2.0)
     assert flag and np.isnan(n[0, 1]) and n[0, 0] == 50.0, "saturation before normalisation"
-    print("selftest passed: PIL mask, flare exclusion (P2 counts), trailing 3-sigma (P5), detrended SD (P1), saturation (P4)")
+    assert ctrl_mask(b, m)[1], "small AR: ctrl_short flagged"
+    b3 = np.zeros((100, 200)); b3[30:70, 10:98] = 400; b3[30:70, 102:190] = -400; m3 = pil_mask(b3)
+    c, short = ctrl_mask(b3, m3)
+    assert c.sum() == m3.sum() and not (c & m3).any() and (np.abs(b3[c]) > B_AR).all() and not short, "ctrl mask"
+    assert (c == ctrl_mask(b3, m3)[0]).all(), "ctrl mask deterministic"
+    d = ndimage.distance_transform_edt(~m3); cand = ar_mask(b3) & ~m3
+    assert d[c].min() >= d[cand & ~c].max(), "ctrl = farthest candidates"
+    tt = pd.date_range("2014-01-01", periods=50, freq="12min")
+    assert abs(cv(tt, 2 * (s + 100)) - cv(tt, s + 100)) < 1e-12, "CV scale-free"
+    print("selftest passed: ctrl mask (area-matched, outside PIL, inside AR, farthest, deterministic), CV scale-free; PIL mask, flare exclusion (P2 counts), trailing 3-sigma (P5), detrended SD (P1), saturation (P4)")

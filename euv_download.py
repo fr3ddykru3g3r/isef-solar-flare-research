@@ -77,7 +77,10 @@ def fetch(item, e):
     c = drms.Client(email=EMAIL)
     t0 = time.time()
     note = ""
+    reuse = os.environ.get("JSOC_REQUEST_ID")          # finished request to re-download (no new export)
     try:
+        if reuse:
+            raise drms.DrmsExportError(f"reuse ({reuse})")
         r = c.export(ds, method="url", protocol="fits", process=proc) if proc else c.export(ds, method="url", protocol="fits")
         if r.status == 7:                               # drms returns (not raises) status 7 on submit
             raise drms.DrmsExportError(r._d.get("error", ""))
@@ -85,7 +88,7 @@ def fetch(item, e):
         rid = re.search(r"\((JSOC_\d{8}_\d+)\)", str(err))
         if not rid:
             raise
-        r = c.export_from_id(rid.group(1)); note = f"attached to pending {rid.group(1)} (submitted earlier)"
+        r = c.export_from_id(rid.group(1)); note = f"attached to {rid.group(1)} (submitted earlier)"
         print(f"HARP {h} item {item}: {note}", flush=True)
     while True:                                         # ride out transient network timeouts while JSOC prepares
         try:
