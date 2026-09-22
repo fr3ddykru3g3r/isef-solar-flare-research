@@ -2417,3 +2417,40 @@ Source: Hu, Jin, Verma, Liu, Manchester, Zhao, Gombosi & Chen, "Defects and Inco
   - HARP 9121 2023-02-25 16:59 (SWPC M6.3, reg 3229; HEK ar 0).
   - HARP 9182 2023-03-05 11:59 (SWPC M1.0, reg 3242; 2 HEK M1.0 events, both ar 0).
   - Each folder has `hek_record.csv` (165 fields incl. hpc/hgs/hgc/hrc/event_coord), `swpc_report_line.txt` (the NCEI original XRA line) and `sharp_record_at_alarm.csv` (raw SHARP row at the alarm T_REC).
+
+### Path A consistency checks — RESULTS (numbers only; recorded by: me)
+`diag_patha3.py`. Descriptive; frozen files and the main result unchanged.
+
+**1. Region flips.** 139 alarmed regions of 605; **26 flip** (HEK false → K2 true); the 34 phantom episodes span 20 HARPs. No flipping region has a single HEK-positive row. `data/pathA/region_flips_2021_24.csv`.
+
+| reason | regions |
+|---|---:|
+| phantom episode (first evaluable hour) | 15 |
+| later alarm hour, K2-positive, not an episode t | 7 |
+| K2-positive rows only outside alarm hours | 4 |
+
+The 4 with no K2-positive alarm hour: HARPs 9590, 9643, 9822, 10527. The 7 "later alarm hour": 8878, 8968, 9133, 9137, 9632, 9762, 10312. (The region level counts a region positive if **any** row is positive and alarmed if **any** hour alarms, so it does not require the positive row to be an alarm hour.)
+
+**2. FAR / precision by test-year set** (2,000 HARP resamples, seed 0; the 2021–2024 table above is unchanged)
+
+| years | level | FAR HEK | FAR K2 | FAR HEK − K2 | precision HEK | precision K2 |
+|---|---|---|---|---|---|---|
+| primary 2021/2023/2024 (3,988 alarm hours, 105 alarmed regions) | hour | 0.8007 [0.7110, 0.8878] | 0.7021 [0.6186, 0.7833] | 0.0985 [0.0573, 0.1499] | 0.1993 [0.1122, 0.2890] | 0.2979 [0.2167, 0.3814] |
+| primary 2021/2023/2024 | region | 0.7238 [0.6344, 0.8058] | 0.5429 [0.4414, 0.6337] | 0.1810 [0.1122, 0.2589] | 0.2762 [0.1942, 0.3656] | 0.4571 [0.3663, 0.5586] |
+| 2022 only (1,157 alarm hours, 34 alarmed regions) | hour | 0.9680 [0.9230, 1.0000] | 0.8401 [0.7331, 0.9223] | 0.1279 [0.0519, 0.2241] | 0.0320 [0.0000, 0.0770] | 0.1599 [0.0777, 0.2669] |
+| 2022 only | region | 0.8824 [0.7692, 0.9744] | 0.6765 [0.5161, 0.8333] | 0.2059 [0.0811, 0.3448] | 0.1176 [0.0256, 0.2308] | 0.3235 [0.1667, 0.4839] |
+
+**3. HEK M1+ events with ar_noaanum ≤ 0 or missing, per year** (all HEK/SWPC M1+ events, classes as reported, no scale conversion; `data/pathA/hek_ar_zero_by_year.csv`)
+
+| year | HEK M1+ | AR = 0 or missing | fraction |
+|---|---:|---:|---:|
+| 2019 | 0 | 0 | — |
+| 2020 | 2 | 2 | 1.000 |
+| 2021 | 31 | 14 | 0.452 |
+| 2022 | 195 | 173 | 0.887 |
+| 2023 | 334 | 284 | 0.850 |
+| 2024 | 949 | 72 | 0.076 |
+
+**4. The 4 "no HEK event" phantoms** (HARP 9699 2023-06-22; HARP 10430 2023-11-28 and ×2 2023-12-01). Re-searched HEK (FRM = SWPC) within ±60 min of both the SWPC start and the SWPC peak: **no HEK event found in any of the 8 searches.** `data/pathA/no_hek_phantoms_pm60min.csv`.
+
+**5.** The staged entry "Prior-work check completed: Hu et al. 2026 read in full" was already in `decisions.md` and went into commit `2ba51d3` unchanged (verified with `git log -S`). No re-commit was needed.
