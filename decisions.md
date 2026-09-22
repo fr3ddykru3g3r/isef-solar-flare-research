@@ -2265,3 +2265,60 @@ Implementation note (me): the cgem.lorentz query for the negative pool used one 
 - **Open (me):** "AIA synoptic check", "Path A" and the "pixel-count-matched control, 20 draws" are **not defined** in decisions.md or in this session's messages. The recorded ctrl rule (2026-09-22) is deterministic (the farthest AR-mask pixels, seed-0 tie-break), not 20 random draws.
   - None of the three is run until the user supplies the definitions.
   - Raw item-4 files are **kept, not processed or deleted**, until the metric is defined.
+
+## 2026-09-22 — Definitions D-CTRL, SYNOPTIC CHECK, PATH A, item-4 cadence check (decided by: user; recorded VERBATIM before running anything)
+
+> D-CTRL — pixel-count-matched random control (replaces the "farthest pixels" rule
+> as primary; keep the deterministic rule as a reported secondary):
+> - Candidate set: HARP bitmap region ∩ AR mask (|B_LoS| ≥ 30 G) ∩ OUTSIDE the dilated
+>   PIL mask, defined on the LoS magnetogram at t.
+> - Draws: 20 draws, seeds 0–19, uniform random WITHOUT replacement.
+>   n = min(n_PIL, n_candidates). If n_candidates < n_PIL, also subsample the PIL mask
+>   to n pixels (same seed), so both sides always have equal pixel counts.
+>   Flag ctrl_short when this happens.
+> - Pixels are drawn once in the magnetogram frame at t, then mapped to every AIA frame
+>   with the same reprojection/differential rotation as the full masks.
+> - Per draw: build the mean-intensity time series over (t−24h, t] for the PIL sample
+>   and the control sample (valid frames only; exclusion rules P2/P4/QUALITY as
+>   approved); remove a least-squares linear trend; CV = SD(residuals) / mean(series).
+> - Combine: mean of the per-draw CVs (report the SD across draws too).
+> - Primary feature: ΔCV = CV_PIL − CV_ctrl. Also report CV_PIL, CV_ctrl, CV_box.
+>
+> SYNOPTIC CHECK — report only, no bulk download:
+> - AIA synoptic data (level 1.5, ~1024², ~2-min cadence): URL, format, coverage
+>   2010→2026, 94 Å and 1600 Å availability, file size, any usage/rate policy.
+> - Test: download 20 files with 4–8 parallel connections; report throughput.
+> - If available: rerun the 3 pilot episodes with synoptic frames at the 12-min slots,
+>   same masks mapped to the synoptic frame, D-CTRL metric; side by side with the
+>   cutout results; overlays; time and size.
+> - Also: SDAC/VSO full-res full-disk AIA via SunPy Fido — same 20-file parallel
+>   throughput test. And count UNIQUE 12-min timestamps in the union of all 547 dev
+>   alarm windows. Project total time/GB for (a) JSOC cutouts grouped by HARP, N = 1,
+>   (b) synoptic, (c) SDAC full-res crop-and-delete; 94 Å only and 94 + 1600 Å.
+> - Never use more than one JSOC account.
+>
+> PATH A — "phantom false alarms" (no downloads; descriptive, not a test of the
+> primary result):
+> - Using archived HEK-based labels (data/labels_hek/) and final SWPC K2 labels, with
+>   the same frozen 10-feature gate scores and threshold:
+>   1. Gate TSS, FAR, precision under HEK vs SWPC labels, hour and region level,
+>      region-bootstrap 95% CI — for 2021–2024 and 2010–2019 separately.
+>   2. Count alarm episodes (T1–T4 rules) labelled FALSE under HEK but TRUE under
+>      SWPC ("phantom false alarms"), per year and as % of HEK false alarms.
+>   3. Separate the two causes: also compare HEK vs SWPC on the SAME scale (K),
+>      so region-number loss is separated from the ×0.7 scale change.
+> - Literature check: any published report of HEK SWPC events with
+>   ar_noaanum = 0 after ~2020, and any paper quantifying its effect on flare-forecast
+>   verification. Links only.
+>
+> Item 4 cadence check (after the download finishes): for each pilot episode over
+> (t−6h, t], compute ΔCV (D-CTRL, 6 h window) from (a) all 12 s frames and (b) only
+> the 12-min-slot frames. Side by side, facts only. Raw 12 s files may be deleted
+> after this.
+>
+> Run order: synoptic check and Path A now (they don't need JSOC); cadence check
+> when item 4 finishes. Report each when done.
+
+Notes (me, recorded before running):
+- **Path A uses 2021–2024.** The standing rule (2026-09-21, "PRIMARY RESULT FINAL") is "No new analysis is to be run on 2021–2024". Path A is the user's explicit, descriptive exception. It does not alter or retest the FINAL primary result.
+- The **"AR mask (|B_LoS| ≥ 30 G)"** here uses ≥; the earlier pilot code used > 30 G. D-CTRL follows the ≥ given here.
