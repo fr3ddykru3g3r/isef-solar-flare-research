@@ -2090,3 +2090,8 @@ Notes (me):
 - **Open question raised with the user (fallback geometry):** the approved fallback crops to "the same box" (HARP bounding
   box + 50″). That box comes from JSOC (the item-1 WCS or the patch-extent keywords, never fetched). If JSOC stays down,
   the box cannot be computed; the cache holds only the HARP's flux-weighted centre. Not resolved by me.
+
+### 2026-09-22 08:05 IST — JSOC recovered; export address unregistered (decided by: me)
+- JSOC `info('hmi.sharp_720s')` succeeded at 2026-09-22 08:05:21 IST. The segment `magnetogram` (int, Gauss, "magnetogram") is confirmed as the LoS field; the provisional confirmation is now final. `bitmap` is confirmed too.
+- With JSOC up, `drms.Client(email='lc09.11146@gmail.com')` still returns "Email address is invalid or not registered". Exports cannot run.
+- The fallback (items 2–3 only) covers "JSOC failing". It does not cover an unregistered address, and JSOC is no longer failing. So no fallback is used and no download has started. Waiting for the user to register the address (http://jsoc.stanford.edu/ajax/register_email.html) or supply a registered one.
