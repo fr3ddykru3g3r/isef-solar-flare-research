@@ -2254,3 +2254,14 @@ Implementation note (me): the cgem.lorentz query for the negative pool used one 
 | R4 (SWAN-SF, primary) | 15 | 291 | 4,802 | 132,965 | 0.695 ± 0.039 | 0.779 ± 0.042 | 0.360 ± 0.025 | 0.084 ± 0.010 | no |
 | R4-cgem (masked; failed pre-registered magnitude validation TOTBSQ, TOTFZ; ρ ≥ 0.978) | 2 | 276 | 4,554 | 129,826 | 0.507 ± 0.050 | 0.519 ± 0.051 | 0.730 ± 0.054 | 0.012 ± 0.003 | no |
 | R4-cgem (same label) | 15 | 276 | 4,554 | 129,826 | 0.695 ± 0.042 | 0.777 ± 0.044 | 0.366 ± 0.025 | 0.082 ± 0.009 | no |
+
+## 2026-09-22 — Item 4 resumed; 12-s cadence check pre-declared (decided by: user; pilot only; facts only)
+- Finish item 4 (94 Å, 12 s, (t−6h, t]) for HARPs 4231, 6975 and 3248, resuming from files on disk, one file at a time with retries. Keep per-frame derived results; process-and-delete is OK.
+- **Cadence check (pre-declared):** for each episode over (t−6h, t], compute CV_PIL, CV_ctrl (pixel-count-matched control, 20 draws) and CV_PIL − CV_ctrl:
+  - (a) from all 12-s frames;
+  - (b) from only the frames at the 12-min slots.
+  Report both side by side, with frame counts, gaps, download time and size. No true-vs-false conclusions (n = 3).
+- Also requested: "the AIA synoptic check and Path A as specified earlier".
+- **Open (me):** "AIA synoptic check", "Path A" and the "pixel-count-matched control, 20 draws" are **not defined** in decisions.md or in this session's messages. The recorded ctrl rule (2026-09-22) is deterministic (the farthest AR-mask pixels, seed-0 tie-break), not 20 random draws.
+  - None of the three is run until the user supplies the definitions.
+  - Raw item-4 files are **kept, not processed or deleted**, until the metric is defined.
