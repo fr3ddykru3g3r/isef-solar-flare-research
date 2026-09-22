@@ -2392,3 +2392,28 @@ Requested:
 - (3) The 34 phantom alarms → `data/pathA/phantoms_2021_24.csv`.
 - (4) An evidence pack for 3 phantoms from 2023 → `data/pathA/evidence/`.
 - (5) Numbers only.
+
+## 2026-09-22 — Prior-work check completed: Hu et al. 2026 read in full (recorded by: Claude chat, on user request; no analysis changed)
+Source: Hu, Jin, Verma, Liu, Manchester, Zhao, Gombosi & Chen, "Defects and Inconsistencies in Solar Flare Data Sources: Implications for Machine Learning Forecasting", arXiv:2512.13417v3 (June 2026). Main text pp. 1–33 read; appendix tables only skimmed.
+- **Already published (not ours):** SunPy-HEK GOES list has >3,000 post-2022 flares with AR = 0; authors say not to use it for research, especially GOES-R era (p. 9). SWPC ×0.7 scaling, ratio 0.7 before Dec 2019 then 1 (pp. 10–11, Fig. 4).
+- **Their Section 4 (ML effect)** compares SWPC-FTP vs NCEI Science-Quality labels, and NRT vs definitive SHARPs (LSTM + logistic regression/PCA; train 2010-05-01 → 2019-12-31; test 2020–2024; M/X vs A/B, C excluded; 30 bootstrap models). It does **not** test HEK labels. No HEK effect on skill or FAR is reported in the main text.
+- **Their recommendations (Section 5, Table 11):** for AR-based ML, SWPC-FTP labels are the most direct source; the pre-GOES-R scaling must be documented/corrected; definitive SHARPs preferred for retrospective benchmarks; SunPy-HEK must be independently validated before training/evaluation. Our existing design (SWPC originals, K2 = ÷0.7 correction, definitive SHARPs) already follows these. No design change.
+- **Consequence for Path A framing:** independent confirmation of a published defect + first alarm-level quantification of its effect on FAR (as far as checked). Hu et al. must be cited. Open caveat: appendix tables not read line by line.
+
+### Path A follow-up — RESULTS (numbers only; recorded by: me)
+`diag_patha2.py`. 2021–2024 test HARPs, single-region, frozen gate and threshold. 5,145 alarm hours; 139 alarmed regions of 605. 2,000 HARP resamples, seed 0; all 2,000 were usable.
+
+| level | quantity | HEK | K2 | HEK − K2 |
+|---|---|---|---|---|
+| hour | FAR | 0.8383 [0.7599, 0.9112] | 0.7331 [0.6609, 0.8040] | 0.1052 [0.0662, 0.1466] |
+| hour | precision | 0.1617 [0.0888, 0.2401] | 0.2669 [0.1960, 0.3391] | −0.1052 [−0.1466, −0.0662] |
+| region | FAR | 0.7626 [0.6905, 0.8288] | 0.5755 [0.4937, 0.6593] | 0.1871 [0.1224, 0.2517] |
+| region | precision | 0.2374 [0.1712, 0.3095] | 0.4245 [0.3407, 0.5063] | −0.1871 [−0.2517, −0.1224] |
+
+- **Phantom list:** `data/pathA/phantoms_2021_24.csv`, 34 alarms (2021: 2, 2022: 15, 2023: 17) in 20 HARPs.
+- **HEK match** (SWPC-reported events within ±10 min of the first SWPC K2 M1+ start in (t, t+24h]): ar_noaanum = 0 for 27 phantoms, "0;0" (two HEK events) for 3, and no HEK event for 4 (HARP 9699 2023-06-22; HARP 10430 ×3, 2023-11-28 and 2023-12-01).
+- **Evidence pack** (`data/pathA/evidence/`, the first 3 phantoms of 2023):
+  - HARP 8942 2023-01-08 09:59 (SWPC M2.1, reg 3181; HEK ar_noaanum 0, hpc_x 0, hgs_x/y 0).
+  - HARP 9121 2023-02-25 16:59 (SWPC M6.3, reg 3229; HEK ar 0).
+  - HARP 9182 2023-03-05 11:59 (SWPC M1.0, reg 3242; 2 HEK M1.0 events, both ar 0).
+  - Each folder has `hek_record.csv` (165 fields incl. hpc/hgs/hgc/hrc/event_coord), `swpc_report_line.txt` (the NCEI original XRA line) and `sharp_record_at_alarm.csv` (raw SHARP row at the alarm T_REC).
