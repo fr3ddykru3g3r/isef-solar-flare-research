@@ -592,7 +592,7 @@ Source: Bobra & Couvidat (2015), arXiv:1411.1405, **Table 1** (25 SHARP paramete
 | B&C 13 (Included) | have | | B&C Discarded (12) | have |
 |---|---|---|---|---|
 | TOTUSJH  | yes | | MEANSHR | **yes** (in our 8, but B&C discard it) |
-| TOTBSQ   | **not a JSOC keyword** | | MEANGAM | fetched |
+| TOTBSQ   | **not a JSOC keyword** [corrected 2026-09-22: not a SHARP keyword; available in JSOC `cgem.lorentz`] | | MEANGAM | fetched |
 | TOTPOT   | yes | | MEANGBT | fetched |
 | TOTUSJZ  | fetched | | MEANGBZ | fetched |
 | ABSNJZH  | yes | | MEANGBH | fetched |
@@ -608,7 +608,7 @@ Source: Bobra & Couvidat (2015), arXiv:1411.1405, **Table 1** (25 SHARP paramete
 **Item 1 — BLOCKING for decision Q.** The 7 Lorentz-force parameters (TOTBSQ, TOTFX, TOTFY, TOTFZ,
 EPSX, EPSY, EPSZ) are **not keywords in `hmi.sharp_cea_720s` or `hmi.sharp_720s`** (checked against the
 live JSOC key lists, 2026-09-21). B&C describe them as adapted from Fisher et al. (2012); they are
-computed from the vector-field image data. Three are in the 13-feature SVM set (TOTBSQ, TOTFZ, EPSZ).
+computed from the vector-field image data. Three are in the 13-feature SVM set (TOTBSQ, TOTFZ, EPSZ). [**Corrected 2026-09-22:** not SHARP keywords, but available as keywords in JSOC `cgem.lorentz`; see the 2026-09-22 correction entry.]
 Reproducing the 13-feature gate exactly therefore conflicts with the keyword-only constraint.
 Options put to the user: (1) compute the 3 from image segments — faithful, breaks keyword-only, large
 download; (2) reproduce with the **10 of 13** available as keywords and document the deviation;
@@ -633,14 +633,14 @@ PENDING: fetch completion, row-count and label verification.
 
 **2. Lorentz-force features: option 2. Decision Q amended.**
 Q now reads: **primary gate = Bobra & Couvidat-style SVM, 10 of 13 features; TOTBSQ, TOTFZ, EPSZ
-unavailable as keywords.** ("Reproduction" is withdrawn as a description.)
+unavailable as keywords.** ("Reproduction" is withdrawn as a description.) [**Corrected 2026-09-22:** not SHARP keywords, but available as keywords in JSOC `cgem.lorentz`; see the 2026-09-22 correction entry.]
 **The gate uses exactly these 10 features and no others** — B&C Table 1 "Included" features that exist
 as SHARP keywords, in Table 1 rank order:
 
   1. TOTUSJH   2. TOTPOT   3. TOTUSJZ   4. ABSNJZH   5. SAVNCPP
   6. USFLUX    7. AREA_ACR 8. MEANPOT   9. R_VALUE  10. SHRGT45
 
-(B&C ranks 1, 3, 4, 5, 6, 7, 8, 10, 11, 13; ranks 2 TOTBSQ, 9 TOTFZ, 12 EPSZ unavailable.)
+(B&C ranks 1, 3, 4, 5, 6, 7, 8, 10, 11, 13; ranks 2 TOTBSQ, 9 TOTFZ, 12 EPSZ unavailable.) [**Corrected 2026-09-22:** not SHARP keywords, but available as keywords in JSOC `cgem.lorentz`; see the 2026-09-22 correction entry.]
 **Not in the gate:** MEANSHR and every other SHARP parameter, including B&C's 12 "Discarded".
 The gate's test TSS will be reported against B&C's published TSS later, as a check.
 
@@ -1207,7 +1207,7 @@ that move TSS in both directions. Reported alongside our number:
 
 | | Bobra & Couvidat (2015) | this study |
 |---|---|---|
-| features | 13 | 10 (TOTBSQ, TOTFZ, EPSZ unavailable) |
+| features | 13 | 10 (TOTBSQ, TOTFZ, EPSZ unavailable [corrected 2026-09-22: not SHARP keywords; available in `cgem.lorentz`]) |
 | QUALITY | discard > 65536 | keep == 0 (stricter; drops 06/18 TAI) |
 | longitude | flares within ±68° of central meridian | HARP |LON_FWT| <= 45° |
 | samples | 1 per flare (24 h before GOES peak) + random quiet times | every hourly row (training thinned 6-hourly) |
@@ -1391,7 +1391,7 @@ Table only, no interpretation.
 | positive sample | sample time exactly 24 h before the GOES peak; every flare counted separately, repeated flares of one AR included (pp.6–7) | MATCHABLE with one approximation — nearest **hourly** record within ±30 min of peak − 24 h (our cache is hourly; B&C used 12-min records, p.7) |
 | negative sample | flare-quiet sample times chosen randomly; operational case: AR does not flare within 24 h after the sample time (pp.6–7) | MATCHABLE — random records whose patch has no M1+ in (t, t+24h]; **assumed uniform over eligible records, without replacement, drawn once** |
 | number / N/P | 303 positives, 5,000 random negatives (p.7); N/P = 16.5 in training and testing (p.21) | MATCHABLE — N = round(16.5 × P) |
-| features | 13 highest-F-score of Table 1 (p.24) | NOT MATCHABLE — 10 of 13 (TOTBSQ, TOTFZ, EPSZ not keywords) |
+| features | 13 highest-F-score of Table 1 (p.24) | NOT MATCHABLE — 10 of 13 (TOTBSQ, TOTFZ, EPSZ not keywords [corrected 2026-09-22: not SHARP keywords; available in `cgem.lorentz`]) |
 | scaling | subtract median, divide by standard deviation (p.23) | MATCHABLE — **which data the median/sd come from is not stated; assumed the whole catalogue, before splitting** (literal reading of a pre-processing step) |
 | SVM kernel, parameters | RBF; C = 4, γ = 0.075, tol 1e-8 (pp.15, 21) | MATCHABLE |
 | C1/C2 | 2.0 for Table 2 (p.21) | MATCHABLE — **which class carries C is not stated; assumed C2 = C = 4 (negatives), C1 = 8** (same convention as our gate) |
@@ -1953,7 +1953,7 @@ Also: AR 11429 lies at ~E27 at the start of its window, i.e. inside ±30°.
 **Exploratory; dev data (2010–2019) only for all EUV development.**
 - **D8 conclusion (user, verbatim):** "Same-period reproduction with C1/C2 = 15: D8 TSS 0.716 ± 0.040 vs B&C Table 3
   0.761 ± 0.039, with the same recall/precision trade-off; together with D7 (0.527 vs 0.610), our reproduction is
-  consistently 0.05–0.08 lower, plausibly from 3 unavailable features, catalogue, and flare-location differences."
+  consistently 0.05–0.08 lower, plausibly from 3 unavailable features [corrected 2026-09-22: available in `cgem.lorentz`], catalogue, and flare-location differences."
 - **JSOC export email:** provided by the user for JSOC export requests.
 - **U1–U10 approved as proposed.**
 - **BADPIT power-law threshold dropped** (not algorithmic); **3σ only.**
@@ -2172,3 +2172,28 @@ Notes (me):
   - By year (with location / |lon| ≤ 68): 2010 2/0, 2011 0/0, 2012 22/7, 2013 10/5, 2014 18/7.
 - Not computed: flares the proxy wrongly *included* (true location > 68°) would need the same report. Out of scope.
 - Files: `diag_d7_catalogue.py`, `data/diag/d7_location_proxy_catalogue.csv`, `data/diag/d7_sample_records.csv` (the D7 sample rebuilt from diag_d7.py's seeded code: 272 pos + 4,488 neg, 4,757 distinct records, 763 HARPs).
+
+## 2026-09-22 — CORRECTION and reproduction decisions (decided by: user)
+**Correction:** TOTBSQ, TOTFZ and EPSZ are **not SHARP keywords** (hmi.sharp_cea_720s / hmi.sharp_720s), but they **are available as keywords in the JSOC series `cgem.lorentz`**. Earlier wording ("unavailable", "not a JSOC keyword", "not keywords") is annotated in place with this date. **The main gate stays at 10 features.**
+- **Step 2 (vector-segment size estimate) is cancelled.** It is not needed. The partial script `diag_d7_vector_cost.py` is kept for the record; it produced no result.
+- **Reproduction fix 1 uses `cgem.lorentz` keyword queries** for the 4,757 D7 records, with no image downloads. Pre-registered:
+  - **R4a (primary) = masked variant** (TOTBSQ1, TOTFZ1, EPSZ1).
+  - **R4b (sensitivity) = all-pixel variant** (TOTBSQ, TOTFZ, EPSZ).
+  - **Unstated in B&C:** their exact variant, and their mask threshold (SHARP convention conf_disambig = 90, Bobra et al. 2014 p. 7, vs cgem MASKTHRS = 61).
+- **SWAN-SF:** the full SWAN.tar.gz (735 MB, Harvard Dataverse file 3642432) is approved **for validation only**. It goes to data/swansf/ (untracked).
+  - **Pre-registered pass rule:** Spearman ρ ≥ 0.95 **and** median |relative difference| ≤ 10% between `cgem.lorentz` (each variant) and SWAN-SF, for matching HARP/T_REC.
+  - Report which variant matches SWAN-SF better.
+- **R2 includes the NGDC catalogue fix** (8 recovered flares), as planned.
+- **Step 0:** Ahmed et al. 2013 sample definitions; our HARP/AR count for May 2010 – May 2014 vs B&C's 2,071.
+- Then report, and **wait for the user's OK before R1–R4.** Note: R1 and R3 are not defined in this repository or this session's messages; only R2 (catalogue fix included) and R4a/R4b (above) are specified.
+
+### Step 0 — results (recorded by: me)
+- **Ahmed et al. 2013** (Sol. Phys. 283, 157): full text not read. It is paywalled (Springer), and the only other copy found is on ResearchGate (unofficial). The definitions below are **as B&C 2015 report them (arXiv pp. 6–7)**:
+  - **Operational:** positive = the AR flares within 24 h after the sample time; negative = it does not flare within 24 h after.
+  - **Segmented:** same positive; negative = no flare within ±48 h of the sample time.
+  - Positive sample time = exactly 24 h before the GOES peak; negative sample times random.
+  - B&C also note that Ahmed et al. include C-class flares (p. 21).
+- **HARP/AR count, 2010-05-01 … 2014-05-31** (our hourly hmi.sharp_cea_720s keyword cache):
+  - 2,322 distinct HARPs, 801 of them with ≥ 1 NOAA number; 1,006 distinct NOAA ARs.
+  - B&C: "the SHARP database contains 2,071 ARs and 1.5 million active region patches" (arXiv p. 8).
+  - Their end date and their definition of "AR" (HARP or NOAA region) are not stated.
