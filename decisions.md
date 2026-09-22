@@ -2454,3 +2454,40 @@ The 4 with no K2-positive alarm hour: HARPs 9590, 9643, 9822, 10527. The 7 "late
 **4. The 4 "no HEK event" phantoms** (HARP 9699 2023-06-22; HARP 10430 2023-11-28 and ×2 2023-12-01). Re-searched HEK (FRM = SWPC) within ±60 min of both the SWPC start and the SWPC peak: **no HEK event found in any of the 8 searches.** `data/pathA/no_hek_phantoms_pm60min.csv`.
 
 **5.** The staged entry "Prior-work check completed: Hu et al. 2026 read in full" was already in `decisions.md` and went into commit `2ba51d3` unchanged (verified with `git log -S`). No re-commit was needed.
+
+## 2026-09-23 — COMBINED EUV TEST (decided by: user; replaces all earlier EUV test prompts from Claude chat)
+**Rules in force:** no true-vs-false comparison of ΔCV anywhere; frozen files and the main result unchanged; one JSOC export pending at a time, the user's account only; all rules recorded here **before** running; numbers only; **STOP before the full-study download.**
+
+### PHASE 0 — prior work (source: Claude chat, verified from PDFs; recorded as given)
+- Kniezewski, Mason, Uritsky & Garland 2024, ApJL 977:L29 — 3-min, 6 h, limb loops, 131/171/193/304 Å, 53 flares ≥ C5 vs 30 flare-quiet ARs.
+- Dissauer, Leka & Wagner 2023, ApJ 942:83 — AARPs; full resolution; 72-s bursts; AEC images avoided; criticises spatial binning.
+- Zhong, Kolotkov & Nakariakov, arXiv:2602.18133 — 12-s full-res cutouts; 0.9–10 mHz.
+- Nishizuka et al. 2018, ApJ — DeFN; 1-h cadence.
+- Galvez et al. 2019, ApJS — SDOML, built from AIA synoptic 1024×1024, 2.4″/px, 2-min.
+
+### Download set-up (rules)
+- **JSOC:** `url-tar` for all exports. **Overlap test:** once an export reports complete, submit the next while the previous tar downloads; if JSOC rejects it as a second pending export, revert to sequential and log the exact response.
+- **Synoptic:** 12 connections; log files/s and errors every 500 files; on any error or throttling drop to 6 and log it.
+- **Disk:** free space at start **666 GB** (data/euv_pilot currently 1.7 GB). **Crop-on-download** for synoptic: after each full-disk frame, save the patch for every HARP needed at that time (HARP box + D-CTRL margin), then delete the full-disk file. First verify on the 3 pilot HARPs that cropped-patch ΔCV equals full-disk ΔCV (|diff| < 1e-6). Report MB per 1,000 frames before and after.
+- **Shared cross-HARP cache:** not used now (≈7% saving); noted as optional.
+
+### PHASE 1 (no downloads)
+1. **Exposure:** confirm every frame (cutout, 12-s, synoptic) is divided by EXPTIME before ΔCV; for synoptic, check header/units and state whether already normalised. **Rule: drop frames with EXPTIME < 50% of that channel's median in the window.** Report frames checked/dropped per pilot HARP and channel, and recompute all pilot ΔCVs (24 h cutout, 24 h synoptic, 6 h 12-s, 6 h 12-min): old vs new.
+2. **Offset test:** HARPs 4231, 6975, 3248, existing 12-s 94 Å frames over (t−6h, t]; 12-min subsamples at all 60 offsets (0 s to 11:48 in 12-s steps). Report mean, SD, min, max, and the percentile of the current 12-min value.
+3. **Path A leftovers:** HEK ar_noaanum = 0 count and fraction per year 2019–2024 (all M1+); re-search the 4 "no HEK event" phantoms (HARP 9699; 10430 ×3) at ±60 min by start and by peak.
+
+### PHASE 2 — cadence test (synoptic, 94 Å only)
+4. **15 dev alarms, random seed 1, stratified 8/7 by label for coverage only.** D-CTRL ΔCV over (t−24h, t] at 2, 3, 6 and 12 min; same masks, same 20 draws, exposure rule; **slot = nearest frame within ± half the cadence; an alarm is valid only if ≥ 90% of slots are filled.**
+   - **Decision rule:** reference = 2 min. Choose the **slowest** of {12, 6, 3} with **Spearman ρ ≥ 0.9 AND median |ΔCV − ΔCV_2min| ≤ 0.02**; if none passes, use 2 min. Report ρ with a bootstrap 95% CI (2,000 resamples, seed 0) and state that n = 15.
+   - **1600 Å is not re-tested** (validated by the 3-HARP pilot only; stated as a limitation).
+
+### PHASE 3 — synoptic vs cutout (JSOC, 94 Å only)
+5. First 10 of the 15 (seed-1 order): 24 h cutouts at 2-min cadence by url-tar.
+   - (a) cutout vs synoptic at the chosen cadence. **Rule: synoptic is the full-study source if median |diff| ≤ 0.01 AND Spearman ρ ≥ 0.9, otherwise JSOC cutouts.**
+   - (b) cutout-based 2/3/6/12-min agreement as a second opinion on Phase 2.
+
+### PHASE 4 — after the decisions
+6. **131 Å** ΔCV at the chosen cadence for the 15 alarms (descriptive only).
+7. **Summary table:** each choice (source, cadence, exposure rule, slot rule), its rule, the measured numbers, pass/fail, final decision.
+8. **Full-study cost table** for 547 alarms at the chosen source/cadence: files, GB after cropping, estimated hours for 2 channels (and 3 with 131 Å). Wall-clock time per phase.
+9. **Commit and STOP.** Wait for the user's go-ahead before the full download.
