@@ -2130,3 +2130,8 @@ Notes (me):
 ### 2026-09-22 — update_pointing applied; ctrl mask observations (recorded by: me)
 - `aiapy.calibrate.update_pointing` runs on the cutouts. It shifts CRPIX by X0_MP_new − X0_MP_old and uses the pointing table `aia.master_pointing3h` from a JSOC keyword query. It is applied to every frame before registration (`pointing_updated` counts frames), and all frames in items 2–3 were updated. `ratio_old` changed by < 1% as a result.
 - Ctrl mask facts: under the fixed rule it is spatially scattered (small >30 G plage/network patches far from the PIL, often near the patch edges). For HARP 6975 there are fewer candidates than PIL pixels (26,688 < 33,031), so `ctrl_short` = True and all candidates are used. The rule is not changed.
+
+### 2026-09-22 — Item 4 paused (decided by: user)
+- The user paused item 4 to find a faster download method. Files average 0.14 MB and arrive at ~7–8 s each (per-file HTTP overhead, not bandwidth).
+- State at pause: HARP 4231 has the files present from finished request JSOC_20260922_000545 (1,800 files); partial `.part` files were removed. Nothing is processed yet and no raw files are deleted. HARPs 6975 and 3248 have not been requested.
+- Resume with `JSOC_REQUEST_ID=JSOC_20260922_000545 python euv_run.py item4 4231`, which skips files already present. Items 1–3 and the pilot results are complete.
