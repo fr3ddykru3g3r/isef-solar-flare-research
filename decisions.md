@@ -2332,3 +2332,8 @@ Notes (me, recorded before running):
 - **Box** = all pixels of the SHARP patch (U9, unchanged).
 - **Valid frames:** P2 (amended), QUALITY == 0 and the P4 saturation rule, as approved. For **synoptic** frames (4×4-averaged level 1.5, values = DN per original pixel), the 12,000 DN cut is applied to the averaged pixel values. It cannot be applied per raw pixel, so this is a stated deviation. Synoptic frames are already level 1.5, so no update_pointing or registration is applied to them.
 - **Cadence check (b):** the 12-s frames whose T_OBS lies within ±6 s of the 12-min slots t − 6 h + 12 min … t. **Synoptic:** the file at each 12-min slot, `AIAYYYYMMDD_HHMM_{0094,1600}.fits`, with HHMM = the slot rounded to the 2-min grid.
+
+### SDAC/VSO full-res throughput test — not completed (recorded by: me)
+- **SDAC is not an AIA full-resolution provider.** `Fido.search` for AIA 94 Å (2014-06-12 00:00–00:05) with Provider = SDAC returned 0 rows. Without a provider filter, VSO lists **only JSOC** (64.6 MiB per level-1 full-disk file). SDAC's `umbra.nascom.nasa.gov/sdo/aia/` holds only a few 2010–2012 event bundles.
+- The 20-file test via VSO→JSOC (6 connections) was started, delivered 0 files in ~25 min, and was **stopped**. VSO stages JSOC data under VSO's own JSOC access, which conflicts with "Never use more than one JSOC account". No file was received.
+- Path (c) "SDAC full-res crop-and-delete" therefore has no measured throughput.
