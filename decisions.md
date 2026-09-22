@@ -2095,3 +2095,7 @@ Notes (me):
 - JSOC `info('hmi.sharp_720s')` succeeded at 2026-09-22 08:05:21 IST. The segment `magnetogram` (int, Gauss, "magnetogram") is confirmed as the LoS field; the provisional confirmation is now final. `bitmap` is confirmed too.
 - With JSOC up, `drms.Client(email='lc09.11146@gmail.com')` still returns "Email address is invalid or not registered". Exports cannot run.
 - The fallback (items 2–3 only) covers "JSOC failing". It does not cover an unregistered address, and JSOC is no longer failing. So no fallback is used and no download has started. Waiting for the user to register the address (http://jsoc.stanford.edu/ajax/register_email.html) or supply a registered one.
+
+### 2026-09-22 — JSOC parallel-export limit (fact, measured; recorded by: me)
+- Three small exports (item-1 bitmaps, data already held) were submitted back to back. The first was accepted (JSOC_20260922_000476). The others got status 7: "User lc09.11146@gmail.com has 1 pending export requests (JSOC_20260922_000476); please wait until at least one request has completed before submitting a new one."
+- So JSOC allows N = 1 pending export per registered address. The cost projections use N = 1 as the allowed value.
