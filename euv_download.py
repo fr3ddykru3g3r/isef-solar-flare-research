@@ -97,7 +97,19 @@ def fetch(item, e):
             print(f"wait: {err!r}; retrying", flush=True); time.sleep(60)
     if not r.has_succeeded():
         raise RuntimeError(f"export failed: {r.status} {ds}")
-    got = r.download(d)
+    for p in glob.glob(f"{d}/*.part"):                  # interrupted transfers
+        os.remove(p)
+    urls = r.urls
+    for i, fn in enumerate(urls["filename"]):           # per file: skip present, retry transient stalls
+        if os.path.exists(f"{d}/{fn}"):
+            continue
+        for k in range(5):
+            try:
+                r.download(d, index=i, timeout=120); break
+            except (TimeoutError, ConnectionError, OSError) as err:
+                print(f"file {i} attempt {k + 1}: {err!r}", flush=True); time.sleep(30)
+        else:
+            raise RuntimeError(f"file {fn} failed 5 times")
     dt = time.time() - t0
     files = sorted(glob.glob(f"{d}/*.fits"))  # ponytail: drms "download" paths unreliable; item dir holds only this export
     rows = manifest_rows(item, h, files)
