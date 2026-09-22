@@ -2503,3 +2503,27 @@ The 4 with no K2-positive alarm hour: HARPs 9590, 9643, 9822, 10527. The 7 "late
 - **Slots (Phase 2):** for cadence c ∈ {2, 3, 6, 12} min, slots = t − 24 h + k·c, k = 1…24h/c. Each slot takes the nearest 2-min synoptic frame within ± c/2. A slot is **filled** if that frame exists and is valid (P2, QUALITY, exposure rule). An alarm is valid at cadence c if ≥ 90% of its slots are filled.
 - **Agreement statistics:** Spearman ρ between ΔCV_c and ΔCV_2min over the alarms valid at both. The bootstrap resamples alarms (2,000, seed 0) for the ρ CI. Median |ΔCV_c − ΔCV_2min| is over the same alarms.
 - **Phase 3 cutouts:** `aia.lev1_euv_12s[t−24h+2m – t @2m][94]{image}`, im_patch as items 2–3 (HARP box + 50″, tracked, t_ref = t), url-tar. The same D-CTRL, P2, QUALITY and exposure rules apply; pointing update and cutout registration as approved. The cutout-vs-synoptic comparison is at the cadence chosen in Phase 2, on the same slots.
+
+### Combined EUV test — PHASE 1 RESULTS and crop verification (numbers only; recorded by: me)
+**1. Exposure.**
+- Every source (cutout, 12-s, synoptic) is divided by EXPTIME before ΔCV (`euv_dctrl.frames`; the same code in all paths).
+- Synoptic headers carry EXPTIME, with no PIXLUNIT/BUNIT. The synoptic README gives the units as "DN per original 0.6 arc-sec pixel", i.e. **not exposure-normalised**, so the division is required and applied.
+- Rule applied: drop frames with EXPTIME < 50% of that channel's median in the window. Channel medians were 2.9007–2.9021 s.
+- Frames dropped by the rule (this count overlaps the QUALITY-excluded zero-exposure calibration frame, 1 per 24 h window):
+  - 24-h cutout and synoptic: 1 per HARP and channel, except **HARP 4231 cutout 94 Å: 3**.
+  - 6-h 12-s 94 Å: **4231: 33**, 6975: 0, 3248: 0.
+- ΔCV old → new (`data/euv_pilot/exposure_rule_old_vs_new.csv`). Changes: 4231 cutout 94 −0.1193 → −0.1171 (+0.0022); 4231 12-s (a) 0.2080 → 0.2086 (+0.0006). **All other 16 values are unchanged** at 4 dp.
+
+**2. Offset test** (12-s 94 Å, (t−6h, t], 60 offsets × 30 frames; `data/euv_pilot/offset_test_12s_94.csv`)
+
+| HARP | ΔCV mean | SD | min | max | current (offset 0) | percentile |
+|---|---:|---:|---:|---:|---:|---:|
+| 4231 | 0.2002 | 0.0609 | 0.1308 | 0.3065 | 0.1497 | 24.2 |
+| 6975 | 0.2139 | 0.0178 | 0.1775 | 0.2363 | 0.2322 | 84.2 |
+| 3248 | 0.1804 | 0.0133 | 0.1602 | 0.1999 | 0.1980 | 94.2 |
+
+**3. Path A leftovers:** already computed in the consistency checks (commit `fb1fdd4`) with the same definitions: HEK M1+ with ar_noaanum ≤ 0 or missing, 2019–2024; the 4 no-HEK phantoms re-searched at ±60 min by start and by peak (0 of 8 found). Not recomputed.
+
+**Crop-on-download verification** (3 pilot HARPs, 120 synoptic 94 Å frames each): ΔCV from crops = full disk, **|diff| = 0.0** for all 3 (PASS, < 1e-6). **MB per 1,000 frames: full disk 727–752; cropped 141–190.**
+
+**Selection (Phase 2):** 15 alarms in `data/euv_cad/alarms.csv` (seed-1 order). HARPs: 892, 5745, 7115, 1638, 2663, 5692, 5885, 3291, 6975, 5111, 4205, 4321, 3248, 187, 750.
