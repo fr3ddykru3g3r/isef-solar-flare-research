@@ -2144,3 +2144,31 @@ Notes (me):
   3. A validation plan: compare our computed values with SWAN-SF's TOTBSQ, TOTFZ and EPSZ for matching HARP/time, with an agreement metric, before using them.
   4. A catalogue check (metadata only): does the NGDC/NCEI GOES XRS flare report for May 2010 – May 2014 carry flare location and NOAA region, and how many of the 121 location-proxy losses would it recover?
 - Report 1–4, then stop.
+
+### D7 reproduction improvement — results 1 and 4 (recorded by: me; diagnostic; dev period only)
+**1. Definitions of TOTBSQ, TOTFZ, EPSZ.** Page numbers are arXiv pages; journal pages differ.
+- **Bobra et al. 2014** (arXiv:1404.1879, Table 3, p. 8) lists 16 parameters. **TOTBSQ, TOTFZ and EPSZ are not among them**, and no Lorentz-force formula appears in the paper. It does define the pixel mask for all SHARP parameters (p. 7): pixels "within the HARP (bitmap ≥ 33)" and above the high-confidence disambiguation threshold (≈ 150 G, conf_disambig = 90). The count of contributing pixels is keyword CMASK.
+- **B&C 2015** (arXiv:1411.1405, Table 1, p. 12) gives proportionalities only, with no constants or units:
+  - TOTBSQ: F ∝ ΣB²
+  - TOTFZ: F_z ∝ Σ(B_x² + B_y² − B_z²) dA
+  - EPSZ: δF_z ∝ Σ(B_x² + B_y² − B_z²) / ΣB²
+
+  B&C p. 8 says seven Lorentz parameters are "adapted from Fisher et al. (2012)". B&C p. 8 (Fig. 1 panels 7–8) says each parameter uses one of two masks; the non-R masks are HARP ∩ high-confidence.
+- **Official JSOC series `cgem.lorentz`** ("Lorentz force computed from hmi.sharp_cea_720s", prime keys HARPNUM, T_REC, 12-min cadence, 2010-05-01 → 2026-08-18). Its keyword definitions (jsoc_info) give the constants and units:
+  - TOTBSQ [G²] = Σ B², all pixels; TOTBSQ1 = strong pixels only.
+  - TOTFZ [10²⁰ dyne] = Σ (B_h² − B_r²)·AREA/(8π), all pixels; TOTFZ1 = within the bitmap mask.
+  - EPSZ [none] = Σ(B_h² − B_r²)/ΣB², all pixels; EPSZ1 = within the bitmap mask.
+  - MASKNAME = conf_disambig, MASKTHRS = 61 (e.g. HARP 4231, 2014-06-12).
+  - **hmi.sharp_cea_720s has no TOTBSQ/TOTFZ/EPSZ keywords.**
+- **Not stated in either paper:** which variant B&C used (all pixels or masked), and the exact per-pixel AREA. The official SHARP/CGEM pipeline source would settle both; it has not been read (only official copies may be used).
+
+**4. NCEI GOES XRS report (goes-xrs-report_2010…2014.txt; fixed-width catalogue text, ~1 MB).**
+- Location (e.g. S12W47, cols 29–34) and NOAA region (cols 81–85) fields exist, but location is often blank.
+  - Rows with a location: 2010 204/1,256; **2011 0/2,171**; 2012 840/2,037; 2013 849/2,051; 2014 1,213/2,258.
+  - M/X rows with a location: 15/23, **0/119**, 93/130, 72/111, 151/221.
+- The 121 D7 location-proxy losses (`data/diag/d7_location_proxy_losses.csv`):
+  - 119 match a report row (same date, start hhmm), and 52 of those have a location: 19 with |lon| ≤ 68 and 33 with |lon| > 68.
+  - Of the 19, **8 have a qualifying patch record within 30 min of peak − 24 h**, so **8 of 121 would be recovered as positives.**
+  - By year (with location / |lon| ≤ 68): 2010 2/0, 2011 0/0, 2012 22/7, 2013 10/5, 2014 18/7.
+- Not computed: flares the proxy wrongly *included* (true location > 68°) would need the same report. Out of scope.
+- Files: `diag_d7_catalogue.py`, `data/diag/d7_location_proxy_catalogue.csv`, `data/diag/d7_sample_records.csv` (the D7 sample rebuilt from diag_d7.py's seeded code: 272 pos + 4,488 neg, 4,757 distinct records, 763 HARPs).
