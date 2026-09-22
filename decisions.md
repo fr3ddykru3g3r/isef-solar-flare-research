@@ -2105,3 +2105,24 @@ Notes (me):
 - **Frame quality:** some frames are not covered by P1–P6. There is one zero-exposure frame per episode per channel at ~20:59 UTC (QUALITY 0x10000), and HARP 6975 has frames with QUALITY 0x40000/0x60000 on 2017-03-30 14:59–16:35 UTC (SDO eclipse season). Default: **frames with QUALITY != 0 are excluded**, counted separately (`excl_quality`). Zero-exposure frames cannot be normalised in any case.
 - **P5 with moving masks:** the masks are reprojected per frame (differential rotation), so the trailing 3σ fraction for frame i uses frame i's mask. The baseline uses earlier valid frames only; P2- and quality-excluded frames give no metric and do not enter the baseline.
 - **Flare events for P2:** SWPC events with begin in [t−2 d, t], so events that start before the window and end inside it are included.
+
+### 2026-09-22 — Checkpoint 2 approvals and design fix (decided by: user)
+- **Approved:** registration on cutouts (aiapy's register pixel operation applied to cutouts), exclusion of frames with QUALITY != 0, and the baseline rule (per-frame mask; excluded frames not in the baseline).
+- **Optional:** apply `aiapy.update_pointing` before registration if it runs without JSOC DB issues; otherwise note it.
+- **Design fix before any scaling.** The user decided this **from method reasoning, not from pilot values**.
+  - The ratio SD(PIL)/SD(box) is replaced as the primary feature by **CV_PIL − CV_ctrl**.
+  - CV = SD of the detrended mean-intensity series / mean intensity, over (t−24h, t].
+  - ctrl = a same-area control mask inside the AR mask (30 G) and outside the dilated PIL, chosen by a fixed rule.
+  - CV_PIL, CV_ctrl and CV_box are also reported. The 3 pilot episodes are recomputed with the new definition (facts only).
+- **Full-study download plan: proposal only, not started.** Group dev episodes by HARP, with one export per HARP covering the union of its (t−24h, t] windows. Report the number of requests and the projected time at N = 1, for 94 Å only and for 94 + 1600 Å.
+- Finish item 4, deliver the cost table, then stop.
+
+### 2026-09-22 — Control-mask rule and CV details (decided by: me, before computing any CV)
+- **Control mask (HMI grid at t):**
+  - Candidates are the pixels with |B| > 30 G that are NOT in the dilated PIL mask.
+  - Distance = Euclidean distance (px) to the nearest PIL-mask pixel (`scipy.ndimage.distance_transform_edt`).
+  - ctrl = the n_PIL candidates with the largest distance, where n_PIL is the number of PIL-mask pixels.
+  - Ties are broken by a fixed random permutation (numpy RandomState seed 0) applied before a stable sort.
+  - If there are fewer than n_PIL candidates, all are used and the episode is flagged (`ctrl_short`).
+  - ctrl is reprojected onto each AIA frame exactly as the PIL mask is.
+- **CV:** for each mask, CV = detrended_sd(mean series over valid frames) / mean(mean series over the same frames). Valid frames are the same as for the other features (not P2-excluded, QUALITY == 0).
