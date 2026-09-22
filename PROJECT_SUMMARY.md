@@ -77,7 +77,10 @@ Held-out split by HARP (`frozen/split.csv`, SHA-256 `f3ab4056…`, seed 20260921
 - **NCEI catalogue:** it would recover 8 of the 121 location-proxy flare losses.
 - **Region count:** our 2,322 HARPs (2010-05 → 2014-05) vs B&C's "2,071 ARs"; their counting unit and end date are **[unverified]**.
 - **Ahmed et al. 2013 definitions** are taken from B&C's description, and the original was not read: **[unverified]**.
-- **R-runs** (R1, R2, R4 SWAN-SF primary, R4-cgem sensitivity; R3 skipped): definitions pre-registered in `3e04525`. **Running; no results yet.**
+- **R-runs** (defined in `3e04525`; R3 skipped): none reaches the pre-registered TSS target in any run.
+  - C1/C2 = 2: R1 0.515, R2 0.520, R4 (SWAN-SF) 0.530, R4-cgem 0.507.
+  - C1/C2 = 15: R1 0.706, R2 0.708, R4 0.695, R4-cgem 0.695.
+  - Targets: 0.562–0.658 and 0.722–0.800. All values are ± ~0.04–0.05.
 
 ## 8. EUV pilot status (exploratory; dev data only)
 - **Episodes:** 3 dev episodes chosen by rule P6 (HARPs 4231 true, 6975 delayed, 3248 false).
@@ -93,7 +96,6 @@ Held-out split by HARP (`frozen/split.csv`, SHA-256 `f3ab4056…`, seed 20260921
 - **No true-vs-false conclusions (n = 3).**
 
 ## 9. Open items
-- R-run results (R1, R2, R4, R4-cgem); none has been seen yet.
 - EUV item 4, the cost table, and the full-study download plan (proposal only).
 - The confirmation set 2025-01-01 → 2026-08-16 is **paused**. Data is fetched; overlap exclusion and the ≤ 2 fallback are decided but not applied. Step B (feature R) is pre-registered and not computed.
 - AR 11429 / 13186 BADPIT validation (after the pilot).
@@ -130,4 +132,4 @@ Held-out split by HARP (`frozen/split.csv`, SHA-256 `f3ab4056…`, seed 20260921
 - **P1–P6** approved (P2 amended, P4 raw-DN cut, AARP not used) — `463b00c`; **download rules** — `ecabe4b`
 - **EUV Checkpoint 2** approvals and **design fix** CV_PIL − CV_ctrl — `d164496`; **item 4 paused** — `3b646a6`
 - **D7 improvement** scope — `39b7754`; **correction** (cgem.lorentz), R4a/R4b, SWAN-SF pass rule — `0e78962`
-- **R1–R4** definitions (R3 skipped) — `3e04525`
+- **R1–R4** definitions (R3 skipped) — `3e04525`; results — see the R1–R4 RESULTS entry

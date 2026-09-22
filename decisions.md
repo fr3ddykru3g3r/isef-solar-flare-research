@@ -2239,3 +2239,18 @@ Notes (me):
 - **R2:** a flare that fails the location proxy is admitted if the NCEI GOES XRS report (matched on date and start hhmm) gives a location with |lon| ≤ 68. It still needs a qualifying R1 sample record. No flare is removed by R2. The number recovered under R1 logic is reported (it may differ from 8).
 - **R4 / R4-cgem:** an example needs all 13 features at its (HARP, T_REC); examples without them are dropped **before sampling**, for positives and the negative pool alike (the D7 missing-data assumption). This changes P and N relative to R2, and both are reported. SWAN-SF is matched on HARP + T_REC. cgem.lorentz values come from keyword queries (TOTBSQ1, TOTFZ1, EPSZ1).
 - Everything else is D7/D8: median/SD scaling on the whole catalogue, RBF C = 4, γ = 0.075, tol = 1e-8, class weight positive:negative = 2 or 15, decision value 0, split seeds SEED + i.
+
+### R1–R4 — RESULTS (diagnostic; dev period only; main pipeline and gate unchanged; table only)
+`diag_r.py` → `data/diag/r_runs.csv`. 1,000 random stratified 70/30 splits per row; mean ± sd. The pre-registered TSS targets are Table 2 0.562–0.658 and Table 3 0.722–0.800. Flares in the period with a peak: 454. NCEI-location admissions in R2: 8. No split had undefined precision.
+Implementation note (me): the cgem.lorentz query for the negative pool used one hourly range query per HARP. The first attempt, which listed hourly T_RECs, failed with HTTP 414 before any result was computed.
+
+| run | C1/C2 | P | N | neg pool | TSS | recall | precision | FPR | TSS in target |
+|---|---:|---:|---:|---:|---|---|---|---|---|
+| R1 | 2 | 283 | 4,670 | 132,978 | 0.515 ± 0.049 | 0.531 ± 0.050 | 0.677 ± 0.048 | 0.016 ± 0.003 | no |
+| R1 | 15 | 283 | 4,670 | 132,978 | 0.706 ± 0.040 | 0.797 ± 0.042 | 0.347 ± 0.023 | 0.092 ± 0.010 | no |
+| R2 | 2 | 291 | 4,802 | 132,978 | 0.520 ± 0.049 | 0.536 ± 0.049 | 0.679 ± 0.052 | 0.016 ± 0.004 | no |
+| R2 | 15 | 291 | 4,802 | 132,978 | 0.708 ± 0.038 | 0.801 ± 0.041 | 0.344 ± 0.023 | 0.093 ± 0.010 | no |
+| R4 (SWAN-SF, primary) | 2 | 291 | 4,802 | 132,965 | 0.530 ± 0.051 | 0.541 ± 0.051 | 0.756 ± 0.049 | 0.011 ± 0.003 | no |
+| R4 (SWAN-SF, primary) | 15 | 291 | 4,802 | 132,965 | 0.695 ± 0.039 | 0.779 ± 0.042 | 0.360 ± 0.025 | 0.084 ± 0.010 | no |
+| R4-cgem (masked; failed pre-registered magnitude validation TOTBSQ, TOTFZ; ρ ≥ 0.978) | 2 | 276 | 4,554 | 129,826 | 0.507 ± 0.050 | 0.519 ± 0.051 | 0.730 ± 0.054 | 0.012 ± 0.003 | no |
+| R4-cgem (same label) | 15 | 276 | 4,554 | 129,826 | 0.695 ± 0.042 | 0.777 ± 0.044 | 0.366 ± 0.025 | 0.082 ± 0.009 | no |
