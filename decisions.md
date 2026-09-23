@@ -2729,3 +2729,12 @@ Test 2021/2023/2024, single-region, K2 SWPC. Gate = mean of the 5 frozen fold mo
   - Dev data: `data/stage4/oof_cohort_dev.csv`, 547 episodes, weights 1/n per HARP as in Stage 4.
   - τ is applied unchanged to the frozen test probabilities (`data/stage5/cohort_test_primary.csv`: p_A, p_B = mean of the 5 frozen fold models; primary 2021/2023/2024, single-region, T2 cohort, 313 episodes).
 - **Reported (weighted as in Stage 4/5, plus unweighted counts):** % true kept, % false removed, precision before (all episodes) and after (kept episodes). CIs: HARP bootstrap, 10,000 resamples, seed 20260921 (the Stage 5 model scheme). Gate-only baseline = all 313 kept.
+
+### Descriptive operating point — RESULTS (NOT a pre-registered test; numbers only; recorded by: me)
+`diag_operating_point.py` → `data/stage5/operating_point_descriptive.csv`. Test = 313 episodes (45 true, 268 false), primary 2021/2023/2024, single-region, T2. Percentages are weighted (1/n per HARP); counts are unweighted. CI = HARP bootstrap, 10,000, seed 20260921.
+
+| model | dev τ (weighted dev true kept) | test kept | true kept (count; weighted % [CI]) | false removed (count; weighted % [CI]) | precision before [CI] | precision after [CI] |
+|---|---|---:|---|---|---|---|
+| gate only (all kept) | — | 313 | 45/45; 100% | 0/268; 0% | 0.148 [0.094, 0.206] | 0.148 [0.094, 0.206] |
+| gate + history (A) | 0.0750 (0.888) | 274 | 45/45; 100.0% [100.0, 100.0] | 39/268; 20.3% [13.1, 28.1] | 0.148 [0.094, 0.206] | 0.179 [0.116, 0.247] |
+| A + trends (B) | 0.0701 (0.882) | 198 | 42/45; 95.9% [90.0, 100.0] | 112/268; 41.1% [33.0, 49.2] | 0.148 [0.094, 0.206] | 0.220 [0.143, 0.303] |
