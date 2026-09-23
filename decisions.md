@@ -2787,3 +2787,38 @@ Implementation details (decided by: me, before running):
 **Against the recorded prediction** ("R-D FAR ≈ 0.9; TSS in both variants higher than the chronological test TSS 0.547"):
 - R-D mean FAR 0.663; 1 of 10 seeds has FAR ≥ 0.85 (seed 500, 0.860).
 - Mean TSS: R-D 0.600, R-24 0.637. Seeds with TSS ≤ 0.547: R-D 4 of 10, R-24 2 of 10.
+
+## 2026-09-23 — AMENDMENT: FULL EUV STUDY, 94 Å ONLY (decided by: user) — recorded BEFORE any full-study download
+- **Reason 1:** the validity audit (4c25475) showed flare-in-progress exclusion removed true alarms preferentially (cutouts, 12 min, ≥ 90%: 4/7 true vs 3/3 false kept).
+- **Reason 2 (channels):** time constraint (IRIS deadline). **AIA 94 Å ONLY.** The previously planned secondary channels 1600 Å and 131 Å are **DROPPED before any results** (future work). Basis for 94 Å: BADPIT (André-Hoffmann et al., arXiv:2604.26036) — 94 Å most suitable for brightenings in the PIL area; Leka et al. (arXiv:2212.11255) — 94 Å gives the most discriminating parameters.
+- **Disclosure:**
+  - (a) ΔCV of the 3 pilot HARPs (roles known) was seen before this amendment; n = 3, not used to choose.
+  - (b) No ΔCV-by-label has been computed or seen for the 15 test alarms.
+  - (c) The flare-frame change was prompted by label-split ELIGIBILITY COUNTS only.
+- **Versions:**
+  - **PRIMARY:** ΔCV_94 with flare-in-progress frames NOT excluded. Frames are still removed by the existing exposure rule, QUALITY rule and saturation rule P4/U4 (unchanged). Frames removed per rule are reported per version.
+  - **SENSITIVITY:** the previously specified flare-excluded ΔCV_94.
+  - Both are reported regardless of outcome.
+- **Scheduling change:** ΔCV is computed per HARP as soon as its data are downloaded and verified (same calculation, different timing).
+- **Plan (user):** step 2 dry run on the 3 pilot HARPs (must pass) → step 3 full download + compute (547 dev episodes) → step 4 count-first fill threshold (counts only) → **STOP**. Step 6 analysis only after the user's go-ahead. No ΔCV summary by label is output before then. The magnetic-trend test and the 2021–2024 test set are not reopened.
+
+**Unchanged rules, quoted verbatim:**
+- Exposure (2026-09-23, Phase 1 rule 1): "**Rule: drop frames with EXPTIME < 50% of that channel's median in the window.**"
+- QUALITY (2026-09-22): "Default: **frames with QUALITY != 0 are excluded**, counted separately (`excl_quality`)." Approved: "exclusion of frames with QUALITY != 0".
+- Saturation U4: "**do not interpolate**: exclude pixels > 12,000 DN, and flag the frame if any pixel in the HARP box exceeds 12,000 DN".
+- Saturation P4: "`aia.lev1_euv_12s` / `aia.lev1_uv_24s` exported as cutouts, registered to level 1.5 with `aiapy`, exposure-normalised (DN/s); pixels > 12,000 DN excluded and the frame flagged (U4)." Clarification: "the **12,000 DN saturation cut applies to raw DN, before exposure normalisation.**"
+- **Note (me):** P4/U4 removes **pixels**, not frames; a frame containing them is *flagged*, not removed. "Frames removed by the saturation rule" is therefore reported as frames flagged (and pixels excluded), per version.
+
+**Implementation details (decided by: me, before any download):**
+- **Episodes:** `data/stage3/cohort_dev.csv` (547 episodes, 180 HARPs; the frozen dev cohort). Stage 4 folds from `data/stage4/oof_cohort_dev.csv` for step 6.
+- **HMI masks:** `hmi.sharp_720s` magnetogram + bitmap at each episode's T_REC. Source per step 2a (direct access if it passes, else normal export).
+- **One export per HARP:**
+  - Record set `aia.lev1_euv_12s[(earliest t) − 24h + 12m – (latest t) @12m][94]{image}`, which covers all its windows, including any gaps between them.
+  - im_patch t_ref = the HARP's latest episode t; centre = the patch centre in that episode's magnetogram; width/height = the maximum patch extent over the HARP's episodes + 2 × 50″; tracked; same other settings as the pilot.
+  - For single-episode HARPs this is exactly the pilot item-2 specification.
+  - `url-tar`; the next export is submitted once the previous one completes (during the tar download); one pending export at a time; the user's account only.
+- **Frames per episode:** the HARP's frames with T_OBS in (t − 24h, t]. **Coverage check:** per episode, the fraction of HMI patch pixels that map outside the cutout is logged; episodes with any pixel outside on any valid frame are flagged.
+- **ΔCV:** D-CTRL exactly as in the combined test (`euv_dctrl.samples / hmi_to_frame / frame_means / summarise`; pointing update and cutout registration as approved), over all valid frames in the window. Primary: valid = QUALITY == 0 and the exposure rule. Sensitivity: additionally not in progress per P2 (amended).
+- **Fill (step 4):** 120 slots t − 24h + k·12 min; a slot is filled if a valid frame (per version) lies within ± 6 min. Candidates 90 / 80 / 70%; unweighted episode counts.
+- **Workers:** 8 processes (10 cores − 2). Resumable: FITS files checked by size and header; failed exports retried 3× with backoff, then logged and skipped.
+- **Outputs:** `data/euv_full/` only (`dryrun/`, `hmi/`, `aia/<HARP>/`, `series/`, `results/`, `logs/`). Per-episode results are stored without label summaries.
