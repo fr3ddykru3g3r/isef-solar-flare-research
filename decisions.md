@@ -2532,3 +2532,32 @@ The 4 with no K2-positive alarm hour: HARPs 9590, 9643, 9822, 10527. The 7 "late
 - Both downloads stopped at ~02:19 IST (0% CPU until 10:18); the machine most likely slept. Synoptic had reached 7,000/10,800; cutouts 9 of 10 (alarm 7, HARP 5885, tar stalled at 73 MB).
 - Fix: `socket.setdefaulttimeout(120)` (urlretrieve had no timeout), partial files removed, both relaunched under `caffeinate -i`. Synoptic resumes (existing crops skipped); HARP 5885 gets a new export (one pending at a time).
 - **Wall-clock times for Phases 2–3 exclude the stall** (~8 h); both the rates before the stall and the resumed rates are reported.
+
+### Combined EUV test — PHASE 2 and PHASE 3 RESULTS and DECISIONS (numbers only; recorded by: me, applying the user's pre-registered rules)
+**Data.** Synoptic 94 Å 2-min, 15 alarms: 10,631 of 10,800 frames (169 not in the archive; alarm 5, HARP 2663: 119). Cropped on download, 0 errors, 12 connections throughout. JSOC 2-min cutouts, first 10 alarms: 711–720 frames each.
+**Validity (≥ 90% of slots filled by a valid frame).** Unfilled slots come mostly from P2 flare exclusion plus QUALITY; alarm 5 from archive gaps. Synoptic at 2 min: valid for 8 of 15. Synoptic 2-min fill 0.736–0.999.
+
+**Phase 2 — cadence (synoptic, reference 2 min; alarms valid at both cadences; bootstrap 2,000, seed 0)**
+
+| cadence | n | Spearman ρ [95% CI] | median \|ΔCV − ΔCV_2min\| | PASS (ρ ≥ 0.9 and ≤ 0.02) |
+|---|---:|---|---:|---|
+| 3 min | 8 | 0.976 [0.730, 1.000] | 0.0015 | yes |
+| 6 min | 8 | 0.952 [0.615, 1.000] | 0.0030 | yes |
+| 12 min | 8 | 0.952 [0.615, 1.000] | 0.0077 | yes |
+
+**Decision (rule): cadence = 12 min** (the slowest passing). **n = 8, not 15**, because 7 alarms failed the ≥ 90% fill rule at 2 min. The CI lower bounds are 0.62–0.73.
+
+**Phase 3(b) — cutout second opinion (first 10 alarms; valid at both; n = 5)**
+
+| cadence | n | ρ [95% CI] | median \|diff\| | PASS |
+|---|---:|---|---:|---|
+| 3 min | 5 | 1.000 [1.000, 1.000] | 0.0030 | yes |
+| 6 min | 5 | 0.900 [0.111, 1.000] | 0.0073 | no — ρ is 0.9 exactly for n = 5, computed as 0.8999… (float), so ≥ 0.9 fails by rounding |
+| 12 min | 5 | 1.000 [1.000, 1.000] | 0.0174 | yes |
+
+**Phase 3(a) — source (at 12 min, same slots; alarms valid in both; n = 6)**
+- Spearman ρ 0.600 [−0.636, 1.000]; median |ΔCV_cut − ΔCV_syn| **0.0183**.
+- Rule: synoptic if median ≤ 0.01 AND ρ ≥ 0.9 → **FAIL** → **decision (rule): full-study source = JSOC cutouts.**
+- Per alarm (cut vs syn): 5745 0.2372 / 0.2409; 1638 0.0431 / 0.1667; 5885 0.1006 / 0.0727; 3291 0.0919 / 0.1006; 6975 0.1378 / 0.1333; 5111 0.4191 / 0.3708.
+
+**Phase 4 (next):** 131 Å ΔCV at 12 min, 15 alarms, from the chosen source (JSOC cutouts, url-tar, pipelined as in the overlap test). Descriptive only.
