@@ -1,6 +1,7 @@
 """Combined EUV test, Phases 2-3 (decisions.md 2026-09-23). No true-vs-false comparison of dCV anywhere.
 Usage: python euv_cad.py select | hmi | verify_crop | syn [wl] | cv | cutouts | cv_cut"""
-import glob, json, os, sys, tarfile, time, urllib.request
+import glob, json, os, socket, sys, tarfile, time, urllib.request
+socket.setdefaulttimeout(120)                      # a dead connection (e.g. after sleep) fails and is retried
 from concurrent.futures import ThreadPoolExecutor
 import numpy as np, pandas as pd, sunpy.map, astropy.units as u, drms
 from astropy.io import fits
@@ -286,6 +287,79 @@ def verify_crop():
     df = pd.DataFrame(out); df.to_csv(f"{ROOT}/verify_crop.csv", index=False); log(df.to_string(index=False))
 
 
+# ---------------------------------------------------------------- Phase 3: JSOC 2-min cutouts (url-tar), overlap test
+def cut_spec(e, wl=94):
+    mag = sunpy.map.Map(glob.glob(f"{d_of(e)}/1/*magnetogram*.fits")[0])
+    bl, tr = mag.bottom_left_coord, mag.top_right_coord
+    x0, x1 = sorted([bl.Tx.to_value("arcsec"), tr.Tx.to_value("arcsec")]); y0, y1 = sorted([bl.Ty.to_value("arcsec"), tr.Ty.to_value("arcsec")])
+    t = pd.Timestamp(e.t); fmt = lambda x: x.strftime("%Y-%m-%dT%H:%M:%SZ")
+    im = {"im_patch": {"t_ref": t.strftime("%Y-%m-%dT%H:%M:%S"), "t": 0, "r": 0, "c": 0, "locunits": "arcsec",
+                       "boxunits": "arcsec", "x": round((x0 + x1) / 2, 1), "y": round((y0 + y1) / 2, 1),
+                       "width": round(x1 - x0 + 2 * MARGIN, 1), "height": round(y1 - y0 + 2 * MARGIN, 1)}}
+    return f"aia.lev1_euv_12s[{fmt(t - pd.Timedelta(hours=24) + pd.Timedelta(minutes=2))}-{fmt(t)}@2m][{wl}]{{image}}", im
+
+
+def cutouts(n=10, wl=94):
+    """first n alarms (seed-1 order). Overlap test: submit the next export as soon as the previous is complete,
+    while its tar downloads; on a 'pending export' rejection, revert to sequential and log the response."""
+    import threading
+    a = alarms().head(n); c = drms.Client(email=EMAIL); overlap = True; rows = []
+    pending = []                                         # (e, request, t_submit)
+    dl_threads = []
+
+    def download(e, r, t_sub, t_ready):
+        d = f"{d_of(e)}/cut{wl}"; os.makedirs(d, exist_ok=True); t1 = time.time()
+        for k in range(5):
+            try:
+                r.download(d, timeout=900); break
+            except (TimeoutError, ConnectionError, OSError) as err:
+                log(f"tar retry {k + 1}: {err!r}"); time.sleep(30)
+        nb = 0
+        for tp in glob.glob(f"{d}/*.tar"):
+            nb += os.path.getsize(tp)
+            with tarfile.open(tp) as tf:
+                for m in tf.getmembers():
+                    if m.isfile() and m.name.endswith(".fits"):
+                        m.name = os.path.basename(m.name); tf.extract(m, d)
+            os.remove(tp)
+        rows.append(dict(order=e.order, harpnum=e.harpnum, request_id=r.id, prep_s=round(t_ready - t_sub, 1),
+                         download_s=round(time.time() - t1, 1), tar_bytes=nb, files=len(glob.glob(f"{d}/*.fits"))))
+        log(f"cutout {e.order} HARP {e.harpnum}: {rows[-1]}")
+
+    for e in a.itertuples():
+        d = f"{d_of(e)}/cut{wl}"
+        if len(glob.glob(f"{d}/*.fits")) >= 700:
+            log(f"cutout {e.order}: present, skipped"); continue
+        ds, proc = cut_spec(e, wl)
+        while True:
+            t_sub = time.time()
+            r = c.export(ds, method="url-tar", protocol="fits", process=proc)
+            if r.status == 7:                            # second pending export rejected
+                msg = r._d.get("error", "")
+                if overlap:
+                    log(f"OVERLAP REJECTED: {msg!r} -> reverting to sequential")
+                    overlap = False
+                for th in dl_threads:
+                    th.join()
+                time.sleep(20); continue
+            break
+        while True:
+            try:
+                r.wait(sleep=20, timeout=6 * 3600); break
+            except (TimeoutError, ConnectionError, OSError) as err:
+                log(f"wait retry: {err!r}"); time.sleep(60)
+        if not r.has_succeeded():
+            raise RuntimeError(f"export failed {r.status} {ds}")
+        t_ready = time.time()
+        th = threading.Thread(target=download, args=(e, r, t_sub, t_ready)); th.start(); dl_threads.append(th)
+        if not overlap:
+            th.join()
+    for th in dl_threads:
+        th.join()
+    pd.DataFrame(rows).to_csv(f"{ROOT}/cutout_timing.csv", index=False)
+    log(f"cutouts done; overlap mode kept: {overlap}")
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1]
     if cmd == "select":
@@ -299,3 +373,8 @@ if __name__ == "__main__":
     elif cmd == "cv":
         df = cv_all("synoptic", int(sys.argv[2]) if len(sys.argv) > 2 else 94)
         g = agreement(df); g.to_csv(f"{ROOT}/agreement_synoptic.csv", index=False); log(g.to_string(index=False))
+    elif cmd == "cutouts":
+        cutouts()
+    elif cmd == "cv_cut":
+        df = cv_all("cutout", 94, ids=list(range(10)), tag="cutout")
+        g = agreement(df); g.to_csv(f"{ROOT}/agreement_cutout.csv", index=False); log(g.to_string(index=False))

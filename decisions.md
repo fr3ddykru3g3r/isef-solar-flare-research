@@ -2527,3 +2527,8 @@ The 4 with no K2-positive alarm hour: HARPs 9590, 9643, 9822, 10527. The 7 "late
 **Crop-on-download verification** (3 pilot HARPs, 120 synoptic 94 Å frames each): ΔCV from crops = full disk, **|diff| = 0.0** for all 3 (PASS, < 1e-6). **MB per 1,000 frames: full disk 727–752; cropped 141–190.**
 
 **Selection (Phase 2):** 15 alarms in `data/euv_cad/alarms.csv` (seed-1 order). HARPs: 892, 5745, 7115, 1638, 2663, 5692, 5885, 3291, 6975, 5111, 4205, 4321, 3248, 187, 750.
+
+### Combined EUV test — stall and resume (recorded by: me)
+- Both downloads stopped at ~02:19 IST (0% CPU until 10:18); the machine most likely slept. Synoptic had reached 7,000/10,800; cutouts 9 of 10 (alarm 7, HARP 5885, tar stalled at 73 MB).
+- Fix: `socket.setdefaulttimeout(120)` (urlretrieve had no timeout), partial files removed, both relaunched under `caffeinate -i`. Synoptic resumes (existing crops skipped); HARP 5885 gets a new export (one pending at a time).
+- **Wall-clock times for Phases 2–3 exclude the stall** (~8 h); both the rates before the stall and the resumed rates are reported.
