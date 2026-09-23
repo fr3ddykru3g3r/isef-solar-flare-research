@@ -2721,3 +2721,11 @@ Test 2021/2023/2024, single-region, K2 SWPC. Gate = mean of the 5 frozen fold mo
 - **Gate on hours with P = 0** (n = 51,451; 1,225 positive): TPR 0.4816, precision 0.2081 (TP 590, FP 2,245, FN 635, TN 47,981).
 - For reference, on P = 1 hours (n = 1,905): TPR 0.7963, precision 0.5186.
 - **Definition note:** the Stage 5 region unit is not time-linked. A region with any M1+ from its own region during the period has positive hours (before the flare) and P = 1 hours (after it), so region-level P is positive by construction for such regions.
+
+## 2026-09-23 — DESCRIPTIVE OPERATING POINT (Deshmukh-style; requested by: user) — NOT a pre-registered test
+- Read-only, no refit. The FINAL primary result is unchanged.
+- **Naming:** the request called "B" gate + history and "A" B + trends. In this project (frozen spec, Stages 4–5) **A = gate score + n_C + n_M + n_X** and **B = A + 24-h relative slopes of USFLUX and TOTUSJH**. Results are labelled by content with the project letters.
+- **Rule (decided by: me, before computing):** for each model, τ = the largest dev threshold such that the weighted fraction of TRUE dev episodes with out-of-fold probability ≥ τ is ≥ 0.88.
+  - Dev data: `data/stage4/oof_cohort_dev.csv`, 547 episodes, weights 1/n per HARP as in Stage 4.
+  - τ is applied unchanged to the frozen test probabilities (`data/stage5/cohort_test_primary.csv`: p_A, p_B = mean of the 5 frozen fold models; primary 2021/2023/2024, single-region, T2 cohort, 313 episodes).
+- **Reported (weighted as in Stage 4/5, plus unweighted counts):** % true kept, % false removed, precision before (all episodes) and after (kept episodes). CIs: HARP bootstrap, 10,000 resamples, seed 20260921 (the Stage 5 model scheme). Gate-only baseline = all 313 kept.
