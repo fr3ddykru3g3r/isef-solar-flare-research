@@ -2682,3 +2682,25 @@ Implementation (decided by: me, before running):
 | region | (a) alarmed | 105 | 48 | 0.457 [0.370, 0.553] |
 | region | (b) non-alarmed | 345 | 7 | 0.020 [0.006, 0.037] |
 | region | (a) − (b) | | | 0.437 [0.349, 0.532] |
+
+## 2026-09-23 — Read-only checks on the finished test results (requested by: user; descriptive; no fitting; FINAL result unchanged)
+Test 2021/2023/2024, single-region, K2 SWPC. Gate = mean of the 5 frozen fold models (re-scored, no fitting). Cohort = `data/stage5/cohort_test_primary.csv` (313 episodes). Onset = episode_onset (T1 first alarm hour); the label time t (T4) is ≥ onset. `diag_testchecks.py`.
+
+**1. Lead time** (first SWPC K2 M1+ from the HARP's NOAA region(s) with start > onset; no upper bound; catalogue to 2025-01-01 22:18). `data/stage5/lead_time_test_primary.csv`.
+- Episodes: 313 = 45 true + 26 delayed + 242 other false.
+- 139 had an M1+ from their region after onset (true 45, delayed 26, other false 68). 174 never did (all "other false").
+- Lead (h), n = 139: median 45.1, Q1 16.6, Q3 82.0, min 1.7, max 167.4. Within 24 h: 33.8%; 48 h: 51.8%; 72 h: 67.6%.
+- Median by group: true 12.4, delayed 37.4, other false 83.2.
+
+**2. Time-linked region metric** (105 alarmed regions of 450). `data/stage5/region_timelinked_test_primary.csv`.
+- Existing definition (≥ 1 labelled hour of the region positive): **48/105**.
+- Time-linked (an M1+ starts within 24 h after ≥ 1 **alarmed** hour): **39/105**.
+- Difference: 9 regions whose positive hours all lie **outside** their alarmed hours. The flare followed a non-alarmed labelled hour, not an alarm.
+
+**3. Label spot-check, 15 false episodes** (random, seed 0; all M1+ on the whole disk in (onset, onset+24h]; region positions = FWT centres of the SHARP containing each region within ±1 h; great-circle distance to the alarmed HARP). `data/stage5/false_alarm_spotcheck.csv`.
+- 8 episodes had no M1+ on the disk in the window. 7 episodes had 17 M1+ flares in total, none from the episode's own region.
+- 15 flares were from other numbered regions at **35.9–99.3°** from the HARP (none < 15°).
+- 2 flares had no SWPC region (2024-08-05 09:49 M1.7 and 17:56 M1.0, around HARP 11640), so their position is unknown.
+- **Possible mislabels (< 15°): 0.** The 2 unregioned flares cannot be assessed.
+
+**4. Hourly base rate** (all scorable single-region test rows, alarmed + non-alarmed): **1,976 / 53,356 = 3.70%**. By year: 2021 194/10,920 = 1.78%; 2023 843/21,631 = 3.90%; 2024 939/20,805 = 4.51%.
