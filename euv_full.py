@@ -100,7 +100,299 @@ def hmi_check():
     return bool(df.PASS.all())
 
 
+
+# ================================================================ episodes and exports
+def episodes(pilot=False):
+    lab = pd.read_csv("data/labelled_20100501_20250101.csv", usecols=["harpnum", "t_rec_utc", "t_rec_tai"],
+                      parse_dates=["t_rec_utc"], low_memory=False)
+    if pilot:
+        from euv_download import EP
+        e = EP[["harpnum", "t", "t_rec_tai", "noaa_ars"]].copy()
+    else:
+        c = pd.read_csv("data/stage3/cohort_dev.csv", parse_dates=["t"])
+        e = c[["harpnum", "t", "noaa_ars"]].merge(lab, left_on=["harpnum", "t"], right_on=["harpnum", "t_rec_utc"],
+                                                     how="left", validate="one_to_one").drop(columns="t_rec_utc")
+    assert e.t_rec_tai.notna().all()
+    e["eid"] = [f"{h}_{t:%Y%m%dT%H%M}" for h, t in zip(e.harpnum, e.t)]
+    return e.sort_values(["harpnum", "t"]).reset_index(drop=True)
+
+
+def unpack(dest):
+    nb = 0
+    for tp in glob.glob(f"{dest}/*.tar"):
+        nb += os.path.getsize(tp)
+        with tarfile.open(tp) as tf:
+            for m in tf.getmembers():
+                if m.isfile() and m.name.endswith(".fits"):
+                    m.name = os.path.basename(m.name); tf.extract(m, dest)
+        os.remove(tp)
+    return nb
+
+
+def submit(ds, proc=None, tries=3):
+    """submit one url-tar export (one pending at a time); retries with backoff; returns ExportRequest."""
+    c = drms.Client(email=EMAIL)
+    for k in range(tries):
+        try:
+            r = c.export(ds, method="url-tar", protocol="fits", process=proc) if proc else c.export(ds, method="url-tar", protocol="fits")
+            if r.status == 7:
+                raise RuntimeError(f"status 7: {r._d.get('error')}")
+            return r
+        except Exception as err:
+            log(f"submit retry {k + 1}/{tries}: {err!r}"); time.sleep(60 * (k + 1))
+    raise RuntimeError(f"submit failed: {ds}")
+
+
+def wait(r):
+    t0 = time.time()
+    while True:
+        try:
+            r.wait(sleep=20, timeout=6 * 3600); break
+        except (TimeoutError, ConnectionError, OSError) as err:
+            log(f"wait retry: {err!r}"); time.sleep(60)
+    if not r.has_succeeded():
+        raise RuntimeError(f"export failed status {r.status}")
+    return time.time() - t0
+
+
+def download(r, dest):
+    t0 = time.time(); os.makedirs(dest, exist_ok=True)
+    for p in glob.glob(f"{dest}/*.tar*"):
+        os.remove(p)
+    for k in range(5):
+        try:
+            r.download(dest, timeout=900); break
+        except (TimeoutError, ConnectionError, OSError) as err:
+            log(f"tar retry {k + 1}: {err!r}"); time.sleep(30 * (k + 1))
+    else:
+        raise RuntimeError("tar download failed")
+    return unpack(dest), time.time() - t0
+
+
+def hmi_ds(h, eps):
+    return f"hmi.sharp_720s[{h}][{','.join(eps.t_rec_tai)}]{{magnetogram,bitmap}}"
+
+
+def hmi_files(dest, trec):
+    tag = trec.replace(".", "").replace(":", "")
+    m = glob.glob(f"{dest}/hmi.sharp_720s.*.{tag}.magnetogram.fits"); b = glob.glob(f"{dest}/hmi.sharp_720s.*.{tag}.bitmap.fits")
+    return (m[0], b[0]) if m and b else (None, None)
+
+
+def aia_spec(h, eps, hmi_dir):
+    """one tracked 94 A cutout export per HARP covering all its windows (decisions.md implementation details)."""
+    ext, cen = [], None
+    for e in eps.itertuples():
+        mag = sunpy.map.Map(hmi_files(hmi_dir, e.t_rec_tai)[0])
+        bl, tr = mag.bottom_left_coord, mag.top_right_coord
+        x0, x1 = sorted([bl.Tx.to_value("arcsec"), tr.Tx.to_value("arcsec")]); y0, y1 = sorted([bl.Ty.to_value("arcsec"), tr.Ty.to_value("arcsec")])
+        ext.append((x1 - x0, y1 - y0)); cen = ((x0 + x1) / 2, (y0 + y1) / 2)     # last = latest episode (sorted by t)
+    t_ref = eps.t.max(); t_first = eps.t.min()
+    im = {"im_patch": {"t_ref": t_ref.strftime("%Y-%m-%dT%H:%M:%S"), "t": 0, "r": 0, "c": 0, "locunits": "arcsec",
+                       "boxunits": "arcsec", "x": round(cen[0], 1), "y": round(cen[1], 1),
+                       "width": round(max(w for w, _ in ext) + 2 * MARGIN, 1), "height": round(max(v for _, v in ext) + 2 * MARGIN, 1)}}
+    fmt = lambda x: x.strftime("%Y-%m-%dT%H:%M:%SZ")
+    return f"aia.lev1_euv_12s[{fmt(t_first - pd.Timedelta(hours=24) + pd.Timedelta(minutes=12))}-{fmt(t_ref)}@12m][94]{{image}}", im
+
+
+def expected_frames(eps):
+    return len(pd.date_range(eps.t.min() - pd.Timedelta("24h") + pd.Timedelta("12min"), eps.t.max(), freq="12min"))
+
+
+def trec_of(p):
+    """AIA T_REC from the file name, e.g. aia.lev1_euv_12s.2014-06-11T131125Z.94.image.fits -> 2014-06-11 13:11:25"""
+    return pd.to_datetime(os.path.basename(p).split(".")[2], format="%Y-%m-%dT%H%M%SZ")
+
+
+def valid_fits(p):
+    try:
+        if os.path.getsize(p) < 2880:
+            return False
+        h = fits.getheader(p, 1) if len(fits.open(p)) > 1 else fits.getheader(p)
+        return "T_REC" in h or "T_OBS" in h
+    except Exception:
+        return False
+
+
+# ================================================================ per-episode computation (both versions)
+def compute_episode(ep, hmi_dir, aia_dir, series_dir):
+    """ep: dict(eid, harpnum, t, t_rec_tai, noaa_ars). Same D-CTRL computation as euv_dctrl.run (cutout); returns results
+    for PRIMARY (flare frames kept) and SENSITIVITY (flare frames excluded, P2 amended)."""
+    import swpc
+    from astropy.time import Time
+    from aiapy.calibrate import update_pointing
+    from aiapy.calibrate.utils import get_pointing_table
+    from euv_run import register_cutout
+    from euv_dctrl import samples, hmi_to_frame, frame_means, summarise
+    from euv_pilot import flare_excluded, SAT_DN
+    t = pd.Timestamp(ep["t"])
+    mp, bp = hmi_files(hmi_dir, ep["t_rec_tai"])
+    mag = sunpy.map.Map(mp); bitmap = fits.open(bp)[-1].data
+    S, short, n = samples(mag.data, bitmap)
+    lo = t - pd.Timedelta("24h")
+    paths = sorted(p for p in glob.glob(f"{aia_dir}/*.fits")
+                   if lo < trec_of(p) <= t)
+    ptab = get_pointing_table("JSOC", time_range=(Time(t - pd.Timedelta("26h")), Time(t + pd.Timedelta("2h"))))
+    rows = []
+    for f in paths:
+        m = sunpy.map.Map(f)
+        q, exp = int(m.meta.get("quality", 0)), m.exposure_time.to_value("s")
+        raw = m.data.astype(float)
+        if exp <= 0:
+            raw[:] = np.nan; exp = 1.0
+        nsat = int((raw > SAT_DN).sum())
+        raw[raw > SAT_DN] = np.nan
+        try:
+            m = update_pointing(m, pointing_table=ptab)
+        except IndexError:
+            pass
+        r = register_cutout(sunpy.map.Map(raw / exp, m.meta))
+        idx = hmi_to_frame(mag, r)
+        rows.append(dict(t_obs=pd.Timestamp(m.meta["t_obs"].rstrip("Z")), t_rec=trec_of(f),
+                         quality=q, exptime=exp, sat_px=nsat, sat_flag=nsat > 0, frac_outside=float((idx < 0).mean()),
+                         **frame_means(r.data, idx, S)))
+    s = pd.DataFrame(rows)
+    ev, _ = swpc.load(t - pd.Timedelta("2D"), t)
+    regions = {int(x) for x in str(ep["noaa_ars"]).split(",") if x.strip()}
+    flare, na, nb, _ = flare_excluded(s.t_obs, ev, regions)
+    med = s.loc[(s.quality == 0) & (s.exptime > 0), "exptime"].median()
+    s["q_ok"], s["exp_ok"], s["flare"] = s.quality == 0, s.exptime >= 0.5 * med, flare
+    s["valid_primary"] = s.q_ok & s.exp_ok & s.box.notna()
+    s["valid_sens"] = s.valid_primary & ~s.flare
+    s.to_csv(f"{series_dir}/{ep['eid']}.csv", index=False)
+    slots = pd.date_range(lo + pd.Timedelta("12min"), t, freq="12min").to_numpy()
+    out = dict(eid=ep["eid"], harpnum=ep["harpnum"], t=t, frames=len(s), n_pix=n, ctrl_short=short,
+               excl_quality=int((~s.q_ok).sum()), excl_exposure=int((~s.exp_ok).sum()), excl_flare=int(s.flare.sum()),
+               excl_flare_P2a=na, excl_flare_P2b=nb, sat_flagged_frames=int(s.sat_flag.sum()), sat_pixels=int(s.sat_px.sum()),
+               max_frac_outside_valid=float(s.loc[s.valid_primary, "frac_outside"].max()) if s.valid_primary.any() else np.nan)
+    for ver, col in [("primary", "valid_primary"), ("sens", "valid_sens")]:
+        v = s[s[col]]; tv = v.t_obs.to_numpy()
+        fill = np.mean([len(tv) > 0 and np.abs(tv - sl).min() <= np.timedelta64(6, "m") for sl in slots])
+        r_ = summarise(s.assign(valid=s[col]), S, short, n, ver) if len(v) >= 3 else {}
+        out.update({f"{ver}_valid_frames": len(v), f"{ver}_fill": round(float(fill), 4),
+                    **{f"{ver}_{k}": r_.get(k, np.nan) for k in ("dCV", "dCV_sd", "CV_PIL", "CV_ctrl", "CV_box", "dCV_far")}})
+    return out
+
+
+# ================================================================ driver (dry run and full run)
+def run_pipeline(eps, root, workers=8, progress_every=7200):
+    import threading
+    from concurrent.futures import ProcessPoolExecutor
+    for sub in ["hmi", "aia", "series", "results"]:
+        os.makedirs(f"{root}/{sub}", exist_ok=True)
+    elog = f"{root}/exports.csv"; flog = f"{root}/failed.csv"
+    pool = ProcessPoolExecutor(workers); futs = {}; threads = []; t_start = time.time(); last_prog = time.time()
+    lock = threading.Lock()
+
+    def rec(row, path):
+        with lock:
+            pd.DataFrame([row]).to_csv(path, mode="a", header=not os.path.exists(path), index=False)
+
+    def dispatch(h, g):
+        for e in g.itertuples():
+            if os.path.exists(f"{root}/results/{e.eid}.json"):
+                continue
+            ep = dict(eid=e.eid, harpnum=int(e.harpnum), t=str(e.t), t_rec_tai=e.t_rec_tai, noaa_ars=str(e.noaa_ars))
+            futs[e.eid] = pool.submit(compute_episode, ep, f"{root}/hmi/{h}", f"{root}/aia/{h}", f"{root}/series")
+
+    def aia_worker(h, g, r, prep):
+        try:
+            nb, dl = download(r, f"{root}/aia/{h}")
+            ok = [p for p in glob.glob(f"{root}/aia/{h}/*.fits") if valid_fits(p)]
+            rec(dict(harpnum=h, kind="aia", request_id=r.id, prep_s=round(prep, 1), download_s=round(dl, 1), files=len(ok),
+                     expected=expected_frames(g), bytes=nb, error=""), elog)
+            dispatch(h, g)
+        except Exception as err:
+            rec(dict(harpnum=h, kind="aia", request_id=getattr(r, "id", ""), error=repr(err)), flog)
+
+    harps = list(eps.groupby("harpnum"))
+    for i, (h, g) in enumerate(harps):
+        try:
+            hdir = f"{root}/hmi/{h}"
+            if not all(hmi_files(hdir, x)[0] for x in g.t_rec_tai):
+                for k in range(3):
+                    try:
+                        r = submit(hmi_ds(h, g)); prep = wait(r); nb, dl = download(r, hdir)
+                        rec(dict(harpnum=h, kind="hmi", request_id=r.id, prep_s=round(prep, 1), download_s=round(dl, 1),
+                                 files=len(glob.glob(f"{hdir}/*.fits")), expected=2 * len(g), bytes=nb, error=""), elog)
+                        break
+                    except Exception as err:
+                        log(f"HARP {h} HMI attempt {k + 1}: {err!r}"); time.sleep(120 * (k + 1))
+                assert all(hmi_files(hdir, x)[0] for x in g.t_rec_tai), "HMI files missing after export"
+            adir = f"{root}/aia/{h}"
+            have = [p for p in glob.glob(f"{adir}/*.fits") if valid_fits(p)] if os.path.isdir(adir) else []
+            if len(have) >= 0.97 * expected_frames(g):
+                dispatch(h, g)
+            else:
+                ds, proc = aia_spec(h, g, hdir)
+                for k in range(3):
+                    try:
+                        r = submit(ds, proc); prep = wait(r); break          # export complete -> next HARP may be submitted
+                    except Exception as err:
+                        log(f"HARP {h} AIA attempt {k + 1}: {err!r}"); time.sleep(120 * (k + 1))
+                else:
+                    raise RuntimeError("AIA export failed 3 times")
+                th = threading.Thread(target=aia_worker, args=(h, g, r, prep)); th.start(); threads.append(th)
+        except Exception as err:
+            rec(dict(harpnum=h, kind="harp", request_id="", error=repr(err)), flog); log(f"HARP {h} FAILED: {err!r}")
+        if time.time() - last_prog > progress_every or i == len(harps) - 1:
+            done_r = len(glob.glob(f"{root}/results/*.json"))
+            gb = sum(os.path.getsize(p) for p in glob.glob(f"{root}/aia/*/*.fits")) / 1e9
+            el = (time.time() - t_start) / 3600
+            log(f"PROGRESS {pd.Timestamp.now():%H:%M}: HARPs submitted {i + 1}/{len(harps)}, episode results {done_r}/{len(eps)}, "
+                f"AIA files {len(glob.glob(f'{root}/aia/*/*.fits'))}, {gb:.1f} GB, failures "
+                f"{sum(1 for _ in open(flog)) - 1 if os.path.exists(flog) else 0}, elapsed {el:.1f} h, "
+                f"ETA ~{el / (i + 1) * (len(harps) - i - 1):.1f} h", "logs/progress.log")
+            last_prog = time.time()
+        for eid, f in list(futs.items()):                       # harvest finished computations
+            if f.done():
+                try:
+                    json.dump({k: str(v) for k, v in f.result().items()}, open(f"{root}/results/{eid}.json", "w"))
+                except Exception as err:
+                    rec(dict(harpnum=eid.split("_")[0], kind="compute", request_id=eid, error=repr(err)), flog)
+                futs.pop(eid)
+    for th in threads:
+        th.join()
+    for eid, f in list(futs.items()):
+        try:
+            json.dump({k: str(v) for k, v in f.result().items()}, open(f"{root}/results/{eid}.json", "w"))
+        except Exception as err:
+            rec(dict(harpnum=eid.split("_")[0], kind="compute", request_id=eid, error=repr(err)), flog)
+    pool.shutdown()
+    res = [json.load(open(p)) for p in sorted(glob.glob(f"{root}/results/*.json"))]
+    pd.DataFrame(res).to_csv(f"{root}/episode_results.csv", index=False)
+    return pd.DataFrame(res)
+
+
+def dryrun():
+    eps = episodes(pilot=True); root = f"{R}/dryrun"
+    t0 = time.time(); res = run_pipeline(eps, root, workers=8); log(f"dry run pipeline wall {time.time() - t0:.0f} s", "logs/dryrun.log")
+    # single-process recomputation from the same downloaded files
+    os.makedirs(f"{root}/series_single", exist_ok=True)
+    single = [compute_episode(dict(eid=e.eid, harpnum=int(e.harpnum), t=str(e.t), t_rec_tai=e.t_rec_tai, noaa_ars=str(e.noaa_ars)),
+                              f"{root}/hmi/{e.harpnum}", f"{root}/aia/{e.harpnum}", f"{root}/series_single")
+              for e in eps.itertuples()]
+    single = pd.DataFrame(single).set_index("eid"); multi = res.set_index("eid")
+    pil = pd.read_csv("data/euv_pilot/dctrl_cutout.csv"); pil = pil[pil.tag == "cutout_94"].set_index("harpnum").dCV
+    rows = []
+    for e in eps.itertuples():
+        mv = float(multi.loc[e.eid, "sens_dCV"]); sv = float(single.loc[e.eid, "sens_dCV"])
+        mp_, sp_ = float(multi.loc[e.eid, "primary_dCV"]), float(single.loc[e.eid, "primary_dCV"])
+        rows.append(dict(harpnum=e.harpnum, pilot_dCV_exposure_rule=float(pil[e.harpnum]), dryrun_sens_dCV=mv,
+                         abs_diff_vs_pilot=abs(mv - float(pil[e.harpnum])), single_eq_multi_sens=mv == sv, single_eq_multi_primary=mp_ == sp_,
+                         frames=int(multi.loc[e.eid, "frames"])))
+    df = pd.DataFrame(rows); df["PASS"] = (df.abs_diff_vs_pilot < 1e-6) & df.single_eq_multi_sens & df.single_eq_multi_primary
+    df.to_csv(f"{root}/dryrun_check.csv", index=False)
+    pd.set_option("display.width", 250); log("\n" + df.to_string(index=False), "logs/dryrun.log")
+    log(f"step 2b dry run: {'PASS' if df.PASS.all() else 'FAIL'}", "logs/dryrun.log")
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1]
+    if cmd == "dryrun":
+        dryrun()
+    elif cmd == "run":
+        eps = episodes(); log(f"FULL RUN start: {len(eps)} episodes, {eps.harpnum.nunique()} HARPs")
+        res = run_pipeline(eps, R, workers=8); log(f"FULL RUN done: {len(res)} episode results")
     if cmd == "hmi_check":
         ok = hmi_check(); log(f"step 2a HMI direct access: {'PASS' if ok else 'FAIL'}", "logs/dryrun.log")
