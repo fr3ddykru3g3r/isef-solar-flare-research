@@ -2857,3 +2857,6 @@ Implementation details (decided by: me, before running):
 - **Fallback criterion:** PIL/AR masks 0 differing pixels and D-CTRL samples identical, 16/16. ΔCV on the 3 pilot episodes (dry-run AIA frames) with per-HARP vs per-alarm masks: \|diff\| = 0.0 in both versions → **PASS.**
 - **Timing:** median prep per export 62.6 s (per HARP, 3–9 records) vs 63.5 s (per alarm, 1 record) → 180 HMI exports instead of 547 in the full run.
 - **Decision (rule): per-HARP HMI exports for the full run.**
+
+### Full run — data-availability note (recorded by: me, during the run)
+HARP 8 (1 episode, t = 2010-05-04 20:59 UTC): the AIA export failed 3× with JSOC status 4. A keyword query shows `aia.lev1_euv_12s` 94 Å has **no records before 2010-05-13**; the first record is 2010-05-13T00:00:02Z. It is the only dev episode with t < 2010-05-14, so the episode has no AIA data and is listed as missing ("no AIA data"). This is not a pipeline fault.
