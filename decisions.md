@@ -2738,3 +2738,27 @@ Test 2021/2023/2024, single-region, K2 SWPC. Gate = mean of the 5 frozen fold mo
 | gate only (all kept) | — | 313 | 45/45; 100% | 0/268; 0% | 0.148 [0.094, 0.206] | 0.148 [0.094, 0.206] |
 | gate + history (A) | 0.0750 (0.888) | 274 | 45/45; 100.0% [100.0, 100.0] | 39/268; 20.3% [13.1, 28.1] | 0.148 [0.094, 0.206] | 0.179 [0.116, 0.247] |
 | A + trends (B) | 0.0701 (0.882) | 198 | 42/45; 95.9% [90.0, 100.0] | 112/268; 41.1% [33.0, 49.2] | 0.148 [0.094, 0.206] | 0.220 [0.143, 0.303] |
+
+## 2026-09-23 — EXPLORATORY DIAGNOSTIC "R-split" — design recorded BEFORE running (requested by: user)
+Dev years only. It does **not** touch the 2021–2024 test set, frozen files or FINAL results. Refits are diagnostic only.
+**Prediction by Claude chat (verbatim, recorded before running):** "R-D FAR ≈ 0.9; TSS in both variants higher than the chronological test TSS 0.547."
+
+- **Data:** labelled rows 2010-05 → 2017-12 from `data/labelled_20100501_20250101.csv` (all of them dev HARPs). Same filters as the gate (QUALITY == 0, |LON_FWT| ≤ 45°, single-region primary subset), K2 SWPC labels.
+- **Model:** the frozen gate specification, refit per split. The same 10 features; SVM RBF C = 4, γ = 0.075, tol 1e-8, class weight positive:negative = 2:1; median/SD scaling on the training rows; training rows = train-HARP rows at TAI hours {4, 10, 16, 22}.
+- **Split:** HARPs randomly assigned 70% train / 10% validation / 20% test; seeds 100, 200, …, 1000. All rows of a HARP are in one set.
+- **Threshold:** max TSS on the validation set, applied to the test set.
+- **Variants:**
+  - **R-D:** label = M1+ flare start in (t, t+12h]; evaluated on rows at TAI hours 0, 3, 6, …, 21.
+  - **R-24:** label = `flared_M1_next_24h` (as in the main study); evaluated on all hourly rows.
+- Reported per seed and as mean/min/max: P, N, TP, FP, FN, TN, base rate, TPR, FPR, TSS, precision, FAR = FP/(TP+FP), accuracy, and the accuracy of "always no flare".
+- Comparators:
+  - Deshmukh et al. 2022 Table 6 CNN-only means, **as supplied by Claude chat (not verified here)**: FAR 0.894, accuracy 0.934, TPR 0.742, FPR 0.064, TSS 0.678, base rate 0.010.
+  - Our chronological Stage 5 hour-level result: FAR 0.702, accuracy 0.933, TPR 0.601, FPR 0.055, TSS 0.547, base rate 0.037.
+
+Implementation details (decided by: me, before running):
+- **HARP assignment:** HARPs with ≥ 1 primary-subset row in 2010-05 → 2017-12, sorted by number, permuted by `RandomState(seed)`. The first 70% (rounded down) are train, the next 10% validation, the rest test. Not stratified (random, as specified).
+- **R-D label:** computed from the SWPC K2 M1+ list with the same region join (ANY over NOAA_ARS) as the main labels. Rows are already restricted to label windows free of missing days.
+- **Training labels:** each variant is trained with its own label, so R-D and R-24 are separate fits.
+- **Validation threshold:** chosen on the validation rows at the variant's evaluation spacing (3-hourly for R-D, hourly for R-24).
+- **Unscorable rows** (any gate feature missing) are excluded, as in Stage 2.
+- Precision and FAR are undefined if TP + FP = 0; that is reported.
