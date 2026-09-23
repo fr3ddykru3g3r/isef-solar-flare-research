@@ -2612,3 +2612,11 @@ The 4 with no K2-positive alarm hour: HARPs 9590, 9643, 9822, 10527. The 7 "late
 JSOC queue outliers (~30 min per request, seen twice in 25) are not in these medians.
 
 **Wall-clock per phase (stall excluded):** Phase 1: 12.4 min. Phase 2: download 88.5 min (10,800 synoptic) + ΔCV 19.1 min. Phase 3: download 70.9 min (10 × 2-min cutouts) + ΔCV 21.4 min. Phase 4: 131 download 55.1 min + ΔCV 5.1 min.
+
+## 2026-09-23 — VALIDITY COUNT TEST (decided by: user; descriptive; no downloads, no ΔCV computed or reported, no rule changes)
+Data: the 15 test alarms (synoptic 94 Å, 2-min) and the 10 with 2-min JSOC cutouts (94 Å). The same slot rule as the test (nearest **valid** frame within ± cadence/2; exposure rule; flare-in-progress invalid). Per alarm × cadence (2, 3, 6, 12 min) × source: slots, filled, % filled, valid at 90/80/70%; reason for each empty slot; summary valid counts overall and by label; per-alarm list.
+
+Implementation (decided by: me, before running):
+- **Empty-slot reason:** if no frame at all lies within ± cadence/2 → (a) no file in the archive or export. Otherwise every frame in the window is invalid, and the slot takes the reason of the **nearest** frame, with precedence **(b) exposure rule → (c) flare-in-progress (P2 a or b) → (d) QUALITY ≠ 0 → (d) other** (e.g. no mapped pixels).
+- Zero-exposure calibration frames fail both (b) and QUALITY; by this precedence they count as (b).
+- Flags are recomputed from each alarm's stored per-frame series (t_obs, quality, exptime, box), with P2 re-derived from SWPC (same function and regions as the test). The stored `valid` column must reproduce exactly; this is asserted.
