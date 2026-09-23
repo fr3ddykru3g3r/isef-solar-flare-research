@@ -2762,3 +2762,28 @@ Implementation details (decided by: me, before running):
 - **Validation threshold:** chosen on the validation rows at the variant's evaluation spacing (3-hourly for R-D, hourly for R-24).
 - **Unscorable rows** (any gate feature missing) are excluded, as in Stage 2.
 - Precision and FAR are undefined if TP + FP = 0; that is reported.
+
+### EXPLORATORY DIAGNOSTIC "R-split" — RESULTS (numbers only; recorded by: me)
+`diag_rsplit.py` → `data/diag/rsplit_per_seed.csv`, `rsplit_summary.csv`, `data/diag/rsplit.log`.
+- Data: 109,362 scorable single-region rows, 927 HARPs, 2010-05 → 2017-12. Positive rows: 24 h 3,168; 12 h 2,009.
+- 20 fits (2 variants × 10 seeds). Per seed: ~14,000 training rows and 187 test HARPs. Validation positives: R-D 10–105, R-24 63–541.
+
+**Mean [min, max] over 10 seeds (test set of each split)**
+
+| metric | R-D (12 h, 3-hourly rows) | R-24 (24 h, hourly rows) | Deshmukh 2022 Table 6 CNN-only mean (as supplied, not verified) | our chronological Stage 5, hour level |
+|---|---|---|---|---|
+| P | 119.7 [65, 166] | 680.1 [357, 961] | — | 1,976 |
+| N | 5,866.2 [5,591, 6,036] | 21,154.7 [20,104, 21,787] | — | 51,380 |
+| TP / FP / FN / TN (mean) | 78.2 / 201.5 / 41.5 / 5,664.7 | 482.2 / 1,049.9 / 197.9 / 20,104.8 | — | 1,188 / 2,800 / 788 / 48,580 |
+| base rate | 0.0200 [0.0111, 0.0281] | 0.0312 [0.0167, 0.0446] | 0.010 | 0.037 |
+| TPR | 0.634 [0.494, 0.836] | 0.687 [0.511, 0.852] | 0.742 | 0.601 |
+| FPR | 0.035 [0.005, 0.108] | 0.050 [0.021, 0.098] | 0.064 | 0.055 |
+| TSS | 0.600 [0.486, 0.794] | 0.637 [0.490, 0.795] | 0.678 | 0.547 |
+| precision | 0.337 [0.140, 0.532] | 0.319 [0.199, 0.408] | — | 0.298 |
+| FAR | 0.663 [0.468, 0.860] | 0.681 [0.592, 0.801] | 0.894 | 0.702 |
+| accuracy | 0.959 [0.884, 0.990] | 0.943 [0.897, 0.969] | 0.934 | 0.933 |
+| accuracy "always no flare" | 0.980 [0.972, 0.989] | 0.969 [0.955, 0.983] | — | 0.963 |
+
+**Against the recorded prediction** ("R-D FAR ≈ 0.9; TSS in both variants higher than the chronological test TSS 0.547"):
+- R-D mean FAR 0.663; 1 of 10 seeds has FAR ≥ 0.85 (seed 500, 0.860).
+- Mean TSS: R-D 0.600, R-24 0.637. Seeds with TSS ≤ 0.547: R-D 4 of 10, R-24 2 of 10.
