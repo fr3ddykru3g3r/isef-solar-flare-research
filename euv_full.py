@@ -387,8 +387,56 @@ def dryrun():
     log(f"step 2b dry run: {'PASS' if df.PASS.all() else 'FAIL'}", "logs/dryrun.log")
 
 
+def hmi_test():
+    """per-HARP multi-T_REC HMI export vs per-alarm exports, 3 pilot HARPs (decisions.md, addition before full run)."""
+    from euv_dctrl import samples
+    eps = episodes(); eps = eps[eps.harpnum.isin([3248, 4231, 6975])]
+    root = f"{R}/hmi_test"; rows = []; timing = []
+    for h, g in eps.groupby("harpnum"):
+        d = f"{root}/per_harp/{h}"
+        if not all(hmi_files(d, x)[0] for x in g.t_rec_tai):
+            r = submit(hmi_ds(h, g)); prep = wait(r); nb, dl = download(r, d)
+            timing.append(dict(kind="per_harp", harpnum=h, n_trec=len(g), request_id=r.id, prep_s=round(prep, 1), download_s=round(dl, 1)))
+        for e in g.itertuples():
+            d1 = f"{root}/per_alarm/{h}/{e.t_rec_tai[:16].replace('.', '').replace(':', '')}"
+            if not hmi_files(d1, e.t_rec_tai)[0]:
+                r = submit(f"hmi.sharp_720s[{h}][{e.t_rec_tai}]{{magnetogram,bitmap}}"); prep = wait(r); nb, dl = download(r, d1)
+                timing.append(dict(kind="per_alarm", harpnum=h, n_trec=1, request_id=r.id, prep_s=round(prep, 1), download_s=round(dl, 1)))
+    pd.DataFrame(timing).to_csv(f"{root}/timing.csv", mode="a", header=not os.path.exists(f"{root}/timing.csv"), index=False)
+    for e in eps.itertuples():
+        h = int(e.harpnum)
+        A = hmi_files(f"{root}/per_harp/{h}", e.t_rec_tai)
+        B = hmi_files(f"{root}/per_alarm/{h}/{e.t_rec_tai[:16].replace('.', '').replace(':', '')}", e.t_rec_tai)
+        row = dict(harpnum=h, t_rec=e.t_rec_tai)
+        for seg, pa, pb in [("magnetogram", A[0], B[0]), ("bitmap", A[1], B[1])]:
+            ha, hb = fits.open(pa), fits.open(pb)
+            xa, xb = ha[-1], hb[-1]
+            da, db = np.asarray(xa.data), np.asarray(xb.data)
+            row[f"{seg}_data_identical"] = bool(da.dtype == db.dtype and da.shape == db.shape and da.tobytes() == db.tobytes())
+            ca = {c.keyword: str(c.value) for c in xa.header.cards if c.keyword not in ("", "COMMENT", "HISTORY")}
+            cb = {c.keyword: str(c.value) for c in xb.header.cards if c.keyword not in ("", "COMMENT", "HISTORY")}
+            dk = sorted(k for k in set(ca) | set(cb) if ca.get(k) != cb.get(k))
+            row[f"{seg}_header_diff_keys"] = ";".join(dk)
+            row[f"{seg}_file_bytes_identical"] = open(pa, "rb").read() == open(pb, "rb").read()
+        ma, mb = sunpy.map.Map(A[0]), sunpy.map.Map(B[0])
+        Sa, *_ = samples(ma.data, fits.open(A[1])[-1].data); Sb, *_ = samples(mb.data, fits.open(B[1])[-1].data)
+        row["pil_diff_px"] = int((pil_mask(ma.data) != pil_mask(mb.data)).sum()); row["ar_diff_px"] = int((ar_mask(ma.data) != ar_mask(mb.data)).sum())
+        row["dctrl_samples_identical"] = all(np.array_equal(Sa[k], Sb[k]) for k in Sa)
+        rows.append(row)
+    df = pd.DataFrame(rows)
+    df["PASS_bytes"] = (df.magnetogram_data_identical & df.bitmap_data_identical & (df.magnetogram_header_diff_keys == "")
+                        & (df.bitmap_header_diff_keys == ""))
+    df.to_csv(f"{root}/hmi_per_harp_check.csv", index=False)
+    pd.set_option("display.width", 250); pd.set_option("display.max_colwidth", 60)
+    log("\n" + df.to_string(index=False), "logs/dryrun.log")
+    log(f"HMI per-HARP test: byte-identical data+header {int(df.PASS_bytes.sum())}/{len(df)}; masks/samples identical "
+        f"{int(((df.pil_diff_px == 0) & (df.ar_diff_px == 0) & df.dctrl_samples_identical).sum())}/{len(df)}", "logs/dryrun.log")
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1]
+    if cmd == "hmi_test":
+        hmi_test()
     if cmd == "dryrun":
         dryrun()
     elif cmd == "run":

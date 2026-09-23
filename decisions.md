@@ -2841,3 +2841,8 @@ Implementation details (decided by: me, before running):
   - Comparison per file: the data arrays (bytes, including NaN pattern and dtype) and every header card. Cards that can legitimately differ between two export requests of the same record (e.g. an export timestamp) are listed rather than hidden.
   - Byte-identical data + header = PASS. Otherwise the fallback criterion applies: PIL/AR masks and D-CTRL samples identical; ΔCV checked on the 3 pilot episodes with AIA data.
   - Runs after the step 2b dry run (one pending export at a time).
+
+### Step 2b — dry run: PASS (recorded by: me)
+`euv_full.py dryrun` → `data/euv_full/dryrun/` (fresh url-tar exports; the pilot files were not reused).
+- **Checks:** flare-excluded ΔCV_94 vs the pilot values after the exposure rule: 3248 0.134345 (\|diff\| 5.6e-17); 4231 −0.117111 (2.8e-17); 6975 0.147909 (8.3e-17), all < 1e-6. Single-process = 8-worker results for both versions (exact equality). Frames 120 / 120 / 118 (as in the pilot).
+- **Exports:** HMI prep 62–84 s; AIA prep 85–104 s, download 28–73 s; 0 failures. Pipeline wall time 631 s.
