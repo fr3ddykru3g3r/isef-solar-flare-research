@@ -1,5 +1,7 @@
 # Project summary
 
+All numbers verified in VERIFIED_FACTS.md (f572994).
+
 Generated 2026-09-22 from `decisions.md`, `frozen/` and the git log (not from memory). Where this file and
 `decisions.md` disagree, `decisions.md` wins. **[unverified]** marks statements no check in this repo establishes.
 
@@ -64,7 +66,7 @@ Held-out split by HARP (`frozen/split.csv`, SHA-256 `f3ab4056…`, seed 20260921
   - D3: ±68° → 0.646.
   - D4: B&C samples → 0.812.
   - D5: random row split → 0.790.
-  - D6: D1–D5 together → 0.687 [0.562, 0.783].
+  - D6: D1–D5 together → 0.687. (Its bootstrap CI [0.562, 0.783] is recorded in decisions.md only; no saved artefact. VERIFIED_FACTS #32.)
 - **D7 closest reproduction** (272 pos / 4,488 neg, 1,000 random 70/30 splits):
   - C1/C2 = 2: TSS 0.527 ± 0.050, vs B&C 0.610 ± 0.048.
   - D7t (threshold learned on the training 70%): 0.707 ± 0.040.
@@ -82,21 +84,31 @@ Held-out split by HARP (`frozen/split.csv`, SHA-256 `f3ab4056…`, seed 20260921
   - C1/C2 = 15: R1 0.706, R2 0.708, R4 0.695, R4-cgem 0.695.
   - Targets: 0.562–0.658 and 0.722–0.800. All values are ± ~0.04–0.05.
 
-## 8. EUV pilot status (exploratory; dev data only)
+## 8. EUV pilot and settings test (exploratory; dev data only)
 - **Episodes:** 3 dev episodes chosen by rule P6 (HARPs 4231 true, 6975 delayed, 3248 false).
 - **Items 1–3 downloaded from JSOC and checked:**
   - 6 HMI files and 717 AIA 12-min frames.
   - HARP 6975 is missing 3 frames.
 - **Processing:** approved registration method on cutouts, QUALITY ≠ 0 exclusion and the trailing baseline, plus `aiapy.update_pointing`.
-- **Design fix before scaling:** the primary feature is now CV_PIL − CV_ctrl, decided from method reasoning and not from pilot values.
-- **Item 4 (12-s cost test) is paused** by the user at 191 of 1,800 files for HARP 4231.
-  - JSOC allows 1 pending export per address.
-  - Download cost is dominated by ~7–8 s per file.
-- **Not yet delivered:** the cost table and Checkpoint 2.
-- **No true-vs-false conclusions (n = 3).**
+- **Primary feature:** first the design fix CV_PIL − CV_ctrl, then superseded by D-CTRL: ΔCV = mean over 20 pixel-count-matched random control draws (seeds 0–19).
+- **Item 4 (12-s cost test): done.** 1,800 files for each of the 3 HARPs.
+  - HARP 4231: per file, ~3.55 s/file.
+  - HARPs 6975 and 3248: `url-tar`. HARP 6975 took 844.5 s in total (prep 475 s + download 375 s).
+- **JSOC:** 1 pending export per address. The next export is accepted once the previous one is complete (0 rejections in 25 overlapped exports).
+- **Combined EUV settings test (15 dev alarms): done** (decisions.md, 9a56c68):
+  - Cadence rule: 12 min passes (ρ 0.952 [0.615, 1.000], median |Δ| 0.0077, n = 8).
+  - Source rule: synoptic fails (median |diff| 0.0183, ρ 0.600, n = 6) → full-study source = JSOC cutouts.
+- **Cost table: delivered** (`data/euv_cad/cost_full_study.csv`). For 547 dev alarms at 12 min:
+  - 94 + 1600 Å: 86,060 files, 18.6 GB, ~14.3 h download (pipelined), 3.3 h processing.
+  - Adding 131 Å: 129,090 files, 32.0 GB, ~21.5 h.
+  - 1600 Å cost is assumed equal to 94 Å; HMI mask exports are not included.
+- **Validity count test: done.** Synoptic at 2 min: 8/15 alarms valid at ≥ 90% (true 2/8, false 6/7). Synoptic at 12 min: 11/15.
+- **No true-vs-false ΔCV comparison has been made.**
 
 ## 9. Open items
-- EUV item 4, the cost table, and the full-study download plan (proposal only).
+- **Full-study EUV download:** awaiting the user's go-ahead.
+  - A draft amendment is not yet recorded (primary = flare frames kept). It needs a count-first threshold rule and a test specification.
+- **Done:** EUV item 4; the cost table; the synoptic-vs-cutout and cadence tests; Path A (phantom false alarms, FAR/precision CIs, consistency checks); the full fact check (VERIFIED_FACTS.md).
 - The confirmation set 2025-01-01 → 2026-08-16 is **paused**. Data is fetched; overlap exclusion and the ≤ 2 fallback are decided but not applied. Step B (feature R) is pre-registered and not computed.
 - AR 11429 / 13186 BADPIT validation (after the pilot).
 - The repo must not be pushed: a 137 MB CSV remains in git history, and history will not be rewritten.
@@ -104,6 +116,7 @@ Held-out split by HARP (`frozen/split.csv`, SHA-256 `f3ab4056…`, seed 20260921
 
 ## 10. AI-use disclosure
 - **Claude (Anthropic), via Claude Code:** wrote and ran the pipeline, analyses and diagnostics in this repository. It also drafted the non-decision entries of `decisions.md` and this summary.
+- **Claude (chat):** drafted instructions and `verification/claude_chat_status_to_verify.md` (unverified; checked in VERIFIED_FACTS.md).
 - **Codex:** generated and ran `verification/`, an exploratory pre-registration run on HEK-era labels, 2010-05 → 2016-04. It is not used in the final analysis, and its results were seen by the user.
 - **Scientific decisions:** every one is recorded as the user's. Implementation choices are marked "decided by: me".
 
