@@ -2704,3 +2704,20 @@ Test 2021/2023/2024, single-region, K2 SWPC. Gate = mean of the 5 frozen fold mo
 - **Possible mislabels (< 15°): 0.** The 2 unregioned flares cannot be assessed.
 
 **4. Hourly base rate** (all scorable single-region test rows, alarmed + non-alarmed): **1,976 / 53,356 = 3.70%**. By year: 2021 194/10,920 = 1.78%; 2023 843/21,631 = 3.90%; 2024 939/20,805 = 4.51%.
+
+## 2026-09-23 — Persistence baseline vs frozen gate, test 2021/2023/2024 (requested by: user; descriptive; no fitting; FINAL result unchanged)
+- **P** = 1 if an M1+ (K2 SWPC) from the same NOAA region(s) started in (t−24h, t]. Same rows as Stage 5: scorable single-region test rows, n = 53,356; 0 rows have history_incomplete.
+- Gate = mean of the 5 frozen fold models, threshold −0.992496. It reproduces Stage 5 (asserted).
+- Region level = Stage 5 definition (450 HARPs; alarm if any alarm hour, positive if any positive hour). CI = HARP bootstrap, 1,000, seed 20260921.
+- `diag_persistence.py` → `data/stage5/persistence_vs_gate.csv`.
+
+| predictor | level | TP | FP | FN | TN | TSS [95% CI] | TPR | FPR | precision | FAR |
+|---|---|---:|---:|---:|---:|---|---:|---:|---:|---:|
+| gate | hour | 1,188 | 2,800 | 788 | 48,580 | 0.5467 [0.4120, 0.6598] | 0.6012 | 0.0545 | 0.2979 | 0.7021 |
+| P | hour | 751 | 1,154 | 1,225 | 50,226 | 0.3576 [0.2435, 0.4613] | 0.3801 | 0.0225 | 0.3942 | 0.6058 |
+| gate | region | 48 | 57 | 7 | 338 | 0.7284 [0.6301, 0.8198] | 0.8727 | 0.1443 | 0.4571 | 0.5429 |
+| P | region | 51 | 7 | 4 | 388 | 0.9096 [0.8337, 0.9740] | 0.9273 | 0.0177 | 0.8793 | 0.1207 |
+
+- **Gate on hours with P = 0** (n = 51,451; 1,225 positive): TPR 0.4816, precision 0.2081 (TP 590, FP 2,245, FN 635, TN 47,981).
+- For reference, on P = 1 hours (n = 1,905): TPR 0.7963, precision 0.5186.
+- **Definition note:** the Stage 5 region unit is not time-linked. A region with any M1+ from its own region during the period has positive hours (before the flare) and P = 1 hours (after it), so region-level P is positive by construction for such regions.
