@@ -2846,3 +2846,14 @@ Implementation details (decided by: me, before running):
 `euv_full.py dryrun` → `data/euv_full/dryrun/` (fresh url-tar exports; the pilot files were not reused).
 - **Checks:** flare-excluded ΔCV_94 vs the pilot values after the exposure rule: 3248 0.134345 (\|diff\| 5.6e-17); 4231 −0.117111 (2.8e-17); 6975 0.147909 (8.3e-17), all < 1e-6. Single-process = 8-worker results for both versions (exact equality). Frames 120 / 120 / 118 (as in the pilot).
 - **Exports:** HMI prep 62–84 s; AIA prep 85–104 s, download 28–73 s; 0 failures. Pipeline wall time 631 s.
+
+### Per-HARP HMI export test — RESULT: PASS by the fallback criterion → per-HARP HMI exports (recorded by: me)
+`euv_full.py hmi_test` → `data/euv_full/hmi_test/hmi_per_harp_check.csv`, `timing.csv`. JSOC accepted `hmi.sharp_720s[HARP][t1,…,tn]` (3 exports; 3, 4 and 9 T_RECs).
+- **Data arrays:** identical (bytes, dtype, shape) for all 16 records, magnetogram and bitmap.
+- **Headers:** byte-identical for 3/16. The other 13 magnetograms differ in exactly two cards:
+  - `POLICY` (JSOC's data-use attribution text): blank in the multi-T_REC export, filled in the per-alarm export.
+  - `HEADSUM` ("Keyword checksum"), which changes with POLICY.
+  - No WCS or data keyword differs. Bitmap headers are identical.
+- **Fallback criterion:** PIL/AR masks 0 differing pixels and D-CTRL samples identical, 16/16. ΔCV on the 3 pilot episodes (dry-run AIA frames) with per-HARP vs per-alarm masks: \|diff\| = 0.0 in both versions → **PASS.**
+- **Timing:** median prep per export 62.6 s (per HARP, 3–9 records) vs 63.5 s (per alarm, 1 record) → 180 HMI exports instead of 547 in the full run.
+- **Decision (rule): per-HARP HMI exports for the full run.**
