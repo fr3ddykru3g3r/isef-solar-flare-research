@@ -2669,3 +2669,16 @@ Implementation (decided by: me, before running):
   - 14 HARP 187 2010-09-27 23:59 false 90.1/94.2 QUALITY
   - 15 HARP 750 2011-08-02 16:59 true 88.5/93.3 flare
 - **Cutout** (first 10): 83.6/89.2, 89.3/95.8, 79.6/88.3, 95.8/99.2, 99.9/100.0 (exposure), 73.9/81.7, 84.6/93.3, 99.9/100.0 (exposure), 97.4/99.2, 93.8/95.8. The main reason is flare-in-progress for all except orders 5 and 8.
+
+## 2026-09-23 — Flare-followed fraction, alarmed vs non-alarmed, primary test years (requested by: user; descriptive; no model fitting)
+- Frozen Stage 5 gate on 2021/2023/2024, single-region (the mean of the 5 frozen fold models, threshold −0.992496), with K2 SWPC labels. The re-scoring reproduces Stage 5 exactly: hour TP 1,188, FP 2,800, FN 788, TN 48,580; TSS 0.5467, FAR 0.7021; region FAR 0.5429.
+- CIs: HARP bootstrap, 1,000 resamples, seed 20260921 (the Stage 5 gate scheme). `diag_flare_rate.py` → `data/stage5/flare_rate_by_alarm_primary.csv`. No new analysis of the primary question; the FINAL result is unchanged.
+
+| level | group | n | followed by M1+ in 24 h | fraction [95% CI] |
+|---|---|---:|---:|---|
+| hour | (a) alarmed | 3,988 | 1,188 | 0.298 [0.223, 0.383] |
+| hour | (b) non-alarmed | 49,368 | 788 | 0.016 [0.011, 0.022] |
+| hour | (a) − (b) | | | 0.282 [0.205, 0.367] |
+| region | (a) alarmed | 105 | 48 | 0.457 [0.370, 0.553] |
+| region | (b) non-alarmed | 345 | 7 | 0.020 [0.006, 0.037] |
+| region | (a) − (b) | | | 0.437 [0.349, 0.532] |
