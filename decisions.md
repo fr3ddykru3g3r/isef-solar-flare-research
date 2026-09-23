@@ -2592,7 +2592,7 @@ The 4 with no K2-positive alarm hour: HARPs 9590, 9643, 9822, 10527. The 7 "late
 | choice | rule (pre-registered) | measured | pass/fail | final decision |
 |---|---|---|---|---|
 | exposure | drop frames with EXPTIME < 50% of the channel median; divide all frames by EXPTIME | synoptic not pre-normalised (README); drops: 1 per 24 h window (= the QUALITY-flagged 0-s frame), 4231 cutout 94: 3, 4231 12-s: 33; ΔCV changes +0.0022 and +0.0006, the others 0 | applied | rule adopted |
-| slot rule | nearest valid frame within ± cadence/2; alarm valid if ≥ 90% filled | 2-min synoptic: 8/15 valid; 12-min 94 synoptic: 8/15; 12-min 131 cutout: 10/15 | applied | rule adopted (it removes many alarms: fill counts P2-excluded frames as unfilled) |
+| slot rule | nearest valid frame within ± cadence/2; alarm valid if ≥ 90% filled | 2-min synoptic: 8/15 valid; 12-min 94 synoptic: 11/15 [corrected 2026-09-23: earlier '8/15' was the number valid at BOTH 2 and 12 min, the n of the cadence test]; 12-min 131 cutout: 10/15 | applied | rule adopted (it removes many alarms: fill counts P2-excluded frames as unfilled) |
 | cadence | slowest of {12, 6, 3} with ρ ≥ 0.9 and median \|Δ\| ≤ 0.02 vs 2 min | 12 min: ρ 0.952 [0.615, 1.000], median 0.0077, n = 8 | pass | **12 min** |
 | cadence (2nd opinion, cutouts) | same rule | 12 min ρ 1.000, median 0.0174, n = 5 (6 min fails by float rounding at ρ = 0.9) | pass at 12 | consistent |
 | source | synoptic if median \|diff\| ≤ 0.01 and ρ ≥ 0.9 at the chosen cadence | median 0.0183, ρ 0.600 [−0.636, 1.000], n = 6 | **fail** | **JSOC cutouts** |
@@ -2620,3 +2620,52 @@ Implementation (decided by: me, before running):
 - **Empty-slot reason:** if no frame at all lies within ± cadence/2 → (a) no file in the archive or export. Otherwise every frame in the window is invalid, and the slot takes the reason of the **nearest** frame, with precedence **(b) exposure rule → (c) flare-in-progress (P2 a or b) → (d) QUALITY ≠ 0 → (d) other** (e.g. no mapped pixels).
 - Zero-exposure calibration frames fail both (b) and QUALITY; by this precedence they count as (b).
 - Flags are recomputed from each alarm's stored per-frame series (t_obs, quality, exptime, box), with P2 re-derived from SWPC (same function and regions as the test). The stored `valid` column must reproduce exactly; this is asserted.
+
+### VALIDITY COUNT TEST — RESULTS (descriptive; counts only; no ΔCV; no rule changes; recorded by: me)
+`euv_validity.py` → `data/euv_cad/validity_counts.csv` (per alarm × cadence × source), `validity_summary.csv`, `validity_per_alarm.csv`. The recomputed flags reproduce the test's `valid` column exactly (asserted).
+**Correction in the Phase 4 summary:** 12-min synoptic valid = 11/15, not 8/15. The 8 was the number valid at both 2 and 12 min.
+
+**Valid alarms (overall | true | false)**
+
+| source | cadence | ≥ 90% | ≥ 80% | ≥ 70% |
+|---|---|---|---|---|
+| synoptic (15: 8 true, 7 false) | 2 min | 8 \| 2 \| 6 | 14 \| 7 \| 7 | 15 \| 8 \| 7 |
+| synoptic | 3 min | 9 \| 3 \| 6 | 14 \| 7 \| 7 | 15 \| 8 \| 7 |
+| synoptic | 6 min | 10 \| 4 \| 6 | 14 \| 7 \| 7 | 15 \| 8 \| 7 |
+| synoptic | 12 min | 11 \| 5 \| 6 | 15 \| 8 \| 7 | 15 \| 8 \| 7 |
+| cutout (10: 7 true, 3 false) | 2 min | 5 \| 2 \| 3 | 8 \| 5 \| 3 | 10 \| 7 \| 3 |
+| cutout | 3 min | 5 \| 2 \| 3 | 9 \| 6 \| 3 | 10 \| 7 \| 3 |
+| cutout | 6 min | 6 \| 3 \| 3 | 9 \| 6 \| 3 | 10 \| 7 \| 3 |
+| cutout | 12 min | 7 \| 4 \| 3 | 10 \| 7 \| 3 | 10 \| 7 \| 3 |
+
+**Empty slots by reason (totals over alarms)**
+
+| source | cadence | slots | empty | (a) no file | (b) exposure | (c) flare-in-progress | (d) QUALITY ≠ 0 | (d) other |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| synoptic | 2 | 10,800 | 1,019 | 169 | 14 | 682 | 154 | 0 |
+| synoptic | 3 | 7,200 | 645 | 101 | 4 | 437 | 103 | 0 |
+| synoptic | 6 | 3,600 | 276 | 41 | 2 | 184 | 49 | 0 |
+| synoptic | 12 | 1,800 | 103 | 19 | 1 | 62 | 21 | 0 |
+| cutout | 2 | 7,200 | 737 | 15 | 31 | 580 | 111 | 0 |
+| cutout | 3 | 4,800 | 468 | 7 | 22 | 368 | 71 | 0 |
+| cutout | 6 | 2,400 | 197 | 0 | 5 | 157 | 35 | 0 |
+| cutout | 12 | 1,200 | 69 | 0 | 3 | 53 | 13 | 0 |
+
+**Per alarm** (% filled at 2 min / 12 min; main reason over all cadences):
+- **Synoptic:**
+  - 1 HARP 892 2011-09-26 04:59 true 84.0/89.2 flare
+  - 2 HARP 5745 2015-07-06 18:59 true 89.4/95.8 flare
+  - 3 HARP 7115 2017-09-06 09:59 true 80.3/88.3 flare
+  - 4 HARP 1638 2012-05-08 22:59 true 96.0/100.0 flare
+  - 5 HARP 2663 2013-04-18 19:59 false 83.5/84.2 no file
+  - 6 HARP 5692 2015-06-19 12:59 true 73.6/80.8 flare
+  - 7 HARP 5885 2015-08-26 09:59 true 84.9/95.0 flare
+  - 8 HARP 3291 2013-10-20 20:59 false 99.9/100.0 exposure
+  - 9 HARP 6975 2017-04-01 08:59 true 97.4/98.3 flare
+  - 10 HARP 5111 2015-01-26 06:59 false 93.8/95.8 flare
+  - 11 HARP 4205 2014-06-07 19:59 false 99.9/100.0 exposure
+  - 12 HARP 4321 2014-07-10 18:59 false 99.0/100.0 no file
+  - 13 HARP 3248 2013-10-08 06:59 false 98.3/99.2 flare
+  - 14 HARP 187 2010-09-27 23:59 false 90.1/94.2 QUALITY
+  - 15 HARP 750 2011-08-02 16:59 true 88.5/93.3 flare
+- **Cutout** (first 10): 83.6/89.2, 89.3/95.8, 79.6/88.3, 95.8/99.2, 99.9/100.0 (exposure), 73.9/81.7, 84.6/93.3, 99.9/100.0 (exposure), 97.4/99.2, 93.8/95.8. The main reason is flare-in-progress for all except orders 5 and 8.
