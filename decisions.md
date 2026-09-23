@@ -2830,3 +2830,14 @@ Implementation details (decided by: me, before running):
 - **Extra check (me): WCS not reproducible.** JSOC keyword interfaces (`jsoc_info` rs_list, `show_info`) return keywords at display precision, e.g. CDELT1 0.504362 vs exported 0.504361629, CRPIX1 22.440430 vs 22.4404297. The rebuilt WCS changes the HMI→AIA pixel mapping for 0.009–0.043% of mapped pixels (6 sampled frames per pilot HARP), so ΔCV from direct-access masks cannot equal the exported-mask ΔCV to 1e-6 (the step 2b rule).
 - **Decision (me): masks via normal JSOC exports (the user's FAIL branch)** for all episodes, one export per HARP (magnetogram + bitmap at all its episode T_RECs), url-tar. This keeps the full run exactly reproducible; the cost is extra export time. Flagged for the user.
 - **Saturation flag (implementation, me):** a frame is flagged if any raw pixel > 12,000 DN lies anywhere in the cutout (HARP box + 50″ margin). Saturated pixels are excluded as before. The pixel cut is unchanged; the flag area includes the margin.
+
+### Addition before the full run: per-HARP HMI export test (decided by: user; recorded before running)
+- **Test:** for HMI mask exports (normal export path), ONE export per HARP covering all of that HARP's alarm times, `hmi.sharp_720s[HARP][t1,t2,…]{magnetogram,bitmap}`.
+- **Verification:** on the 3 pilot HARPs, the files must be byte-identical in data and header to per-alarm exports, or produce identical PIL/AR masks and identical ΔCV (\|diff\| < 1e-6).
+- **Rule:** if it passes, per-HARP HMI exports for the full run; if JSOC rejects it or anything differs, keep per-alarm exports. One pending export at a time.
+- **Implementation (me):**
+  - The 3 pilot HARPs have 16 dev alarm times: 3248 × 3, 4231 × 4, 6975 × 9.
+  - 3 per-HARP exports vs 16 per-alarm exports, all `url-tar`, into `data/euv_full/hmi_test/`.
+  - Comparison per file: the data arrays (bytes, including NaN pattern and dtype) and every header card. Cards that can legitimately differ between two export requests of the same record (e.g. an export timestamp) are listed rather than hidden.
+  - Byte-identical data + header = PASS. Otherwise the fallback criterion applies: PIL/AR masks and D-CTRL samples identical; ΔCV checked on the 3 pilot episodes with AIA data.
+  - Runs after the step 2b dry run (one pending export at a time).
