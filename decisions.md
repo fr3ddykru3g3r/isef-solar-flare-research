@@ -2561,3 +2561,54 @@ The 4 with no K2-positive alarm hour: HARPs 9590, 9643, 9822, 10527. The 7 "late
 - Per alarm (cut vs syn): 5745 0.2372 / 0.2409; 1638 0.0431 / 0.1667; 5885 0.1006 / 0.0727; 3291 0.0919 / 0.1006; 6975 0.1378 / 0.1333; 5111 0.4191 / 0.3708.
 
 **Phase 4 (next):** 131 Å ΔCV at 12 min, 15 alarms, from the chosen source (JSOC cutouts, url-tar, pipelined as in the overlap test). Descriptive only.
+
+### Combined EUV test — PHASE 4 RESULTS, SUMMARY and COST (numbers only; recorded by: me). **STOPPED before any full-study download.**
+
+**6. 131 Å ΔCV at 12 min** (JSOC cutouts, url-tar; descriptive; `data/euv_cad/cv_cutout_131.csv`).
+- Valid (≥ 90% filled): 10 of 15.
+
+| order | HARP | fill | valid | ΔCV ± SD(draws) | CV_PIL | CV_ctrl | CV_box |
+|---:|---:|---:|---|---|---:|---:|---:|
+| 1 | 892 | 0.850 | no | 0.0171 ± 0.0003 | 0.5352 | 0.5181 | 0.4458 |
+| 2 | 5745 | 0.908 | yes | 0.3729 ± 0.0047 | 0.7247 | 0.3518 | 0.3515 |
+| 3 | 7115 | 0.808 | no | 0.1119 ± 0.0023 | 0.9915 | 0.8797 | 0.8625 |
+| 4 | 1638 | 0.950 | yes | 0.0037 ± 0.0003 | 0.0684 | 0.0648 | 0.0559 |
+| 5 | 2663 | 0.992 | yes | −0.0089 ± 0.0007 | 0.0484 | 0.0574 | 0.0372 |
+| 6 | 5692 | 0.725 | no | 0.0540 ± 0.0044 | 0.6235 | 0.5695 | 0.6834 |
+| 7 | 5885 | 0.833 | no | 0.0677 ± 0.0003 | 0.1486 | 0.0809 | 0.0849 |
+| 8 | 3291 | 0.992 | yes | 0.0557 ± 0.0006 | 0.1086 | 0.0530 | 0.0532 |
+| 9 | 6975 | 0.967 | yes | 0.0696 ± 0.0004 | 0.1228 | 0.0532 | 0.0750 |
+| 10 | 5111 | 0.925 | yes | 0.1433 ± 0.0011 | 0.2335 | 0.0902 | 0.0855 |
+| 11 | 4205 | 0.992 | yes | 0.0034 ± 0.0006 | 0.0495 | 0.0461 | 0.0244 |
+| 12 | 4321 | 0.983 | yes | 0.0196 ± 0.0005 | 0.0686 | 0.0490 | 0.0406 |
+| 13 | 3248 | 0.975 | yes | 0.1121 ± 0.0014 | 0.1878 | 0.0757 | 0.0627 |
+| 14 | 187 | 0.883 | no | 0.0670 ± 0.0007 | 0.1259 | 0.0589 | 0.0421 |
+| 15 | 750 | 0.892 | no | 0.2117 ± 0.0020 | 0.5466 | 0.3349 | 0.3079 |
+
+- 131 Å exports: 15, all 116–120 frames. Median prep 114 s and download 43 s, with one queue outlier each (prep 1,688 s; download 1,797 s). The overlap was kept throughout.
+
+**7. Summary of choices**
+
+| choice | rule (pre-registered) | measured | pass/fail | final decision |
+|---|---|---|---|---|
+| exposure | drop frames with EXPTIME < 50% of the channel median; divide all frames by EXPTIME | synoptic not pre-normalised (README); drops: 1 per 24 h window (= the QUALITY-flagged 0-s frame), 4231 cutout 94: 3, 4231 12-s: 33; ΔCV changes +0.0022 and +0.0006, the others 0 | applied | rule adopted |
+| slot rule | nearest valid frame within ± cadence/2; alarm valid if ≥ 90% filled | 2-min synoptic: 8/15 valid; 12-min 94 synoptic: 8/15; 12-min 131 cutout: 10/15 | applied | rule adopted (it removes many alarms: fill counts P2-excluded frames as unfilled) |
+| cadence | slowest of {12, 6, 3} with ρ ≥ 0.9 and median \|Δ\| ≤ 0.02 vs 2 min | 12 min: ρ 0.952 [0.615, 1.000], median 0.0077, n = 8 | pass | **12 min** |
+| cadence (2nd opinion, cutouts) | same rule | 12 min ρ 1.000, median 0.0174, n = 5 (6 min fails by float rounding at ρ = 0.9) | pass at 12 | consistent |
+| source | synoptic if median \|diff\| ≤ 0.01 and ρ ≥ 0.9 at the chosen cadence | median 0.0183, ρ 0.600 [−0.636, 1.000], n = 6 | **fail** | **JSOC cutouts** |
+| crop-on-download | cropped ΔCV = full-disk ΔCV, \|diff\| < 1e-6 | \|diff\| = 0 on 3 pilot HARPs; 727–758 → 141–245 MB per 1,000 frames | pass | available (synoptic not chosen) |
+| JSOC overlap | submit the next export once the previous is complete, during the tar download | never rejected in 25 exports | pass | pipelined exports |
+| synoptic connections | 12; drop to 6 on errors/throttling | 0 errors; 2.06 files/s overall | — | stayed at 12 |
+| 1600 Å | not re-tested | validated by the 3-HARP pilot only | limitation | stated |
+
+**8. Full-study cost, 547 dev alarms, JSOC cutouts at 12 min, one url-tar export per HARP (union of windows), pipelined** (`data/euv_cad/cost_full_study.csv`)
+- Inputs, all measured: 180 requests/channel; 43,030 frames/channel (239 per request); prep = 87 + 0.236 × frames s (fit, n = 24 exports, one 1,688-s queue outlier excluded) → 143 s/request; median tar rate 0.76 MB/s → 68 s/request; MB/frame 94 Å 0.216, 131 Å 0.312. **1600 Å assumed = 94 Å** (not measured at 12 min by url-tar). Processing 0.09 s/frame per episode-frame (547 × 120), 1 core.
+
+| channels | requests | files | GB | download h (pipelined) | download h (sequential) | processing h (1 core) |
+|---|---:|---:|---:|---:|---:|---:|
+| 94 + 1600 Å | 360 | 86,060 | 18.6 | 14.3 | 21.2 | 3.3 |
+| 94 + 1600 + 131 Å | 540 | 129,090 | 32.0 | 21.5 | 31.8 | 4.9 |
+
+JSOC queue outliers (~30 min per request, seen twice in 25) are not in these medians.
+
+**Wall-clock per phase (stall excluded):** Phase 1: 12.4 min. Phase 2: download 88.5 min (10,800 synoptic) + ΔCV 19.1 min. Phase 3: download 70.9 min (10 × 2-min cutouts) + ΔCV 21.4 min. Phase 4: 131 download 55.1 min + ΔCV 5.1 min.

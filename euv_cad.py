@@ -288,7 +288,7 @@ def verify_crop():
 
 
 # ---------------------------------------------------------------- Phase 3: JSOC 2-min cutouts (url-tar), overlap test
-def cut_spec(e, wl=94):
+def cut_spec(e, wl=94, cad=2):
     mag = sunpy.map.Map(glob.glob(f"{d_of(e)}/1/*magnetogram*.fits")[0])
     bl, tr = mag.bottom_left_coord, mag.top_right_coord
     x0, x1 = sorted([bl.Tx.to_value("arcsec"), tr.Tx.to_value("arcsec")]); y0, y1 = sorted([bl.Ty.to_value("arcsec"), tr.Ty.to_value("arcsec")])
@@ -296,10 +296,10 @@ def cut_spec(e, wl=94):
     im = {"im_patch": {"t_ref": t.strftime("%Y-%m-%dT%H:%M:%S"), "t": 0, "r": 0, "c": 0, "locunits": "arcsec",
                        "boxunits": "arcsec", "x": round((x0 + x1) / 2, 1), "y": round((y0 + y1) / 2, 1),
                        "width": round(x1 - x0 + 2 * MARGIN, 1), "height": round(y1 - y0 + 2 * MARGIN, 1)}}
-    return f"aia.lev1_euv_12s[{fmt(t - pd.Timedelta(hours=24) + pd.Timedelta(minutes=2))}-{fmt(t)}@2m][{wl}]{{image}}", im
+    return f"aia.lev1_euv_12s[{fmt(t - pd.Timedelta(hours=24) + pd.Timedelta(minutes=cad))}-{fmt(t)}@{cad}m][{wl}]{{image}}", im
 
 
-def cutouts(n=10, wl=94):
+def cutouts(n=10, wl=94, cad=2):
     """first n alarms (seed-1 order). Overlap test: submit the next export as soon as the previous is complete,
     while its tar downloads; on a 'pending export' rejection, revert to sequential and log the response."""
     import threading
@@ -328,9 +328,9 @@ def cutouts(n=10, wl=94):
 
     for e in a.itertuples():
         d = f"{d_of(e)}/cut{wl}"
-        if len(glob.glob(f"{d}/*.fits")) >= 700:
+        if len(glob.glob(f"{d}/*.fits")) >= 0.97 * 24 * 60 / cad:
             log(f"cutout {e.order}: present, skipped"); continue
-        ds, proc = cut_spec(e, wl)
+        ds, proc = cut_spec(e, wl, cad)
         while True:
             t_sub = time.time()
             r = c.export(ds, method="url-tar", protocol="fits", process=proc)
@@ -356,7 +356,7 @@ def cutouts(n=10, wl=94):
             th.join()
     for th in dl_threads:
         th.join()
-    pd.DataFrame(rows).to_csv(f"{ROOT}/cutout_timing.csv", index=False)
+    pd.DataFrame(rows).to_csv(f"{ROOT}/cutout_timing_{wl}_{cad}min.csv", index=False)
     log(f"cutouts done; overlap mode kept: {overlap}")
 
 
@@ -375,6 +375,10 @@ if __name__ == "__main__":
         g = agreement(df); g.to_csv(f"{ROOT}/agreement_synoptic.csv", index=False); log(g.to_string(index=False))
     elif cmd == "cutouts":
         cutouts()
+    elif cmd == "cut131":
+        cutouts(n=15, wl=131, cad=12)
+    elif cmd == "cv131":
+        df = cv_all("cutout", 131, tag="cutout"); log(df[df.cad_min == 12].to_string(index=False))
     elif cmd == "cv_cut":
         df = cv_all("cutout", 94, ids=list(range(10)), tag="cutout")
         g = agreement(df); g.to_csv(f"{ROOT}/agreement_cutout.csv", index=False); log(g.to_string(index=False))
