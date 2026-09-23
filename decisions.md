@@ -2822,3 +2822,11 @@ Implementation details (decided by: me, before running):
 - **Fill (step 4):** 120 slots t − 24h + k·12 min; a slot is filled if a valid frame (per version) lies within ± 6 min. Candidates 90 / 80 / 70%; unweighted episode counts.
 - **Workers:** 8 processes (10 cores − 2). Resumable: FITS files checked by size and header; failed exports retried 3× with backoff, then logged and skipped.
 - **Outputs:** `data/euv_full/` only (`dryrun/`, `hmi/`, `aia/<HARP>/`, `series/`, `results/`, `logs/`). Per-episode results are stored without label summaries.
+
+### Step 2a — HMI direct-access benchmark: RESULT and mask-source decision (recorded by: me)
+`euv_full.py hmi_check` → `data/euv_full/dryrun/hmi_direct_check.csv`. 3 pilot records via `url_quick` / `as-is`, with headers rebuilt from a keyword query.
+- **The user's PASS rule is met:** pixel arrays identical (shape, NaN pattern, max \|diff\| = 0 on finite pixels), bitmaps identical, PIL and AR masks 0 differing pixels, D-CTRL samples identical.
+- Time per record: direct 9.3–11.7 s vs logged export 18.4–87.1 s.
+- **Extra check (me): WCS not reproducible.** JSOC keyword interfaces (`jsoc_info` rs_list, `show_info`) return keywords at display precision, e.g. CDELT1 0.504362 vs exported 0.504361629, CRPIX1 22.440430 vs 22.4404297. The rebuilt WCS changes the HMI→AIA pixel mapping for 0.009–0.043% of mapped pixels (6 sampled frames per pilot HARP), so ΔCV from direct-access masks cannot equal the exported-mask ΔCV to 1e-6 (the step 2b rule).
+- **Decision (me): masks via normal JSOC exports (the user's FAIL branch)** for all episodes, one export per HARP (magnetogram + bitmap at all its episode T_RECs), url-tar. This keeps the full run exactly reproducible; the cost is extra export time. Flagged for the user.
+- **Saturation flag (implementation, me):** a frame is flagged if any raw pixel > 12,000 DN lies anywhere in the cutout (HARP box + 50″ margin). Saturated pixels are excluded as before. The pixel cut is unchanged; the flag area includes the margin.
