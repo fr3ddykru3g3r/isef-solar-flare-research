@@ -3178,3 +3178,29 @@ Code `euv_step6.py`, console `euv_step6.log`, outputs `data/euv_full/step6/` (pe
 
 - Downloads overlap with the next export's prep (one pending export at a time), so the wall time is set by Σ prep. The dev ratio (13.2 h wall / 10.44 h prep) covers the compute tail and retries.
 - A single HMI export across HARPs has not been tested. The record-set form `hmi.sharp_720s[h1,h2,…][t1,…]` is a HARP × time cross-product and would return extra records, so the exact form must be tested (and verified as in the per-HARP HMI test) before use.
+
+## 2026-09-24 — EXPLORATORY DIAGNOSTIC on step 6 ΔCV — NOT PRE-REGISTERED (requested by: user; recorded BEFORE running)
+**Status:** EXPLORATORY DIAGNOSTIC. Not pre-registered, no new claims, no refits of the pre-registered models. Step 6 result and its reading unchanged.
+**Data:** dev 2010–2019, primary version, the 540 episodes of the step 6 PRIMARY set.
+
+**User's items, verbatim:**
+1. "Overlap with flare history: Spearman ρ of ΔCV with n_C, n_M, n_X, (n_C+n_M+n_X) and gate score."
+2. "Timing: for true episodes, ΔCV vs hours from t to the flare start (Spearman ρ); median ΔCV for flare within 0–6 h vs 6–24 h after t."
+3. "Eventually-flaring: weighted AUC of ΔCV ALONE for (true + delayed) vs other false, and for true vs other false; HARP-bootstrap 95% CI (2,000, seed 0)."
+4. "Skew: ΔCV min, 1st, 5th, 50th, 95th, 99th percentile, max; number of |ΔCV| > 3 SD."
+
+**Implementation (decided by: me, before running):**
+- Code `euv_explore.py`; console `euv_explore.log`; outputs `data/euv_full/step6/explore_*.csv`.
+- **Item 1:** `scipy.stats.spearmanr` on all 540 episodes, unweighted; ρ, p and n reported.
+- **Item 2:**
+  - Flare start = the first M1+ (K2, `swpc.load`, flux ≥ 1e-5) whose NOAA region is in the episode's `noaa_ars` and whose start is in (t, t + 24 h]. This is the same join as `diag_testchecks.py` item 1.
+  - The number of true episodes with such a flare is reported (expected 96).
+  - Windows: 0–6 h = (0, 6]; 6–24 h = (6, 24].
+- **Item 3:**
+  - Score = raw ΔCV, higher = positive class; no model.
+  - Weights = the step 6 PRIMARY weights (1/n per HARP over the 540 episodes). The same weights are used in both comparisons; for "true vs other false" the delayed episodes are dropped.
+  - Bootstrap: resample HARPs with replacement, 2,000 times, `np.random.RandomState(0)`. Resamples with only one class are skipped and counted. 2.5/97.5 percentiles.
+- **Item 4:**
+  - Percentiles use `np.percentile` (linear).
+  - SD = sample SD (ddof = 1) over the 540 values.
+  - Two counts are reported, because the wording allows both: |ΔCV| > 3 SD, and |ΔCV − mean| > 3 SD.
