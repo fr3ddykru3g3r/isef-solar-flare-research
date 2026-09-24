@@ -3116,3 +3116,11 @@ ISEF: no project changes after the affiliated fair. Extra data only with the sam
   - Test weights: 1 / (valid test episodes in the HARP), per version.
   - Delayed test episodes count as false.
   - The frozen Stage 4/5 model-A files are not used for this comparison, because A must be fitted on the same episodes as E94 (item a).
+
+### Step 6 — addition before any label split: episode with undefined ΔCV (decided by: me; label not looked at)
+- First run of `euv_step6.py`: all pre-registered checks passed (stored primary/sens ΔCV and fill reproduced from the series for 546 episodes, |diff| < 1e-9; Stage 4 `p_A` reproduced with the fold column, max |diff| 1.1e-16; the twins code reproduces the 83 Stage 4 pairs). The run then stopped at the `ΔCV not NaN` assertion, before any model with ΔCV was fitted.
+- **Cause:** episode `4839_20141123T2259` has `n_pix = 0`. The HMI magnetogram at t has no PIL pixels under the ±150 G / 16-px rule, so there are no PIL or control samples and ΔCV is undefined in every version. Its fill passes 80% in both versions.
+- **Rule (me):** an analysis set = fill ≥ 80% for that version AND a defined ΔCV for that version. This removes this one episode from every set, for both A and E94 (item a: same episodes).
+  - Expected sizes: PRIMARY 540 (step 4: 541), S1 527 (step 4: 528).
+  - The step 4 threshold choice is not re-run; it stays at 80% (ff3c11c).
+- The episode's label was not looked at for this decision. The n true/false per set is reported with the results.
