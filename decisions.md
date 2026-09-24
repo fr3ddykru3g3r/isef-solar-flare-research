@@ -3234,3 +3234,64 @@ Code `euv_step6.py`, console `euv_step6.log`, outputs `data/euv_full/step6/` (pe
 - Mean 0.1196, SD 0.1981.
 - Percentiles: min −0.5021; 1st −0.3700; 5th −0.0808; 50th 0.0748; 95th 0.4201; 99th 0.8296; max 1.6496.
 - |ΔCV| > 3 SD: 10 episodes; |ΔCV − mean| > 3 SD: 7 episodes.
+
+## 2026-09-25 — PHASE X: SPATIAL 94 Å MEASURES — PRE-REGISTRATION (decided by: user; recorded BEFORE computing anything new)
+**Label: EXPLORATORY on dev.** The step 6 result ("no detectable improvement", 04a2abf) stands and is reported regardless. Dev 2010–2019 only; no downloads; frozen files and FINAL results unchanged.
+
+**User's text, verbatim:**
+- "Fixed candidate list (no additions after results; definitions follow the cited papers):"
+  - "R1 PIL running-difference kurtosis (Leka et al. 2023, arXiv:2212.11255, κ(ΔI)): for consecutive valid frames ≤ 24 min apart, excess kurtosis of (I_k − I_{k−1}) over PIL-mask pixels (DN/s, exposure-normalised, saturated pixels excluded); summary = median over the window; minus the same statistic on the 20 control draws (D-CTRL form)."
+  - "R2 PIL running-difference skew (Leka et al. 2023, ς(ΔI)): as R1 with skewness instead of kurtosis; minus controls."
+  - "R3 PIL transient-brightening fraction (adapted from BADPIT, André-Hoffmann et al. 2026, §3.2): per pixel, threshold = mean + 3 SD of that pixel over all valid frames in (t−24h, t]; a brightening = a connected patch of ≥ 4 pixels above threshold (8-connectivity); per frame, fraction of PIL pixels inside brightenings; summary = mean over frames; minus the same on the 20 control draws. Stated deviation: BADPIT's ≥ 5-consecutive-frame rule cannot be applied at 12-min cadence."
+  - "R4 Whole-box counterparts of R1–R3 (no control subtraction), as in Leka's whole-field parametrisation."
+- "Rules: primary-version frame rules (QUALITY, exposure rule, saturated pixels excluded; flare frames kept), same masks, 80% fill, the same label-blind exclusion if a value is undefined (report n excluded). Consecutive frames are differenced after the existing registration; report the median frame-to-frame pointing shift in pixels as a check."
+- "Stated deviations from the papers: 12-min vs 72-s (Leka) / 12-s (BADPIT) sampling; PIL-local with matched controls is this project's addition."
+- "Dev evaluation: each candidate added to model A exactly as in step 6 (same fold assignment, weights 1/n per HARP, estimator and preprocessing as frozen_spec.json, HARP bootstrap 10,000, seed 20260921). Report Δ = logloss(A) − logloss(A + Rk) with 95% CI, and weighted AUC, for ALL candidates."
+- "Selection rule: the PIL candidate (R1–R3) with the largest dev Δ; it qualifies only if Δ > 0. Dev selection is not confirmation."
+- "Held-out plan (NOT run now): if one qualifies, it will be computed ONCE on the 2021/2023/2024 test episodes with the same design as 3283478 item 1h, after the held-out download. Disclose that test-year labels and magnetic results were seen earlier; test-year EUV values were not."
+- **Disclosure (as required):**
+  - Test-year labels and magnetic (gate, model A/B) results were seen earlier: Stage 5 and the read-only checks of 2026-09-23.
+  - No test-year EUV value has been computed or seen.
+  - On dev, the step 6 ΔCV results and the exploratory diagnostic (064725c) were seen before this list was fixed.
+
+**Implementation (decided by: me, before computing):**
+- **Code:** `euv_spatial.py` (new). Outputs:
+  - `data/euv_full/spatial/<eid>_pairs.csv` (per frame pair: κ and ς for the 20 PIL draws, the 20 control draws and the box; Δt; pointing shift);
+  - `data/euv_full/spatial/<eid>_frames.csv` (per frame: brightening fraction for the same sets);
+  - `data/euv_full/spatial/<eid>.json` (summaries R1–R4 and checks).
+  - The timing runs (B) write to `data/euv_full/spatial_timing/{single,pool}/`.
+- **Frames:** the rows with `valid_primary` in `data/euv_full/series/<eid>.csv`, matched to the AIA files by T_REC.
+  - Each frame is processed exactly as in `euv_full.compute_episode`: raw > 12,000 DN → NaN; divide by EXPTIME; `update_pointing` with the JSOC pointing table for (t − 26 h, t + 2 h); `register_cutout`; `hmi_to_frame`.
+  - The pointing table is a JSOC keyword query, as in the original run; it is not a data export or download.
+  - **Check:** `frame_means` of every processed frame must reproduce the stored series values (all sample sets, |diff| < 1e-9). Otherwise the run stops.
+- **Pixel values:** per HMI patch pixel, the registered AIA value (DN/s) at its mapped pixel (`hmi_to_frame`, differential rotation to each frame's time). This is the same mapping as ΔCV; it is NaN outside the cutout or if saturated. The same HMI pixel is followed from frame to frame, so the running difference I_k − I_{k−1} is taken per HMI pixel after the existing registration.
+- **Sets:** from `euv_dctrl.samples` (same masks and draws as ΔCV):
+  - `pil_k` and `ctrl_k`, k = 0–19; `pil_k` is the full PIL mask unless the control candidates are too few.
+  - `box` = all HMI patch pixels, used for R4.
+- **R1/R2 (κ, ς):**
+  - Pairs = consecutive valid frames with 0 < Δt(T_OBS) ≤ 24 min.
+  - Per pair and set: `scipy.stats.kurtosis(x, fisher=True, bias=True)` / `scipy.stats.skew(x, bias=True)` over the pixels finite in both frames; ≥ 4 pixels are required, otherwise NaN.
+  - Per set: the median over pairs (NaN ignored).
+  - R1 = mean over k of [median κ(pil_k) − median κ(ctrl_k)]; R2 likewise with ς.
+  - R4a = median κ(box); R4b = median ς(box).
+- **R3:**
+  - Per HMI patch pixel, over all valid frames of the window: threshold = mean + 3 SD (ddof = 1). A threshold needs ≥ 3 finite values; otherwise the pixel is never "above".
+  - Per frame, above = value > threshold. Connected components use 8-connectivity on the HMI patch grid (`scipy.ndimage.label`, 3×3 structure).
+  - **Pixel count:** a component is a brightening if it covers ≥ 4 distinct AIA pixels (distinct mapped AIA indices). The rule is thus in AIA pixels as in BADPIT, while connectivity is assessed on the surface-tracked HMI grid.
+  - Per frame and set: the fraction of the set's pixels with a finite value that lie in a brightening.
+  - R3 = mean over k of [mean over frames of frac(pil_k) − mean over frames of frac(ctrl_k)]; R4c = mean over frames of frac(box).
+- **Pointing-shift check:**
+  - Per frame, the pixel position of the HMI patch centre, mapped with differential rotation into the registered frame.
+  - Shift = Euclidean distance in AIA pixels between consecutive pair frames.
+  - Reported: the median over all pairs of all episodes, plus the 95th percentile and the maximum.
+- **Valid sets:** the primary 80% set (`primary_fill ≥ 0.80`, 541 episodes) AND a defined value of that candidate. The number excluded is reported per candidate. `4839_20141123T2259` (no PIL pixels) is expected to be undefined for R1–R3; for R4 it can be defined and is then kept.
+- **Candidates evaluated:** R1, R2, R3, R4a (κ box), R4b (ς box), R4c (brightening fraction box).
+- **Dev evaluation:**
+  - The step 6 `compare` procedure: the `fold` column from `data/stage4/oof_cohort_dev.csv`; weights 1/n per HARP over the candidate's valid set; features [score, n_C, n_M, n_X] (+ Rk); a StandardScaler per training fold; the frozen LogisticRegression; weighted log-loss; HARP bootstrap 10,000 with `RandomState(20260921)`; weighted AUC. A and A + Rk are fitted on the same episodes.
+  - **Check:** the same code applied to step 6 PRIMARY ΔCV must reproduce the step 6 Δ and CI (|diff| < 1e-12).
+- **Timing (B):**
+  - 10 dev episodes drawn label-blind: `RandomState(0)`, from the 546 with results.
+  - Single process, then an 8-worker pool; the two outputs must be identical.
+  - Projection = N × (mean per-episode time inside the pool) / 8, for N = 546 dev and N = 313 test.
+  - If the dev projection is > 8 h: STOP and report.
+- **Selection (only R1–R3):** the largest Δ; qualifies only if Δ > 0. R4a–c are reported but cannot be selected.
