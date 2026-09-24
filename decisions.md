@@ -2874,3 +2874,32 @@ HARP 8 (1 episode, t = 2010-05-04 20:59 UTC): the AIA export failed 3× with JSO
   - Neither fix can change any of the 535 existing results: those episodes contain no such frames, and their HMI files were found.
 - **4 HARPs below 97% of expected frames:** 2635 and 2636 (513/530), 3258 (344/360), 6206 (698/795). Their episodes were computed. The resume pass re-exports them once to confirm the gaps are in the archive.
 - **Resume pass:** `euv_full.py run` again (downloads and existing results skipped).
+
+### Full run — resume pass and STEP 4 COUNT-FIRST THRESHOLD (counts only; no ΔCV read or reported; recorded by: me)
+**Resume pass** (05:54 → 06:16): 11 missing episodes computed → **546 of 547 episodes have results.**
+- Missing: **HARP 8** (1 episode, 2010-05-04), with no `aia.lev1_euv_12s` data before 2010-05-13; JSOC status 4 again, 3×.
+- The 4 short HARPs re-exported under the same JSOC request IDs with the same counts, so their gaps are in the archive: 2635 and 2636 513/530, 3258 344/360, 6206 698/795. HARP 4610 AIA 120/120.
+- **Totals:** 180 HMI exports + 183 AIA exports (179 HARPs; 4 repeats); 14.5 GB; pass 1 wall time 12.8 h + resume 0.4 h.
+
+**Frames** (546 episodes, 65,253 frames in their (t−24h, t] windows):
+- QUALITY ≠ 0: 1,440.
+- Exposure rule: 661.
+- Flare-in-progress: 2,180, removed in the SENSITIVITY version only.
+- Saturation-flagged frames (pixels > 12,000 DN excluded, frame kept): 321.
+- Frames without `SAT_ROT`: 12, all QUALITY = 4.
+
+**Coverage flag:** 26 episodes (14 HARPs) have HMI patch pixels mapping outside the cutout on ≥ 1 valid frame. Maximum fraction outside: median 0.69%, maximum 5.8%; > 1% in 10 episodes, > 10% in none.
+
+**Valid episodes (fill ≥ threshold; unweighted; the denominator includes HARP 8's episode as not valid)**
+
+| threshold | version | valid / 547 | true valid / 98 | false valid / 449 | frac true | frac false | gap (pp) |
+|---|---|---:|---:|---:|---:|---:|---:|
+| 90% | primary | 530 | 94 | 436 | 0.9592 | 0.9710 | 1.19 |
+| 90% | sensitivity | 445 | 63 | 382 | 0.6429 | 0.8508 | **20.79** |
+| 80% | primary | 541 | 96 | 445 | 0.9796 | 0.9911 | 1.15 |
+| 80% | sensitivity | 528 | 89 | 439 | 0.9082 | 0.9777 | 6.96 |
+| 70% | primary | 546 | 97 | 449 | 0.9898 | 1.0000 | 1.02 |
+| 70% | sensitivity | 542 | 95 | 447 | 0.9694 | 0.9955 | 2.62 |
+
+**Rule** (highest threshold with gap ≤ 10 pp in BOTH versions): 90% fails (sensitivity 20.79 pp); 80% passes (1.15 and 6.96 pp) → **fill threshold = 80%.**
+**Failed / missing HARPs:** HARP 8 only (no AIA data). **STOPPED — awaiting the user's go-ahead for step 6. No ΔCV summary by label has been computed or output.**
