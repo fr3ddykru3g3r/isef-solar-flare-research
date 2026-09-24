@@ -1,0 +1,32 @@
+EXPLORATORY DIAGNOSTIC (not pre-registered); dev 2010-2019, primary version, n = 540
+
+1. Spearman rho of dCV with flare history and gate score (unweighted)
+   variable   n    rho        p
+        n_C 540 0.2294 7.04e-08
+        n_M 540 0.0614 1.54e-01
+        n_X 540 0.0345 4.24e-01
+n_C+n_M+n_X 540 0.2231 1.61e-07
+      score 540 0.0501 2.45e-01
+
+2. true episodes 96; with a region M1+ start in (t, t+24h]: 96
+   Spearman rho(dCV, hours to flare start) = -0.0294 (p 0.7765, n 96)
+   lead (0, 6] h:  n 31, median dCV 0.1189; lead (6, 24] h: n 65, median dCV 0.1001
+
+3. weighted AUC of dCV alone (weights 1/n per HARP over the 540); HARP bootstrap 2,000, seed 0
+                     comparison  episodes  positive  negative  HARPs  weighted_AUC  CI_lo  CI_hi  skipped_resamples
+(true + delayed) vs other false       540       142       398    178        0.5386 0.4692 0.6128                  0
+            true vs other false       494        96       398    173        0.5271 0.4395 0.6079                  0
+
+4. dCV distribution (primary, 540)
+n                          540.0000
+mean                         0.1196
+SD                           0.1981
+min                         -0.5021
+p1                          -0.3700
+p5                          -0.0808
+p50                          0.0748
+p95                          0.4201
+p99                          0.8296
+max                          1.6496
+n_abs_gt_3SD                10.0000
+n_abs_dev_from_mean_gt_3SD   7.0000

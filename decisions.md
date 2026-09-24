@@ -3204,3 +3204,33 @@ Code `euv_step6.py`, console `euv_step6.log`, outputs `data/euv_full/step6/` (pe
   - Percentiles use `np.percentile` (linear).
   - SD = sample SD (ddof = 1) over the 540 values.
   - Two counts are reported, because the wording allows both: |ΔCV| > 3 SD, and |ΔCV − mean| > 3 SD.
+
+### EXPLORATORY DIAGNOSTIC — RESULT (not pre-registered; numbers only)
+`euv_explore.py` → `euv_explore.log`. Dev 2010–2019, primary version, 540 episodes. First run stopped on a column-name clash (`weight` in both inputs); the step 6 weights are used, as recorded.
+
+**1. Spearman ρ of ΔCV (unweighted, n = 540):**
+
+| variable | ρ | p |
+|---|---:|---:|
+| n_C | 0.2294 | 7.04e-08 |
+| n_M | 0.0614 | 0.154 |
+| n_X | 0.0345 | 0.424 |
+| n_C+n_M+n_X | 0.2231 | 1.61e-07 |
+| gate score | 0.0501 | 0.245 |
+
+**2. Timing (true episodes):**
+- 96 of 96 have a region M1+ start in (t, t + 24 h].
+- ρ(ΔCV, hours to flare start) = −0.0294 (p 0.777, n 96).
+- Median ΔCV: 0.1189 for lead (0, 6] h (n 31); 0.1001 for lead (6, 24] h (n 65).
+
+**3. Weighted AUC of ΔCV alone** (weights 1/n per HARP over the 540; HARP bootstrap 2,000, seed 0; 0 resamples skipped):
+
+| comparison | episodes | pos | neg | HARPs | AUC | 95% CI |
+|---|---:|---:|---:|---:|---:|---|
+| (true + delayed) vs other false | 540 | 142 | 398 | 178 | 0.5386 | [0.4692, 0.6128] |
+| true vs other false | 494 | 96 | 398 | 173 | 0.5271 | [0.4395, 0.6079] |
+
+**4. ΔCV distribution (n = 540):**
+- Mean 0.1196, SD 0.1981.
+- Percentiles: min −0.5021; 1st −0.3700; 5th −0.0808; 50th 0.0748; 95th 0.4201; 99th 0.8296; max 1.6496.
+- |ΔCV| > 3 SD: 10 episodes; |ΔCV − mean| > 3 SD: 7 episodes.
