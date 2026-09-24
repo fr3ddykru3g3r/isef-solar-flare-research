@@ -1,0 +1,8 @@
+dev check of the prep model: logged 10.44 h vs model 10.43 h; dev wall / dev prep = 1.26
+      bytes_per_file  dl_s_per_file   prep_s    files      n
+kind                                                        
+aia       270168.988          0.360  24352.3  56040.0  183.0
+hmi       259603.656          1.807  13223.4   1094.0  180.0
+                   plan  HARPs  episodes  exports  AIA_files  HMI_files   GB  prep_h  download_h_serial  wall_h_dev_ratio
+   per-HARP HMI exports     98       313      196      31290        626 8.62    5.69               3.44              7.20
+one combined HMI export     98       313       99      31290        626 8.62    3.75               3.44              4.75

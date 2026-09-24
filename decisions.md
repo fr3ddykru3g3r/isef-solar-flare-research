@@ -3167,3 +3167,14 @@ Code `euv_step6.py`, console `euv_step6.log`, outputs `data/euv_full/step6/` (pe
 - frames in P2 flare intervals: 2,180
 
 **(g) Pre-stated rule, applied mechanically:** PRIMARY Δ = −0.0043, CI [−0.0092, 0.0003]. Δ is not > 0 and the CI includes 0, so the rule's condition is not met. Reading: "no detectable improvement".
+
+## 2026-09-24 — Held-out EUV test: ESTIMATE only (no export, no download) (requested by: user)
+`euv_test_estimate.py` → `euv_test_estimate.log`. Inputs: cohort `data/stage5/cohort_test_primary.csv` (313 episodes, 98 HARPs) and the same per-HARP export plan as the dev run. Prep per export = 72 s + 0.2 s/file (user; on the dev exports this model gives 10.43 h vs 10.44 h logged). Bytes/file and download s/file are dev averages (AIA 270 kB, 0.36 s; HMI 260 kB, 1.81 s).
+
+| plan | exports | AIA files | HMI files | GB | Σ prep (h) | serial download (h) | wall (h) × dev ratio 1.26 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| per-HARP HMI exports | 196 | 31,290 | 626 | 8.62 | 5.69 | 3.44 | 7.20 |
+| one combined HMI export | 99 | 31,290 | 626 | 8.62 | 3.75 | 3.44 | 4.75 |
+
+- Downloads overlap with the next export's prep (one pending export at a time), so the wall time is set by Σ prep. The dev ratio (13.2 h wall / 10.44 h prep) covers the compute tail and retries.
+- A single HMI export across HARPs has not been tested. The record-set form `hmi.sharp_720s[h1,h2,…][t1,…]` is a HARP × time cross-product and would return extra records, so the exact form must be tested (and verified as in the per-HARP HMI test) before use.
