@@ -3124,3 +3124,46 @@ ISEF: no project changes after the affiliated fair. Extra data only with the sam
   - Expected sizes: PRIMARY 540 (step 4: 541), S1 527 (step 4: 528).
   - The step 4 threshold choice is not re-run; it stays at 80% (ff3c11c).
 - The episode's label was not looked at for this decision. The n true/false per set is reported with the results.
+
+## 2026-09-24 — STEP 6 RESULT (dev 2010–2019, internal 5-fold CV — NOT a held-out test; numbers only)
+Code `euv_step6.py`, console `euv_step6.log`, outputs `data/euv_full/step6/` (per-set OOF probabilities, twins pairs, the PRIMARY/S1 fold models for the held-out test). Checks passed: stored ΔCV/fill reproduced from the series (546 episodes, |diff| < 1e-9); Stage 4 `p_A` reproduced (1.1e-16); Stage 4 pairs reproduced (83). Excluded for undefined ΔCV: `4839_20141123T2259` (entry above).
+
+**(b, c) E94 vs A.** Δ = LL(A) − LL(E94), positive = EUV helps. HARP bootstrap 10,000, seed 20260921. Weighted AUC.
+
+| set | episodes | true | false | HARPs | LL(A) | LL(E94) | Δ | 95% CI | AUC A | AUC E94 |
+|---|---:|---:|---:|---:|---:|---:|---:|---|---:|---:|
+| PRIMARY | 540 | 96 | 444 | 178 | 0.3220 | 0.3262 | −0.0043 | [−0.0092, 0.0003] | 0.7430 | 0.7196 |
+| S1 flare-excluded | 527 | 89 | 438 | 178 | 0.3375 | 0.3421 | −0.0046 | [−0.0102, 0.0004] | 0.7490 | 0.7203 |
+| S2 primary, no overhang | 514 | 90 | 424 | 169 | 0.3220 | 0.3269 | −0.0049 | [−0.0108, 0.0002] | 0.7262 | 0.6925 |
+| S3 flare + 2 h after end | 332 | 31 | 301 | 135 | 0.3705 | 0.3747 | −0.0042 | [−0.0199, 0.0094] | 0.4173 | 0.4873 |
+
+- S3 at 80%: 332 of 547 valid (true 31/98, false 301/449). The +2 h extension removes 9,792 frames beyond S1.
+
+**(d) Magnetic twins.** Gate score, caliper 0.0747, Stage 4 procedure. Paired ΔCV difference = true − false. CIs: HARP bootstrap clustered by true HARP, 10,000 resamples.
+
+| | PRIMARY | S1 |
+|---|---:|---:|
+| true episodes / pairs / unmatched | 96 / 81 / 15 | 89 / 79 / 10 |
+| true HARPs in pairs | 34 | 34 |
+| delayed episodes among matched false | 9 | 8 |
+| max \|score diff\| | 0.0623 | 0.0733 |
+| mean [95% CI] | 0.0776 [−0.0463, 0.2159] | 0.0767 [−0.0331, 0.2081] |
+| median [95% CI] | 0.0321 [−0.0346, 0.0999] | 0.0564 [0.0098, 0.0995] |
+| fraction of pairs with true > false | 0.6049 | 0.6709 |
+| Wilcoxon p (two-sided) | 0.0979 | 0.0228 |
+
+**(e) Descriptive ΔCV** (unweighted episodes; no test). Values are median [Q1, Q3].
+
+| set | true | delayed | other false |
+|---|---|---|---|
+| PRIMARY | n 96: 0.1007 [0.0415, 0.2142] | n 46: 0.1308 [0.0437, 0.1688] | n 398: 0.0678 [0.0203, 0.1768] |
+| S1 | n 89: 0.0857 [0.0404, 0.1737] | n 44: 0.1043 [0.0437, 0.1721] | n 394: 0.0561 [0.0144, 0.1396] |
+
+**(f) Frame counts** (recomputed from the series; identical to the 2026-09-24 entry, item 1c):
+- exposure-rule frames: 661
+  - QUALITY ≠ 0: 544; QUALITY == 0: 117
+  - inside a P2 flare interval: 86 (any QUALITY), 68 (QUALITY == 0)
+- frames total: 65,253
+- frames in P2 flare intervals: 2,180
+
+**(g) Pre-stated rule, applied mechanically:** PRIMARY Δ = −0.0043, CI [−0.0092, 0.0003]. Δ is not > 0 and the CI includes 0, so the rule's condition is not met. Reading: "no detectable improvement".
