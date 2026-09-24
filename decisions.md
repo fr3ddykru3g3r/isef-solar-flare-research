@@ -2860,3 +2860,17 @@ Implementation details (decided by: me, before running):
 
 ### Full run — data-availability note (recorded by: me, during the run)
 HARP 8 (1 episode, t = 2010-05-04 20:59 UTC): the AIA export failed 3× with JSOC status 4. A keyword query shows `aia.lev1_euv_12s` 94 Å has **no records before 2010-05-13**; the first record is 2010-05-13T00:00:02Z. It is the only dev episode with t < 2010-05-14, so the episode has no AIA data and is listed as missing ("no AIA data"). This is not a pipeline fault.
+
+### Full run, pass 1 — completion and fixes before the resume pass (recorded by: me)
+- **Pass 1** (2026-09-23 17:01 → 2026-09-24 05:52, 12.8 h): 180 HMI + 178 AIA exports; 53,852 of 54,165 expected frames; 14.5 GB. Episode results: 535 of 547.
+- **12 without a result:**
+  - HARP 8, no AIA data before 2010-05-13 (1).
+  - HARP 2037, pointing-table query timeout (1).
+  - HARP 4610, HMI files present but named by record number (`hmi.sharp_720s.4519292.*`), so the file-finder missed them (1). Headers verified: HARPNUM 4610, T_REC 2014.09.29_16:00.
+  - 9 episodes (HARPs 4424, 4900, 4921, 5026, 5298, 5739, 7075): `aiapy.update_pointing` raised TypeError because 10 frames lack `SAT_ROT`. **All 10 have QUALITY = 4** and are excluded by the QUALITY rule anyway.
+- **Fixes (implementation, me):**
+  - The HMI file-finder falls back to matching the header T_REC.
+  - A missing `SAT_ROT` keeps the header pointing, as for a missing pointing-table entry; counted per episode (`frames_no_satrot`, `frames_no_satrot_q_ok`).
+  - Neither fix can change any of the 535 existing results: those episodes contain no such frames, and their HMI files were found.
+- **4 HARPs below 97% of expected frames:** 2635 and 2636 (513/530), 3258 (344/360), 6206 (698/795). Their episodes were computed. The resume pass re-exports them once to confirm the gaps are in the archive.
+- **Resume pass:** `euv_full.py run` again (downloads and existing results skipped).

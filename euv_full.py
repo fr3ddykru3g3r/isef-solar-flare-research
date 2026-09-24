@@ -176,7 +176,14 @@ def hmi_ds(h, eps):
 def hmi_files(dest, trec):
     tag = trec.replace(".", "").replace(":", "")
     m = glob.glob(f"{dest}/hmi.sharp_720s.*.{tag}.magnetogram.fits"); b = glob.glob(f"{dest}/hmi.sharp_720s.*.{tag}.bitmap.fits")
-    return (m[0], b[0]) if m and b else (None, None)
+    if m and b:
+        return m[0], b[0]
+    found = {}                                          # JSOC sometimes names files by record number: match the header
+    for f in glob.glob(f"{dest}/hmi.sharp_720s.*.fits"):
+        seg = "magnetogram" if f.endswith("magnetogram.fits") else "bitmap" if f.endswith("bitmap.fits") else None
+        if seg and str(fits.getheader(f, 1).get("T_REC", ""))[:19] == trec[:19]:
+            found[seg] = f
+    return (found["magnetogram"], found["bitmap"]) if len(found) == 2 else (None, None)
 
 
 def aia_spec(h, eps, hmi_dir):
@@ -242,14 +249,17 @@ def compute_episode(ep, hmi_dir, aia_dir, series_dir):
             raw[:] = np.nan; exp = 1.0
         nsat = int((raw > SAT_DN).sum())
         raw[raw > SAT_DN] = np.nan
+        pt_ok = True
         try:
             m = update_pointing(m, pointing_table=ptab)
         except IndexError:
             pass
+        except TypeError:                               # SAT_ROT missing in the header: keep header pointing (counted)
+            pt_ok = False
         r = register_cutout(sunpy.map.Map(raw / exp, m.meta))
         idx = hmi_to_frame(mag, r)
         rows.append(dict(t_obs=pd.Timestamp(m.meta["t_obs"].rstrip("Z")), t_rec=trec_of(f),
-                         quality=q, exptime=exp, sat_px=nsat, sat_flag=nsat > 0, frac_outside=float((idx < 0).mean()),
+                         quality=q, exptime=exp, sat_px=nsat, sat_flag=nsat > 0, pointing_updated=pt_ok, frac_outside=float((idx < 0).mean()),
                          **frame_means(r.data, idx, S)))
     s = pd.DataFrame(rows)
     ev, _ = swpc.load(t - pd.Timedelta("2D"), t)
@@ -264,6 +274,7 @@ def compute_episode(ep, hmi_dir, aia_dir, series_dir):
     out = dict(eid=ep["eid"], harpnum=ep["harpnum"], t=t, frames=len(s), n_pix=n, ctrl_short=short,
                excl_quality=int((~s.q_ok).sum()), excl_exposure=int((~s.exp_ok).sum()), excl_flare=int(s.flare.sum()),
                excl_flare_P2a=na, excl_flare_P2b=nb, sat_flagged_frames=int(s.sat_flag.sum()), sat_pixels=int(s.sat_px.sum()),
+               frames_no_satrot=int((~s.pointing_updated).sum()), frames_no_satrot_q_ok=int((~s.pointing_updated & s.q_ok).sum()),
                max_frac_outside_valid=float(s.loc[s.valid_primary, "frac_outside"].max()) if s.valid_primary.any() else np.nan)
     for ver, col in [("primary", "valid_primary"), ("sens", "valid_sens")]:
         v = s[s[col]]; tv = v.t_obs.to_numpy()
