@@ -3068,3 +3068,51 @@ ISEF: no project changes after the affiliated fair. Extra data only with the sam
 - Experiments run before a signed plan must be discussed with the sponsor/SRC.
 
 **Sources for this entry:** the PDFs in `output/` (literature, not in git) and arXiv/journal pages: 2212.11255, 2411.12704, 2506.14004, 2503.12338, 2602.18133, 2604.26036, 1708.01323, 2410.16116, 2111.10704, 2512.13417, 10.1029/2025SW004546, 10.1029/2026SW005010, 10.1007/s11207-026-02691-5.
+
+## 2026-09-24 — STEP 6 GO-AHEAD: PRE-REGISTRATION (decided by: user; recorded BEFORE any ΔCV is split by label)
+**Scope:** dev years 2010–2019 only (`data/stage3/cohort_dev.csv`, 547 episodes); internal cross-validation, not a held-out test. No downloads. Frozen files and the FINAL Stage 5 result unchanged. This go-ahead replaces the step 6 outline in the amendment above (2026-09-23) where the two differ (twins: gate score only with the frozen Stage 4 caliper, instead of gate score + log USFLUX with caliper 0.2 pooled SD and one episode per HARP; twins bootstrap 10,000 with seed 20260921 instead of 2,000 with seed 0).
+
+**User's items, verbatim:**
+- a. "Fill threshold 80% (already fixed by the rule, ff3c11c). Each version uses its own valid episodes; A and E94 are always fitted on the SAME episodes."
+- b. "PRIMARY (dev, cross-validated): model A = gate score + n_C, n_M, n_X; model E94 = A + ΔCV_94 (primary version). Identical to Stage 4: same fold assignment (data/stage4/oof_cohort_dev.csv), weights 1/n per HARP, same estimator and preprocessing as frozen_spec.json (quote them; the ΔCV column gets the same preprocessing as the other features). Metric: weighted log-loss, Δ = logloss(A) − logloss(E94) (positive = EUV helps), HARP bootstrap 10,000 resamples, seed 20260921; weighted AUC for A and E94. Delayed episodes count as false."
+- c. "SENSITIVITIES (same procedure): S1 = flare-excluded version; S2 = primary excluding the 26 episodes with HMI patch pixels outside the cutout; S3 = NEW: flare-excluded plus frames up to 2 h after each P2 event end time (recompute from data/euv_full/series/*.csv with the stored per-frame means and the same 20 draws, no downloads, no image reprocessing; re-apply the 80% fill rule; report n valid true/false)."
+- d. "SUPPORTING — magnetic twins: each true episode matched 1:1 to a false episode on gate score, greedy nearest neighbour, frozen caliper 0.0747 (as Stage 4). Report n pairs, mean and median paired ΔCV difference (true − false), HARP-bootstrap 95% CI, and a Wilcoxon signed-rank p. Primary version; repeat for S1."
+- e. "DESCRIPTIVE: ΔCV (primary and S1) by group true / delayed / other false: n, median, IQR. No test."
+- f. "Also report the frame counts from the 2026-09-24 entry, item 1c."
+- g. "Pre-stated reading: \"EUV adds information\" only if the PRIMARY Δ > 0 with a 95% CI excluding 0 AND S1 Δ > 0. Otherwise report \"no detectable improvement\", in the same wording as the magnetic-trend result."
+  - Note (me): decisions.md records no conclusion wording for the magnetic-trend (Stage 5) result (VERIFIED_FACTS.md row 79). The phrase "no detectable improvement" is therefore used exactly as the user wrote it above.
+
+**Quoted from `frozen/frozen_spec.json` (`models`):**
+- estimator: "LogisticRegression(penalty='l2', C=1.0, solver='lbfgs', max_iter=10000), no tuning"
+- standardisation: "StandardScaler fitted on training folds"
+- sample_weight: "episode weight"; cohort unit: "T2: all eligible episodes; weight 1/(eligible episodes in HARP)"
+- cv: "5-fold grouped by HARP, 2 strata (>= 1 true episode / none), seed 20260921"
+- matched_pairs: caliper 0.07470488674776919 ("0.2 x SD of gate score over the dev cohort episodes"); "1:1 greedy nearest on gate score, without replacement, false alarm from a different HARP, seeded order"
+
+**Implementation details (decided by: me, before computing):**
+- **Code:** `euv_step6.py` (new). Inputs: `data/stage4/oof_cohort_dev.csv` (cohort, `fold`, `true_alarm`, `delayed`), `data/euv_full/results/*.json` (`primary_dCV`, `sens_dCV`, fills, `max_frac_outside_valid`), `data/euv_full/series/*.csv` (S3 only). Outputs to `data/euv_full/step6/` only.
+- **Folds:** the `fold` column of `data/stage4/oof_cohort_dev.csv` is used as-is for every analysis set; folds are NOT recomputed on subsets. Check before any EUV fit: model A on all 547 episodes with this column reproduces the stored `p_A` (|diff| < 1e-9).
+- **Analysis sets:** a version's valid episodes are those with fill ≥ 0.80 for that version; HARP 8 (no AIA data) is not valid. Primary 541, S1 528 (step 4). S2 = the primary set minus episodes with `max_frac_outside_valid > 0`. S3 = episodes with S3 fill ≥ 0.80.
+- **Weights:** T2 rule applied to each analysis set: weight = 1 / (number of that set's episodes in the HARP), so each HARP sums to 1 as in Stage 4. A and E94 use the same set and weights.
+- **Features:** A = [score, n_C, n_M, n_X]; E94 = A + [dCV of that version]. All columns get the per-training-fold StandardScaler. Out-of-fold probabilities are pooled.
+- **Metric:** weighted log-loss as in `stage4_models.wlogloss` (clip 1e-15); Δ = LL(A) − LL(E94). **Bootstrap:** resample the set's HARPs with replacement (all episodes of a drawn HARP, with their weights), 10,000 resamples, `np.random.RandomState(20260921)`, 2.5/97.5 percentiles. Weighted AUC = `roc_auc_score(..., sample_weight=weight)` on the pooled OOF probabilities.
+- **S3 recomputation:**
+  - P2 events: `swpc.load(t − 2 d, t)` → `euv_pilot.flare_excluded` with each event's end moved +2 h. S3 excludes frames with T_OBS in [start, end + 2 h] of a P2 event (a: C1+ same NOAA region; b: M1+ any region), on top of the S1 exclusions.
+  - ΔCV uses `euv_dctrl.summarise` on the stored per-frame means (`pil_k`, `ctrl_k`, k = 0–19).
+  - Fill uses the same 120 slots and ± 6 min rule.
+  - Check before use: the same code with the stored `valid_primary` / `valid_sens` must reproduce the stored `primary_dCV` / `sens_dCV` and fills for all 546 episodes (|diff| < 1e-9).
+- **Twins (d):**
+  - The Stage 4 code path is run on each version's valid set, with delayed episodes as false: one `RandomState(20260921)` gives the order of the true episodes (a permutation), and each true episode takes the nearest unused false episode from a different HARP within the caliper.
+  - The same RandomState then draws 10,000 bootstrap resamples of the true HARPs (clustered by true HARP, as in Stage 4). The 95% CIs are for the mean and the median of the paired difference.
+  - Wilcoxon: `scipy.stats.wilcoxon`, two-sided, default zero handling.
+- **Descriptive (e):** unweighted episodes; groups true / delayed (`true_alarm == 0 & delayed == 1`) / other false; n, median, Q1–Q3.
+- **Frame counts (f):** recomputed from `series/*.csv` (`exp_ok`, `q_ok`, `flare`) and reported next to the item-1c values.
+
+**h. HELD-OUT EUV TEST — PRE-REGISTERED, NOT RUN (user, verbatim):** "frozen primary test cohort (data/stage5/cohort_test_primary.csv, 313 episodes, 2021/2023/2024, single-region). Same image pipeline (94 Å, 12 min, (t−24h, t], same masks, D-CTRL, QUALITY, exposure, P2, P4/U4 rules, 80% fill, both versions). E94 and A fitted on the dev cohort with the 5 folds; test prediction = mean of the 5 fold models (as Stage 5). Metric: weighted Δlog-loss(A − E94), HARP bootstrap 10,000, seed 20260921; AUC. Run once; report whatever happens." **When it runs (user's rule, recorded now):** "it will be run regardless of the step 6 result. Deadline for starting the download: 2026-09-30."
+- **Implementation (me):**
+  - Pipeline: `euv_full.py` unchanged (per-HARP HMI + AIA exports, one pending export at a time, the user's account only), outputs in a new folder `data/euv_test/`.
+  - Models: A and E94 are the 5 fold models of the step 6 PRIMARY analysis (dev primary valid set, the same set for both). S1 on test uses the dev S1 fold models.
+  - Test prediction: the mean of the 5 fold models' predicted probabilities.
+  - Test weights: 1 / (valid test episodes in the HARP), per version.
+  - Delayed test episodes count as false.
+  - The frozen Stage 4/5 model-A files are not used for this comparison, because A must be fitted on the same episodes as E94 (item a).
