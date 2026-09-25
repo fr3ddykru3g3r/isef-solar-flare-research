@@ -4033,3 +4033,15 @@ STOP. No further analyses on test years.
 - Paired difference = LL(A + R4a) − LL(A + lnR4a) (positive = the log version is better). Its bootstrap uses the same HARP resamples as the other rows on the 541 set: the same seed and set give the same resample stream.
 - Check: every R4a value is ≥ −3, so the log is defined wherever R4a is.
 - Sets: the Phase X 541 (`primary_fill ≥ 0.80`, R4a defined) and the flare-check 528 (`sens_fill ≥ 0.80`, R4a_nf defined). Weights 1/n per HARP over each set.
+
+### log R4a check — RESULT (evaluated once; EXPLORATORY; dev 2010–2019, internal 5-fold CV; numbers only)
+`euv_lnr4a.py` → `euv_lnr4a.log`, `data/euv_full/spatial/eval_lnr4a.csv`. 9 workers; wall 7.1 s. The check reproduced committed Phase X exactly.
+
+| test | n (true/false) | LL(base) | LL(base + x) | Δ | 95% CI | AUC base | AUC base + x |
+|---|---|---:|---:|---:|---|---:|---:|
+| A vs A + R4a (committed Phase X row) | 541 (96/445) | 0.3206 | 0.3082 | 0.0124 | [−0.0048, 0.0294] | 0.7422 | 0.8003 |
+| PRIMARY A vs A + lnR4a | 541 (96/445) | 0.3206 | 0.3025 | 0.0181 | [0.0005, 0.0349] | 0.7422 | 0.7976 |
+| paired A + R4a vs A + lnR4a (+ = log better) | 541 | 0.3082 | 0.3025 | 0.0057 | [−0.0087, 0.0204] | 0.8003 | 0.7976 |
+| flare-excluded A vs A + ln(R4a_nf + 3) | 528 (89/439) | 0.3359 | 0.3202 | 0.0157 | [−0.0101, 0.0372] | 0.7480 | 0.7870 |
+
+**Pre-stated reading (mechanical):** paired difference +0.0057, CI [−0.0087, +0.0204] not above 0 → **"raw vs log makes no clear difference"**.
