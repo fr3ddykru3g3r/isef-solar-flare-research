@@ -3945,3 +3945,40 @@ STOP. No further analyses on test years.
   - s1 uses log10(`primary_CV_box`) from the stored results, on the set where both values are defined.
   - s2 uses raw CV_M, with `phase_f.ratio_jobs` (mode ratio, 2,000 resamples, seed 0).
   - s4 is unweighted Spearman on the PRIMARY set of each mask.
+
+## 2026-09-26 — EXPLORATORY: TEMPORAL CONTRAST K3 (decided by: user; design drafted by AI, adopted by the student; recorded BEFORE computing)
+**Status:**
+- Added AFTER all held-out results (7438177, ec00afb) had been seen.
+- DEV-ONLY EXPLORATORY: nothing for 2021–2024 or 2025–26; no image reprocessing, no downloads. Frozen files unchanged.
+- Dev candidates so far: 16. This entry adds 1 (K3).
+
+**Relation to the three-mask plan (bebbfe6):**
+- The user's K3 entry says it "Replaces the three-mask plan (not run)", and the user asked for K3 to run "at the same time".
+- When K3 arrived, the three-mask label-blind computation (bebbfe6 step 2) had already started (00:28). It continues; it is label-blind.
+- No mask has been evaluated against labels. The three-mask step 3 evaluation is ON HOLD and will not be run unless the user decides otherwise. On the user's count the masks are therefore not counted as evaluated candidates (16 + 1 = 17).
+
+**User's text, verbatim:**
+- "Motivation (verified): Kniezewski et al. 2024 (ApJL 977:L29) report variability rising 2–4 h before onset (off-limb loops, other channels, flare-centred windows; does not validate this feature). Known limit: dev true alarms lead 0–6 h n=31, 6–24 h n=65 (step 6 diagnostic)."
+- "DEFINITION (per episode, from data/euv_full/spatial/<eid>_pairs.csv, kappa_box as in Phase X):"
+  - "t = cohort alarm time. LATE = pairs with t_obs > t − 3 h; EARLY = pairs with t_obs <= t − 3 h. (Pair time = later frame's t_obs; frames were selected by T_REC <= t, so t_obs may exceed t by <= ~8 s; accepted, recorded.)"
+  - "K3 = log10( median(kappa_box LATE) / median(kappa_box EARLY) )."
+  - "Undefined if LATE has < 5 pairs or either median <= 0 -> label-blind exclusion, n reported."
+  - "3 h is fixed in advance; no other windows are computed."
+  - "Flare-excluded version K3_nf: same from data/euv_full/spatial_nf/<eid>_pairs.csv."
+- "STEP 1 — Compute K3 and K3_nf for all dev episodes. Label-blind report: n defined, n excluded, LATE-pair counts, K3 percentiles. Commit."
+- "STEP 2 — Evaluate once. Same procedure as euv_spatial.compare (folds, weights 1/n per HARP, estimator, HARP bootstrap 10,000, seed 20260921), on the primary 80% set with K3 defined."
+  - "PRIMARY: base = A_COLS + [\"R4a\"] (Phase X values as committed) vs base + [\"K3\"]. Check first: A vs A + R4a on the Phase X 541 set reproduces the committed Phase X values."
+  - "Pre-stated reading: \"ELIGIBLE for independent confirmation\" only if Δ > 0 AND 95% CI lower bound > 0 AND AUC(base + K3) > AUC(base); else \"NOT ELIGIBLE\". Apply mechanically."
+  - "SECONDARY (descriptive; cannot change the reading): s1 A vs A + K3 (without R4a). s2 flare-excluded: A_COLS + [\"R4a_nf\"] vs + [\"K3_nf\"] on the sens 80% set. s3 true episodes only: median K3 for lead (0, 6] h vs (6, 24] h (lead as in the step 6 diagnostic), with n. s4 Spearman rho of K3 with n_C, n_M, n_X, gate score and R4a."
+  - "Report the tables, commit, STOP."
+
+**Implementation (decided by: me, before computing):**
+- **Code:** `euv_k3.py compute | eval`. Outputs in `data/euv_full/k3/`.
+- **Alarm time:** t = `t` of `data/stage4/oof_cohort_dev.csv` (UTC); pair time = the pairs-file `t_obs`.
+- **Pair counting:** only pairs with a finite `kappa_box` are counted and used (LATE count and medians). EARLY must contain ≥ 1 such pair, otherwise its median is undefined → excluded.
+- **Evaluation:** `euv_spatial.cv_fit` with the given feature lists; weights 1/n per HARP over each set; bootstrap drawn in the parent (Phase F method, identical to single process).
+  - PRIMARY set: `primary_fill ≥ 0.80` AND K3 defined AND R4a defined.
+  - s1: the same set.
+  - s2: `sens_fill ≥ 0.80` AND K3_nf and R4a_nf defined.
+- **s3 lead:** `data/euv_full/step6/explore_2_timing.csv` (`lead_h`, the step 6 diagnostic), true episodes with K3 defined.
+- **s4:** unweighted Spearman on the PRIMARY set.
