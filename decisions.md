@@ -3864,3 +3864,36 @@ STOP. No further analyses on test years.
   - Twins CI: pairs resampled clustered by true HARP; all-episodes CI: HARP bootstrap. Both 2,000 resamples, seed 0.
 - **Readings** are applied mechanically to the primary twins CV_box row only. CV_PIL and CV_ctrl, and all secondary rows, are descriptive.
 - **Dev reference (EXPLORATORY):** the secondary history-group twins on the dev primary 80% set (541), same code.
+
+### HELD-OUT REPLICATION OF F2 — RESULT (run once; numbers only)
+`euv_f2_replication.py` → `euv_f2_replication.log`, `data/euv_test/f2_replication/`. 9 workers; wall 1.0 s.
+
+**Checks:**
+- The twins code reproduces the 81 step 6 dev pairs exactly.
+- The ratio code reproduces the committed F2 rows (CV_box, CV_PIL, CV_ctrl: medians, ratios, CIs).
+- Step 1 needed no computation: the test CV values were already stored.
+
+**Test set:** 306 episodes (44 true / 262 false, 98 HARPs); CV_PIL and CV_ctrl are defined for all.
+
+**Twins:**
+- Primary (test): 40 pairs of 44 true episodes; max |Δscore| 0.0469. By group: C-only 21, JUST-FLARED 15, QUIET-NOW 4.
+- History-group (test): 37 pairs; max |Δscore| 0.0375. C-only 20, JUST-FLARED 14, QUIET-NOW 3.
+- History-group (dev, EXPLORATORY): 78 pairs of 96; max |Δscore| 0.0742. C-only 40, JUST-FLARED 29, QUIET-NOW 9.
+
+**Ratios.** Ratio = median(true) ÷ median(false). All-episodes CI: HARP bootstrap; twins CI: pairs resampled by true HARP. Both 2,000 resamples, seed 0.
+
+| twins | measure | n (true/false) | median true / false | ratio (all) [CI] | pairs | twins median true / false | ratio (twins) [CI] |
+|---|---|---|---|---|---:|---|---|
+| **TEST primary** | **CV_box** | 306 (44/262) | 0.1741 / 0.1112 | 1.566 [1.119, 2.428] | 40 | 0.1594 / 0.1221 | **1.306 [0.937, 2.218]** |
+| TEST primary | CV_PIL (descriptive) | 306 | 0.3731 / 0.2599 | 1.435 [1.074, 2.340] | 40 | 0.3519 / 0.2606 | 1.350 [0.885, 2.353] |
+| TEST primary | CV_ctrl (descriptive) | 306 | 0.2387 / 0.1309 | 1.824 [1.233, 2.782] | 40 | 0.2220 / 0.1326 | 1.675 [1.034, 2.574] |
+| TEST history-group (secondary) | CV_box | 306 | as above | as above | 37 | 0.1589 / 0.1442 | 1.102 [0.653, 1.710] |
+| TEST history-group (secondary) | CV_PIL | 306 | | | 37 | 0.3675 / 0.3832 | 0.959 [0.696, 1.577] |
+| TEST history-group (secondary) | CV_ctrl | 306 | | | 37 | 0.2176 / 0.1671 | 1.303 [0.827, 2.188] |
+| DEV history-group (EXPLORATORY) | CV_box | 541 (96/445) | 0.2751 / 0.1098 | 2.506 [1.727, 3.772] | 78 | 0.2509 / 0.1450 | 1.730 [1.359, 2.603] |
+| DEV history-group (EXPLORATORY) | CV_PIL | 540 | 0.4601 / 0.2538 | 1.813 [1.217, 2.540] | 78 | 0.4408 / 0.3531 | 1.249 [0.775, 1.721] |
+| DEV history-group (EXPLORATORY) | CV_ctrl | 540 | 0.3304 / 0.1294 | 2.554 [1.677, 3.394] | 78 | 0.3222 / 0.1650 | 1.953 [1.192, 2.559] |
+
+**Pre-stated reading (mechanical; primary = TEST primary twins, CV_box):** ratio 1.3057 > 1, CI [0.9367, 2.2182] includes 1 → **"direction consistent, not confirmed"**.
+
+STOP. No further analyses on test years.
