@@ -15,7 +15,7 @@ def _kurt_skew(x):
     return (float(kurtosis(x, fisher=True, bias=True)), float(skew(x, bias=True))) if len(x) >= 4 else (np.nan, np.nan)
 
 
-def spatial_episode(ep, out_dir):
+def spatial_episode(ep, out_dir, valid="valid_primary"):
     import sunpy.map, astropy.units as u
     from astropy.io import fits
     from astropy.time import Time
@@ -35,7 +35,7 @@ def spatial_episode(ep, out_dir):
     ny, nx = mag.data.shape
     centre = mag.pixel_to_world((nx - 1) / 2 * u.pix, (ny - 1) / 2 * u.pix)
     s = pd.read_csv(f"{R}/series/{ep['eid']}.csv", parse_dates=["t_obs", "t_rec"], float_precision="round_trip")
-    rows = s[s.valid_primary].to_dict("records")
+    rows = s[s[valid]].to_dict("records")                      # valid_sens = R4a_nf (flare check)
     files = {trec_of(p): p for p in glob.glob(f"{R}/aia/{h}/*.fits")}
     ptab = get_pointing_table("JSOC", time_range=(Time(t - pd.Timedelta("26h")), Time(t + pd.Timedelta("2h"))))
     V = np.full((len(rows), ny * nx), np.nan); IDX = np.full((len(rows), ny * nx), -1, np.int32)
@@ -111,11 +111,11 @@ def dev_episodes():
     return [dict(eid=x.eid, harpnum=int(x.harpnum), t=str(x.t), t_rec_tai=x.t_rec_tai) for x in e.itertuples() if x.eid in done]
 
 
-def run_pool(eps, out_dir, workers=8, log=None):
+def run_pool(eps, out_dir, workers=8, log=None, valid="valid_primary"):
     from concurrent.futures import ProcessPoolExecutor, as_completed
     os.makedirs(out_dir, exist_ok=True); t0 = time.time(); res = []
     with ProcessPoolExecutor(workers) as pool:
-        futs = {pool.submit(spatial_episode, e, out_dir): e["eid"] for e in eps if not os.path.exists(f"{out_dir}/{e['eid']}.json")}
+        futs = {pool.submit(spatial_episode, e, out_dir, valid): e["eid"] for e in eps if not os.path.exists(f"{out_dir}/{e['eid']}.json")}
         for i, f in enumerate(as_completed(futs), 1):
             r = f.result(); res.append(r)
             assert r["max_frame_mean_diff"] < 1e-9, f"{r['eid']}: frame means not reproduced ({r['max_frame_mean_diff']})"
@@ -123,6 +123,38 @@ def run_pool(eps, out_dir, workers=8, log=None):
                 msg = f"{pd.Timestamp.now():%H:%M} {i}/{len(futs)} episodes, elapsed {(time.time() - t0) / 3600:.2f} h"
                 print(msg, flush=True); open(log, "a").write(msg + "\n")
     return res, time.time() - t0
+
+
+def cv_fit(c, cols):                                              # = euv_step6.cv_fit
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.preprocessing import StandardScaler
+    from stage4_models import LR, K
+    y, w, f = c.true_alarm.to_numpy(), c.weight.to_numpy(), c.fold.to_numpy()
+    p = np.empty(len(c))
+    for k in range(K):
+        tr, te = f != k, f == k
+        sc = StandardScaler().fit(c.loc[tr, cols])
+        m = LogisticRegression(**LR).fit(sc.transform(c.loc[tr, cols]), y[tr], sample_weight=w[tr])
+        p[te] = m.predict_proba(sc.transform(c.loc[te, cols]))[:, 1]
+    return p
+
+
+def compare(coh, mask, col, name):                                # = euv_step6.analysis_set + compare (A vs A + col)
+    from sklearn.metrics import roc_auc_score
+    from stage4_models import wlogloss, A_COLS, SEED
+    c = coh[mask].reset_index(drop=True).copy()
+    c["weight"] = 1 / c.groupby("harpnum").harpnum.transform("size")
+    pA, pE = cv_fit(c, A_COLS), cv_fit(c, A_COLS + [col])
+    y, w, h = c.true_alarm.to_numpy(), c.weight.to_numpy(), c.harpnum.to_numpy()
+    harps = np.unique(h); idx_of = {x: np.where(h == x)[0] for x in harps}
+    rng, d = np.random.RandomState(SEED), []
+    for _ in range(10000):
+        ix = np.concatenate([idx_of[x] for x in rng.choice(harps, len(harps), replace=True)])
+        d.append(wlogloss(y[ix], pA[ix], w[ix]) - wlogloss(y[ix], pE[ix], w[ix]))
+    lo, hi = np.percentile(d, [2.5, 97.5]); llA, llE = wlogloss(y, pA, w), wlogloss(y, pE, w)
+    return dict(candidate=name, episodes=len(c), true=int(y.sum()), false=int((y == 0).sum()), HARPs=len(harps),
+                logloss_A=llA, logloss_A_plus=llE, delta_A_minus_Aplus=llA - llE, CI_lo=lo, CI_hi=hi,
+                AUC_A=roc_auc_score(y, pA, sample_weight=w), AUC_A_plus=roc_auc_score(y, pE, sample_weight=w))
 
 
 if __name__ == "__main__" and sys.argv[1:] == ["timing"]:
@@ -149,10 +181,6 @@ if __name__ == "__main__" and sys.argv[1:] == ["run"]:
     print(f"done: {len(res)} episodes in {wall / 3600:.2f} h")
 
 if __name__ == "__main__" and sys.argv[1:] == ["eval"]:
-    from sklearn.linear_model import LogisticRegression
-    from sklearn.preprocessing import StandardScaler
-    from sklearn.metrics import roc_auc_score
-    from stage4_models import wlogloss, LR, A_COLS, SEED, K
     CANDS = ["R1", "R2", "R3", "R4a", "R4b", "R4c"]
     coh = pd.read_csv("data/stage4/oof_cohort_dev.csv", parse_dates=["t"])
     coh["eid"] = [f"{h}_{t:%Y%m%dT%H%M}" for h, t in zip(coh.harpnum, coh.t)]
@@ -162,34 +190,9 @@ if __name__ == "__main__" and sys.argv[1:] == ["eval"]:
     assert len(sp) == 546 and (sp.max_frame_mean_diff < 1e-9).all(), "spatial results incomplete or frame means not reproduced"
     coh = coh.merge(res, on="eid", how="left").merge(sp[["eid"] + CANDS], on="eid", how="left")
 
-    def cv_fit(c, cols):                                          # = euv_step6.cv_fit
-        y, w, f = c.true_alarm.to_numpy(), c.weight.to_numpy(), c.fold.to_numpy()
-        p = np.empty(len(c))
-        for k in range(K):
-            tr, te = f != k, f == k
-            sc = StandardScaler().fit(c.loc[tr, cols])
-            m = LogisticRegression(**LR).fit(sc.transform(c.loc[tr, cols]), y[tr], sample_weight=w[tr])
-            p[te] = m.predict_proba(sc.transform(c.loc[te, cols]))[:, 1]
-        return p
-
-    def compare(mask, col, name):                                 # = euv_step6.analysis_set + compare (A vs A + col)
-        c = coh[mask].reset_index(drop=True).copy()
-        c["weight"] = 1 / c.groupby("harpnum").harpnum.transform("size")
-        pA, pE = cv_fit(c, A_COLS), cv_fit(c, A_COLS + [col])
-        y, w, h = c.true_alarm.to_numpy(), c.weight.to_numpy(), c.harpnum.to_numpy()
-        harps = np.unique(h); idx_of = {x: np.where(h == x)[0] for x in harps}
-        rng, d = np.random.RandomState(SEED), []
-        for _ in range(10000):
-            ix = np.concatenate([idx_of[x] for x in rng.choice(harps, len(harps), replace=True)])
-            d.append(wlogloss(y[ix], pA[ix], w[ix]) - wlogloss(y[ix], pE[ix], w[ix]))
-        lo, hi = np.percentile(d, [2.5, 97.5]); llA, llE = wlogloss(y, pA, w), wlogloss(y, pE, w)
-        return dict(candidate=name, episodes=len(c), true=int(y.sum()), false=int((y == 0).sum()), HARPs=len(harps),
-                    logloss_A=llA, logloss_A_plus=llE, delta_A_minus_Aplus=llA - llE, CI_lo=lo, CI_hi=hi,
-                    AUC_A=roc_auc_score(y, pA, sample_weight=w), AUC_A_plus=roc_auc_score(y, pE, sample_weight=w))
-
     base = coh.primary_fill >= 0.80
     s6 = pd.read_csv(f"{R}/step6/compare.csv").set_index("set").loc["PRIMARY"]
-    chk = compare(base & coh.primary_dCV.notna(), "primary_dCV", "check")
+    chk = compare(coh, base & coh.primary_dCV.notna(), "primary_dCV", "check")
     assert all(abs(chk[a] - s6[b]) < 1e-12 for a, b in [("delta_A_minus_Aplus", "delta_A_minus_E94"), ("CI_lo", "CI_lo"), ("CI_hi", "CI_hi")])
     print(f"check: step 6 PRIMARY reproduced (delta {chk['delta_A_minus_Aplus']:.4f}, CI [{chk['CI_lo']:.4f}, {chk['CI_hi']:.4f}])")
     print(f"check: frame means reproduced in all 546 episodes (max |diff| {sp.max_frame_mean_diff.max():.1e})")
@@ -199,7 +202,7 @@ if __name__ == "__main__" and sys.argv[1:] == ["eval"]:
     rows = []
     for k in CANDS:
         m = base & coh[k].notna()
-        r = compare(m, k, k); r["excluded_undefined"] = int((base & coh[k].isna()).sum())
+        r = compare(coh, m, k, k); r["excluded_undefined"] = int((base & coh[k].isna()).sum())
         r["excluded_eids"] = ";".join(coh.loc[base & coh[k].isna(), "eid"]); rows.append(r)
     T = pd.DataFrame(rows); T.to_csv(f"{OUT}/eval_compare.csv", index=False)
     pd.set_option("display.width", 250)
@@ -212,3 +215,73 @@ if __name__ == "__main__" and sys.argv[1:] == ["eval"]:
     pil = T[T.candidate.isin(["R1", "R2", "R3"])].set_index("candidate").delta_A_minus_Aplus
     best = pil.idxmax()
     print(f"\n3. selection rule (R1-R3): largest delta = {best} ({pil[best]:.4f}); qualifies (delta > 0): {bool(pil[best] > 0)}")
+
+# ================================================================ R4a FLARE CHECK (decisions.md 2026-09-25; EXPLORATORY)
+NF, WORKERS_NF = f"{R}/spatial_nf", os.cpu_count() - 1
+
+if __name__ == "__main__" and sys.argv[1:] == ["nf_check"]:
+    eps = dev_episodes(); five = [eps[i] for i in sorted(np.random.RandomState(0).choice(len(eps), 5, replace=False))]
+    d1, d2 = f"{R}/spatial_nf_check/single", f"{R}/spatial_nf_check/pool"; os.makedirs(d1, exist_ok=True)
+    print(f"workers = os.cpu_count() - 1 = {WORKERS_NF}")
+    t0 = time.time(); single = [spatial_episode(e, d1, "valid_sens") for e in five]; w1 = time.time() - t0
+    pool, w2 = run_pool(five, d2, workers=WORKERS_NF, valid="valid_sens")
+    a = pd.DataFrame(single).set_index("eid").sort_index(); b = pd.DataFrame(pool).set_index("eid").sort_index()
+    num = ["R1", "R2", "R3", "R4a", "R4b", "R4c", "frames", "pairs", "max_frame_mean_diff", "shift_median"]
+    same = all(np.array_equal(a[c].to_numpy(float), b[c].to_numpy(float), equal_nan=True) for c in num) and all(
+        pd.read_csv(f"{d1}/{e}_{k}.csv").equals(pd.read_csv(f"{d2}/{e}_{k}.csv")) for e in a.index for k in ["pairs", "frames"])
+    print(a[["frames", "pairs", "max_frame_mean_diff", "elapsed_s"]].to_string())
+    print(f"pool ({WORKERS_NF}) == single process exactly: {same}; single wall {w1:.0f} s, pool wall {w2:.0f} s")
+
+if __name__ == "__main__" and sys.argv[1:2] == ["nf_run"]:
+    w = int(sys.argv[2]) if len(sys.argv) > 2 else WORKERS_NF
+    print(f"workers = {w}", flush=True)
+    res, wall = run_pool(dev_episodes(), NF, workers=w, log=f"{R}/logs/spatial_nf.log", valid="valid_sens")
+    print(f"done: {len(res)} episodes in {wall / 3600:.2f} h", flush=True)
+    open(f"{R}/logs/spatial_nf.log", "a").write(f"done: {len(res)} episodes in {wall / 3600:.2f} h (this pass), workers {w}\n")
+
+if __name__ == "__main__" and sys.argv[1:] == ["nf_eval"]:
+    from scipy.stats import spearmanr
+    coh = pd.read_csv("data/stage4/oof_cohort_dev.csv", parse_dates=["t"])
+    coh["eid"] = [f"{h}_{t:%Y%m%dT%H%M}" for h, t in zip(coh.harpnum, coh.t)]
+    res = pd.DataFrame([json.load(open(p)) for p in glob.glob(f"{R}/results/*.json")])[["eid", "primary_fill", "sens_fill"]]
+    res[["primary_fill", "sens_fill"]] = res[["primary_fill", "sens_fill"]].apply(pd.to_numeric, errors="coerce")
+    sp = pd.DataFrame([json.load(open(p)) for p in glob.glob(f"{OUT}/*.json")])[["eid", "R4a"]]
+    nf = pd.DataFrame([json.load(open(p)) for p in glob.glob(f"{NF}/*.json")])
+    assert len(nf) == 546 and (nf.max_frame_mean_diff < 1e-9).all(), "R4a_nf incomplete or frame means not reproduced"
+    nf = nf[["eid", "R4a", "frames", "pairs"]].rename(columns={"R4a": "R4a_nf", "frames": "frames_nf", "pairs": "pairs_nf"})
+    coh = coh.merge(res, on="eid", how="left").merge(sp, on="eid", how="left").merge(nf, on="eid", how="left")
+    fl = {os.path.basename(p)[:-4]: int((lambda s: (s.valid_primary & s.flare).sum())(pd.read_csv(p, usecols=["valid_primary", "flare"])))
+          for p in glob.glob(f"{R}/series/*.csv")}
+    coh["flare_frames_in_R4a"] = coh.eid.map(fl)
+    px = pd.read_csv(f"{OUT}/eval_compare.csv").set_index("candidate").loc["R4a"]    # check: module-level compare = Phase X
+    chk = compare(coh, (coh.primary_fill >= 0.80) & coh.R4a.notna(), "R4a", "check")
+    assert all(abs(chk[k] - px[k]) < 1e-12 for k in ["delta_A_minus_Aplus", "CI_lo", "CI_hi", "AUC_A", "AUC_A_plus"])
+    print(f"check: Phase X R4a row reproduced (delta {chk['delta_A_minus_Aplus']:.4f}, CI [{chk['CI_lo']:.4f}, {chk['CI_hi']:.4f}])")
+    m = (coh.sens_fill >= 0.80) & coh.R4a_nf.notna()
+    und = coh.loc[(coh.sens_fill >= 0.80) & coh.R4a_nf.isna(), "eid"].tolist()
+    assert coh.loc[m, "R4a"].notna().all() and (coh.loc[m, "primary_fill"] >= 0.80).all()
+    c = coh[m]
+    print(f"\n1. n valid: R4a_nf (sens fill >= 80%, defined) {m.sum()}: true {int(c.true_alarm.sum())} / false {int((c.true_alarm == 0).sum())} "
+          f"(excluded undefined: {len(und)} {und}); Phase X R4a 541: 96 / 445")
+    T = pd.DataFrame([compare(coh, m, "R4a", "A vs A+R4a (flare frames kept)"),
+                      compare(coh, m, "R4a_nf", "A vs A+R4a_nf (flare frames removed)")])
+    T.to_csv(f"{NF}/eval_nf_compare.csv", index=False); pd.set_option("display.width", 250)
+    print("\n2. same episodes; delta = LL(A) - LL(A + x), + = helps; HARP bootstrap 10,000, seed 20260921; weighted AUC")
+    print(T[["candidate", "episodes", "true", "false", "HARPs", "logloss_A", "logloss_A_plus", "delta_A_minus_Aplus", "CI_lo", "CI_hi",
+             "AUC_A", "AUC_A_plus"]].to_string(index=False, float_format=lambda v: f"{v:.4f}"))
+    S3 = pd.DataFrame([dict(measure=x, variable=v, n=len(c), rho=spearmanr(c[x], c[v])[0], p=spearmanr(c[x], c[v])[1])
+                       for x in ["R4a", "R4a_nf"] for v in ["n_C", "n_M", "n_X", "score"]])
+    S3.to_csv(f"{NF}/eval_nf_spearman.csv", index=False)
+    print("\n3. Spearman rho with flare history and gate score (same episodes)")
+    print(S3.to_string(index=False, formatters={"rho": "{:.4f}".format, "p": "{:.2e}".format}))
+    print("\n4. episodes above the 99th percentile (same episodes; flare frame = valid_primary & flare, i.e. used by R4a)")
+    for x in ["R4a", "R4a_nf"]:
+        q = np.percentile(c[x], 99); top = c[c[x] > q]
+        print(f"   {x}: p99 {q:.4f}; above: {len(top)}; with >= 1 flare frame: {int((top.flare_frames_in_R4a >= 1).sum())} "
+              f"(flare frames per episode: {top.flare_frames_in_R4a.tolist()})")
+    r, p = spearmanr(c.R4a, c.R4a_nf)
+    print(f"\n5. Spearman rho(R4a, R4a_nf) = {r:.4f} (p {p:.2e}, n {len(c)})")
+    q = dict(delta=T.iloc[1].delta_A_minus_Aplus, auc_up=T.iloc[1].AUC_A_plus > T.iloc[1].AUC_A)
+    reading = ("R4a survives flare removal" if q["delta"] > 0 and q["auc_up"] else
+               "R4a mostly reflected flares" if q["delta"] <= 0 else "neither condition met")
+    print(f"\npre-stated reading (mechanical): delta(A - A+R4a_nf) = {q['delta']:.4f}, AUC(A+R4a_nf) > AUC(A): {q['auc_up']} -> \"{reading}\"")

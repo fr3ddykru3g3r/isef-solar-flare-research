@@ -3377,3 +3377,39 @@ Code `euv_step6.py`, console `euv_step6.log`, outputs `data/euv_full/step6/` (pe
   - AIA: files with a readable header; WAVELNTH = 94; T_REC inside the HARP's record range; count vs `expected_frames`.
   - Also reported: GB, failures, and export prep/download times.
 - Runs in parallel with the R4a flare check (dev, 9 CPU workers). The download is network-bound.
+
+### R4a FLARE CHECK — RESULT (EXPLORATORY; dev 2010–2019, internal 5-fold CV; numbers only)
+`euv_spatial.py nf_check | nf_run | nf_eval` → `euv_r4a_nf_eval.log`. Outputs in `data/euv_full/spatial_nf/`.
+
+**B. Compute:**
+- Workers = os.cpu_count() − 1 = 9.
+- 5-episode check: the pool output equals the single-process output exactly (single 102 s wall, pool 39 s); frame means reproduced (0.0).
+- Full run: 546/546 in 1.40 h (12:31–13:55; the held-out download ran in parallel from 13:29). Frame means reproduced in all 546.
+- Check: the module-level `compare` reproduces the Phase X R4a row exactly.
+
+**C1. n valid:**
+- R4a_nf (S1 fill ≥ 80%, defined): 528 (89 true / 439 false), 0 excluded as undefined.
+- Phase X R4a: 541 (96 / 445).
+
+**C2. Same 528 episodes, 179 HARPs.** HARP bootstrap 10,000, seed 20260921. Weighted AUC.
+
+| comparison | LL(A) | LL(A + x) | Δ | 95% CI | AUC A | AUC A + x |
+|---|---:|---:|---:|---|---:|---:|
+| A vs A + R4a (flare frames kept) | 0.3359 | 0.3210 | 0.0149 | [−0.0069, 0.0373] | 0.7480 | 0.8016 |
+| A vs A + R4a_nf (flare frames removed) | 0.3359 | 0.3226 | 0.0133 | [−0.0112, 0.0374] | 0.7480 | 0.7990 |
+
+**C3. Spearman ρ** (n = 528):
+
+| | n_C | n_M | n_X | gate score |
+|---|---|---|---|---|
+| R4a | 0.6901 (p 7.1e-76) | 0.4321 (2.0e-25) | 0.1862 (1.7e-05) | 0.5304 (1.2e-39) |
+| R4a_nf | 0.6793 (1.0e-72) | 0.4268 (8.8e-25) | 0.1842 (2.1e-05) | 0.5277 (3.4e-39) |
+
+**C4. Above the 99th percentile** (528 episodes):
+- R4a: p99 = 741.25; 6 episodes above, all 6 with ≥ 1 flare frame (9, 8, 12, 15, 5, 2).
+- R4a_nf: p99 = 708.31; 6 above, all 6 with ≥ 1 flare frame (same counts).
+- They are the same 6 episodes.
+
+**C5.** Spearman ρ(R4a, R4a_nf) = 0.9990 (n = 528).
+
+**Pre-stated reading, applied mechanically:** Δ(A − A + R4a_nf) = 0.0133 > 0 and AUC(A + R4a_nf) 0.7990 > AUC(A) 0.7480 → "R4a survives flare removal". EXPLORATORY; nothing is claimed from dev alone. R4a's Phase X status (not eligible) is unchanged.
