@@ -4069,3 +4069,8 @@ STOP. No further analyses on test years.
 - SG ∩ SPOT: 0.0000 (n 541)
 - SG ∩ CORE: 0.1236 (n 543)
 - CORE ∩ SPOT: 0.0206 (n 541)
+
+### Three localised areas — go-ahead for step 3 (decided by: user; recorded BEFORE the evaluation)
+- User: "run the three-mask evaluation once, exactly as pre-registered in bebbfe6. Each mask evaluated SEPARATELY (one feature added to A at a time; no model combines M1, M2, M3). Name M2 \"brightest core\" in all outputs (94 Å brightness is not temperature). Record: this is the final dev candidate; total dev candidates = 21 (16 + K3 + log R4a + 3 masks). Report, commit, STOP. No further candidates after this."
+- **Recorded:** the three masks are the FINAL dev candidates. Total dev candidates = 21 (16 + K3 + log R4a + 3 masks). No further candidates after this.
+- **Implementation (me):** the bebbfe6 evaluation code is unchanged except for the output labels (SG → "SG-PIL", CORE → "brightest core", SPOT → "SPOT"). Each mask is added to A alone.
