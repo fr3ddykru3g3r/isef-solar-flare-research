@@ -4011,3 +4011,25 @@ STOP. No further analyses on test years.
 | n_C | n_M | n_X | gate score | R4a |
 |---|---|---|---|---|
 | −0.170 (p 7.2e-05) | −0.131 (0.0023) | 0.042 (0.33) | −0.102 (0.017) | −0.135 (0.0017) |
+
+## 2026-09-26 — EXPLORATORY ROBUSTNESS CHECK: log R4a (decided by: user; design drafted by AI, adopted by the student; recorded BEFORE computing)
+**Status:**
+- Added AFTER R4a's held-out result (7438177), as a check of whether that result depends on feeding raw R4a.
+- Motivation (user): Leka et al. 2023 §3.2.2, "NCI automatically works with the natural logarithm of the variable".
+- Not a confirmation; cannot be tested on 2021–2024. DEV 2010–2019 ONLY; no image reprocessing; nothing on 2021–2024 or 2025–26.
+- Dev candidates total (user): 21 = 16 + 3 masks (bebbfe6; their evaluation is still on hold) + K3 + lnR4a.
+
+**User's design, verbatim:**
+- "DEFINITION: lnR4a = ln(R4a + 3) (R4a = excess kurtosis, bias=True, so R4a + 3 >= 1). Undefined R4a stays undefined."
+- "EVALUATION (once): Phase X set (541), euv_spatial.compare procedure unchanged (folds, weights, estimator, HARP bootstrap 10,000, seed 20260921)."
+  - "Check first: A vs A + R4a reproduces committed Phase X values."
+  - "PRIMARY: A vs A + lnR4a. Report Δ, 95% CI, AUC, next to the committed A vs A + R4a row."
+  - "Also: A + R4a vs A + lnR4a directly (paired, same resamples): difference in log-loss, 95% CI."
+  - "Flare-excluded: A vs A + ln(R4a_nf + 3) on the 528 set."
+- "Pre-stated reading: \"log matters\" only if the paired difference (A + lnR4a better than A + R4a) has a 95% CI above 0; otherwise \"raw vs log makes no clear difference\"."
+
+**Implementation (me):**
+- Code `euv_lnr4a.py`.
+- Paired difference = LL(A + R4a) − LL(A + lnR4a) (positive = the log version is better). Its bootstrap uses the same HARP resamples as the other rows on the 541 set: the same seed and set give the same resample stream.
+- Check: every R4a value is ≥ −3, so the log is defined wherever R4a is.
+- Sets: the Phase X 541 (`primary_fill ≥ 0.80`, R4a defined) and the flare-check 528 (`sens_fill ≥ 0.80`, R4a_nf defined). Weights 1/n per HARP over each set.
