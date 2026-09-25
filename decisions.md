@@ -3775,3 +3775,58 @@ Check: `grep` found no earlier "HELD-OUT R4a TEST" or "HELD-OUT OPERATING-POINT 
   - flare-excluded: 294/313 (true 39/45, false 255/268).
 - **Label-blind exclusions** (fill passes, value undefined): 0 for ΔCV (both versions), R4a, R4c and R4a_nf.
 - **Coverage flag** (HMI pixels outside the cutout on a valid frame; used for S2): 42 episodes in the primary 80% set.
+
+### Step 3 — HELD-OUT TESTS: RESULTS (run once; 2021/2023/2024 single-region T2 cohort; numbers only)
+`euv_heldout.py test` → `euv_heldout_test.log`, `data/euv_test/heldout/`.
+- **First invocation:** stopped at the pre-test τ check, before any test-year prediction or metric was computed. The default pandas CSV parser returned the stored thresholds with the last digit changed (|diff| ≤ 8e-17). Fix: the two dev files are read with `float_precision="round_trip"`; no design change. The single full run below followed.
+
+**Checks:**
+- The dev fold models reproduce step 6: the saved PRIMARY/S1 models have identical coefficients, and the S2 log-losses match.
+- They also reproduce Phase X R4a/R4c and the R4a flare check.
+- Frozen τ reproduced exactly: A (528) 0.071283, A + R4a 0.061914, A + R4a_nf 0.061598, A (541) 0.067970, A + R4c 0.070734.
+- Test frame means: max |diff| 0.0.
+
+**a. ΔCV** (item 1h). Test prediction = mean of the 5 dev fold models. Δ = LL(A) − LL(E94); HARP bootstrap 10,000, seed 20260921.
+
+| set | n (true/false) | HARPs | LL(A) | LL(E94) | Δ | 95% CI | AUC A | AUC E94 |
+|---|---|---:|---:|---:|---:|---|---:|---:|
+| PRIMARY | 306 (44/262) | 98 | 0.3708 | 0.3683 | 0.0025 | [−0.0074, 0.0139] | 0.8002 | 0.7848 |
+| S1 flare-excluded | 294 (39/255) | 98 | 0.3618 | 0.3596 | 0.0022 | [−0.0061, 0.0122] | 0.7868 | 0.7775 |
+| S2 no overhang | 264 (42/222) | 90 | 0.3999 | 0.3944 | 0.0055 | [−0.0047, 0.0181] | 0.7967 | 0.8005 |
+
+Label-blind exclusions: 0. S2 removes 42 overhang episodes.
+
+**b. R4a**
+
+| test | n (true/false) | LL(A) | LL(A + x) | Δ | 95% CI | AUC A | AUC A + x |
+|---|---|---:|---:|---:|---|---:|---:|
+| PRIMARY A vs A + R4a (dev 541 models) | 306 (44/262) | 0.3707 | 0.3623 | 0.0084 | [−0.0227, 0.0418] | 0.8002 | 0.7737 |
+| SENSITIVITY A vs A + R4a_nf (dev 528 models) | 294 (39/255) | 0.3617 | 0.3537 | 0.0080 | [−0.0233, 0.0423] | 0.7861 | 0.7824 |
+
+**Pre-stated reading (mechanical):** PRIMARY Δ 0.0084 > 0, CI includes 0 → **"direction consistent, not confirmed"**.
+
+**Operating-point test** (frozen dev τ, 528-set models, no re-tuning). Weighted %; HARP bootstrap 2,000, seed 0.
+
+| set | model | τ | kept | true kept | false removed | precision | FAR |
+|---|---|---:|---:|---|---|---|---|
+| R4a primary (306) | A | 0.0713 | 248 | 44/44; 1.0000 [1.0000, 1.0000] | 58/262; 0.2758 [0.2001, 0.3598] | 0.1866 [0.1202, 0.2584] | 0.8134 [0.7416, 0.8798] |
+| R4a primary (306) | A + R4a | 0.0619 | 198 | 40/44; 0.8704 [0.7127, 0.9886] | 104/262; 0.4385 [0.3485, 0.5284] | 0.2048 [0.1309, 0.2851] | 0.7952 [0.7149, 0.8691] |
+| R4a_nf (294) | A | 0.0713 | 237 | 39/39; 1.0000 [1.0000, 1.0000] | 57/255; 0.2738 [0.1985, 0.3570] | 0.1784 [0.1139, 0.2488] | 0.8216 [0.7512, 0.8861] |
+| R4a_nf (294) | A + R4a_nf | 0.0616 | 192 | 36/39; 0.8894 [0.7278, 1.0000] | 99/255; 0.4454 [0.3562, 0.5373] | 0.2018 [0.1275, 0.2817] | 0.7982 [0.7183, 0.8725] |
+
+**Differences (A + x − A), paired:**
+- A + R4a: false removed +0.1627 [+0.0727, +0.2528] (+46 episodes); true kept −0.1296 [−0.2873, −0.0114] (−4).
+- A + R4a_nf: false removed +0.1716 [+0.0824, +0.2595] (+42); true kept −0.1106 [−0.2722, 0.0000] (−3).
+
+**Pre-stated reading (mechanical, A + R4a vs A):** the false-removed difference is > 0 with a CI excluding 0, but the true-kept difference is −12.96 points, below the required ≥ −10 → **condition not met**.
+
+**c. R4c secondary** (cannot upgrade the conclusion; dev 541 models):
+- A vs A + R4c: n 306 (44/262). LL(A) 0.3707, LL(A + R4c) 0.3751. Δ −0.0044 [−0.0218, 0.0140]. AUC 0.8002 → 0.7645.
+- Operating point:
+  - A (τ 0.0680): 306 kept, true kept 44/44, false removed 0/262.
+  - A + R4c (τ 0.0707): 190 kept, true kept 39/44 = 0.8943 [0.7863, 0.9762], false removed 111/262 = 0.4684 [0.3778, 0.5559], precision 0.2185 [0.1437, 0.3027], FAR 0.7815 [0.6973, 0.8563].
+  - Differences: false removed +0.4684 [+0.3778, +0.5559]; true kept −0.1057 [−0.2137, −0.0238].
+
+**d. Descriptive:** Spearman ρ(R4a, n_C) on the test R4a primary set = 0.6220 (p 3.8e-34, n 306).
+
+STOP. No further analyses on test years.

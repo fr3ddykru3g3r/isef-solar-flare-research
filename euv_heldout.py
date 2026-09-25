@@ -100,8 +100,8 @@ if __name__ == "__main__" and sys.argv[1:] == ["test"]:
     s6 = pd.read_csv(f"{D}/step6/compare.csv").set_index("set")
     px = pd.read_csv(f"{D}/spatial/eval_compare.csv").set_index("candidate")
     nfc = pd.read_csv(f"{D}/spatial_nf/eval_nf_compare.csv")
-    opd = pd.read_csv(f"{D}/spatial_nf/oppoint_dev.csv").set_index("model")
-    f7 = pd.read_csv("data/phase_f/F7_summary.csv").set_index("candidate")
+    opd = pd.read_csv(f"{D}/spatial_nf/oppoint_dev.csv", float_precision="round_trip").set_index("model")
+    f7 = pd.read_csv("data/phase_f/F7_summary.csv", float_precision="round_trip").set_index("candidate")
 
     def dev_models(mask, extra):
         c = prep(dv, mask); ma, pa = fit_folds(c, A_COLS); me, pe = fit_folds(c, A_COLS + extra)
