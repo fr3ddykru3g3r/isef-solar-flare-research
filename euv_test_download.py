@@ -65,3 +65,22 @@ if __name__ == "__main__" and sys.argv[1:] == ["verify"]:
               f"download {x.download_s.sum() / 3600:.2f} h (downloads overlap)")
     if os.path.exists(f"{ROOT}/failed.csv"):
         print("failures:"); print(pd.read_csv(f"{ROOT}/failed.csv").to_string(index=False))
+
+if __name__ == "__main__" and sys.argv[1:2] == ["reexport"]:
+    # re-export check (user 2026-09-25): AIA once for the given HARPs into data/euv_test/reexport/<H>/; files not already in
+    # aia/<H> are copied there (kept); nothing is deleted or overwritten
+    import shutil
+    from euv_full import aia_spec, submit, wait, download
+    eps = episodes_test(); rows = []
+    for h in [int(x) for x in sys.argv[2:]]:
+        g = eps[eps.harpnum == h]; dest = f"{ROOT}/reexport/{h}"
+        ds, proc = aia_spec(h, g, f"{ROOT}/hmi/{h}")
+        r = submit(ds, proc); prep = wait(r); nb, dl = download(r, dest)       # one pending export at a time
+        old = {os.path.basename(p) for p in glob.glob(f"{ROOT}/aia/{h}/*.fits") if valid_fits(p)}
+        new = {os.path.basename(p) for p in glob.glob(f"{dest}/*.fits") if valid_fits(p)}
+        for f in sorted(new - old):
+            shutil.copy2(f"{dest}/{f}", f"{ROOT}/aia/{h}/{f}")
+        rows.append(dict(harpnum=h, request_id=r.id, prep_s=round(prep, 1), expected=expected_frames(g), before=len(old),
+                         reexport=len(new), new_frames_added=len(new - old), missing_in_reexport=len(old - new)))
+        log(f"re-export HARP {h}: {rows[-1]}")
+    pd.DataFrame(rows).to_csv(f"{ROOT}/reexport.csv", index=False); print(pd.DataFrame(rows).to_string(index=False))

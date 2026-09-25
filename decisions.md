@@ -3702,3 +3702,61 @@ Context (user): Leka et al. 2023 found mean intensity "surprisingly poor" at the
   - 10235: 115/120 (0.958)
 - **For comparison (dev run, `data/euv_full/exports.csv`):** 67 of 179 AIA exports were short (313 frames); 4 were below 97%. Re-exporting those 4 returned identical counts (archive gaps). The 3 test HARPs below 97% have NOT been re-exported; that would be a new download.
 - **Label:** no label, model output, ΔCV or R4a has been read or computed for test years.
+
+## 2026-09-25 — HELD-OUT TESTS (decided by: user)
+### Step 0 — re-export check: RESULT
+AIA re-exported once for HARPs 8932, 12055 and 10235 (`euv_test_download.py reexport`, one pending export, the user's account) into `data/euv_test/reexport/<H>/`.
+- Counts are identical: 8932 171/171; 12055 240/240; 10235 115/115. 0 new frames, 0 missing.
+- **Recorded as: archive gaps.** Nothing was copied or overwritten.
+
+### Step 1 — PRE-REGISTRATION: HELD-OUT R4a TEST and HELD-OUT OPERATING-POINT TEST (recorded BEFORE any test-year computation)
+Check: `grep` found no earlier "HELD-OUT R4a TEST" or "HELD-OUT OPERATING-POINT TEST" in decisions.md, so both are recorded now.
+
+**Disclosure (user, verbatim):** "R4a was not eligible under the Phase X selection rule (85c8285); it was chosen AFTER seeing dev results (Phase X Δ +0.0124 [−0.0048, 0.0294]; flare check 382df4e; ρ(R4a, n_C) = 0.70; operating point 04b6f4f; Phase F). It follows Leka et al. 2023's whole-field κ(ΔI). Test-year labels and magnetic results were seen earlier; test-year EUV values were not. It is one of ~17 candidates evaluated on dev (F7)."
+
+**User's design, verbatim:**
+- "R4a test: PRIMARY A vs A+R4a (315ca5b definition); SENSITIVITY A vs A+R4a_nf (382df4e). Models fitted on dev (5 folds, step 6 settings); test prediction = mean of the 5 fold models; weighted Δ = logloss(A) − logloss(A+x); HARP bootstrap 10,000, seed 20260921; weighted AUC; 80% fill; label-blind exclusion; report n valid true/false. Reading: \"adds information on held-out years\" only if PRIMARY Δ > 0 AND CI excludes 0; \"direction consistent, not confirmed\" if Δ > 0 with CI including 0; else \"not confirmed\"."
+- "Operating-point test: thresholds frozen from dev, no re-tuning; true kept, false removed (count, weighted %), precision, FAR, with HARP-bootstrap 95% CI (2,000, seed 0); differences (A+R4a − A) in false removed and true kept with CIs. Reading: \"removes more false alarms on held-out years\" only if the false-removed difference > 0 with CI excluding 0 AND true-kept difference ≥ −10 points."
+- "Secondary, cannot upgrade the conclusion: A vs A+R4c (315ca5b), same design; frozen dev threshold for A+R4c computed and recorded now."
+- "Descriptive: Spearman ρ of R4a with n_C on test."
+- Run order (user): "a. ΔCV held-out test exactly as 3283478 item 1h (primary, S1, S2). b. R4a held-out test (primary, sensitivity) + operating-point test. c. R4c secondary. d. Descriptive ρ." Run once; no further analyses on test years.
+
+**Frozen dev thresholds** (τ = in-sample dev OOF, ≥ 88% weighted true kept):
+
+| model | dev set on which it was fitted and τ derived | τ |
+|---|---|---|
+| A | 528 (R4a flare-check set; 04b6f4f) | 0.071283 (0.0713) |
+| A + R4a | 528 (04b6f4f) | 0.061914 (0.0619) |
+| A + R4a_nf | 528 (04b6f4f) | 0.061598 (0.0616) |
+| A (for the R4c comparison) | 541 (Phase X R4a/R4c set; F7) | 0.067970 |
+| A + R4c | 541 (F7, `data/phase_f/F7_summary.csv`) | **0.070734** — computed on dev and recorded now |
+
+**Implementation (decided by: me, before any test-year computation):**
+- **Test cohort:** `data/stage5/cohort_test_primary.csv` (313 episodes, 98 HARPs, 2021/2023/2024, single-region; delayed episodes count as false). Features: `score` (mean of the 5 frozen gate fold models, as Stage 5), `n_C`, `n_M`, `n_X`.
+- **Test EUV values (step 2):** the same code as dev, run on `data/euv_test/`:
+  - `euv_full.compute_episode` gives ΔCV (primary and flare-excluded), fills and the coverage flag.
+  - `euv_spatial.spatial_episode` gives R4a and R4c with `valid_primary`, and R4a_nf with `valid_sens`. A `root` argument is added, default `data/euv_full`, so dev behaviour is unchanged.
+  - Workers = os.cpu_count() − 1 = 9. Outputs: `data/euv_test/{series,results,spatial,spatial_nf}/`.
+- **Test sets:**
+  - primary: primary fill ≥ 80% AND the value is defined;
+  - flare-excluded: sens fill ≥ 80% AND the value is defined;
+  - S2: the primary ΔCV set minus episodes with HMI patch pixels outside the cutout.
+  - Test weights: 1/n per HARP over the test analysis set.
+- **Models (5 fold models, step 6 settings; test prediction = mean of the 5 fold models' probabilities):**
+  - **ΔCV (a):**
+    - PRIMARY and S1 use the saved step 6 fold models (`data/euv_full/step6/models/{PRIMARY,S1_flare_excluded}_{A,E94}_fold*.joblib`, dev 540 / 527).
+    - S2 is refitted on the dev S2 set (514) with the same procedure. Check: the refitted OOF log-losses must equal step 6 S2.
+  - **R4a primary (b):** A and A + R4a fitted on the dev R4a set (541; Phase X).
+  - **R4a_nf sensitivity (b):** A and A + R4a_nf fitted on the dev 528 set.
+  - **Operating-point test (b):**
+    - Uses the 528-set models A, A + R4a and A + R4a_nf with their frozen τ (0.0713 / 0.0619 / 0.0616).
+    - A vs A + R4a is evaluated on the test R4a primary set; A vs A + R4a_nf on the test R4a_nf set.
+    - For each set, A is scored on the same episodes. Reported: kept = test probability ≥ τ; true kept, false removed (counts, weighted %), precision, FAR; paired differences (A + x − A) in false removed and true kept.
+    - CIs: HARP bootstrap, 2,000 resamples, `RandomState(0)`, τ fixed.
+  - **R4c (c):**
+    - Δ: A and A + R4c fitted on the dev 541 set.
+    - Operating point: A (541, τ 0.067970) vs A + R4c (541, τ 0.070734) on the test R4c primary set.
+  - **Check:** the refitted dev fold models must reproduce the committed dev OOF log-losses exactly (Phase X / flare check / step 6).
+- **Δ bootstrap:** HARP bootstrap over the test HARPs of each set, 10,000 resamples, `RandomState(20260921)`, drawn in the parent; parallel evaluation identical to single process (Phase F method). AUC is weighted.
+- **Readings** are applied mechanically as written above. The operating-point differences are in weighted percentage points.
+- **(d):** Spearman ρ of R4a with n_C on the test R4a primary set (unweighted).
