@@ -3557,3 +3557,44 @@ Context (user): BADPIT reports ~5× brightenings (2 ARs, 12 s cadence). Kniezews
 | A + n_B | −0.0049 [−0.0132, 0.0019] | 0.7422 | 0.7459 | 60/445, 0.149 [0.098, 0.205] | −0.032 [−0.086, +0.022] |
 | A + n_B + R4a | 0.0092 [−0.0103, 0.0281] | 0.7422 | 0.7946 | 233/445, 0.530 [0.463, 0.601] | +0.350 [+0.277, +0.430] |
 | A + R4a (restated) | 0.0124 [−0.0048, 0.0294] | 0.7422 | 0.8003 | 209/445, 0.487 [0.422, 0.557] | +0.307 [+0.240, +0.383] |
+
+### PHASE F — F4 RESULT (anatomy of false alarms; DESCRIPTIVE; numbers only)
+`phase_f.py F4` → `phase_f_F4.log`, `data/phase_f/F4_*.csv`. 9 workers; wall 1.1 s. Episodes: 547 (98 true / 449 false).
+
+**Checks:**
+- False episodes with a region M1+ in (t, t + 24 h] before the span end: 0.
+- True episodes with one: 89/98. For the other 9, the span end (the HARP's last dev scored row) lies 3–20 h after t, so their flares fall after it.
+
+**Classes (false episodes, 449):**
+- JUST-FLARED: 58 (0.129)
+- QUIET-NOW: 172 (0.383)
+- TOO-EARLY: 59 (0.131)
+- NEVER: 390 (0.869)
+
+**Overlaps** (history × future):
+
+| history [t−48h, t) | NEVER | TOO-EARLY | all |
+|---|---:|---:|---:|
+| C-only history | 185 | 34 | 219 |
+| JUST-FLARED | 45 | 13 | 58 |
+| QUIET-NOW | 160 | 12 | 172 |
+| all | 390 | 59 | 449 |
+
+**TOO-EARLY lead:** median 43.1 h, IQR [31.2, 61.6]; 36 of the 59 are delayed episodes.
+
+**True episodes (98):** zero prior flares 9; JUST-FLARED 42.
+
+**Median [IQR] per class** (primary-valid episodes with a value):
+
+| group | ΔCV n | ΔCV median [IQR] | R4a n | R4a median [IQR] |
+|---|---:|---|---:|---|
+| JUST-FLARED | 57 | 0.1231 [0.0119, 0.2567] | 57 | 205.8 [88.0, 359.6] |
+| QUIET-NOW | 171 | 0.0457 [0.0117, 0.0917] | 172 | 6.37 [1.82, 32.5] |
+| TOO-EARLY | 58 | 0.0888 [0.0368, 0.1556] | 58 | 104.9 [65.5, 223.8] |
+| NEVER | 386 | 0.0687 [0.0201, 0.1780] | 387 | 31.9 [5.17, 93.4] |
+| all false | 444 | 0.0713 [0.0221, 0.1755] | 445 | 41.0 [7.26, 108.8] |
+| true | 96 | 0.1007 [0.0415, 0.2142] | 96 | 201.9 [94.3, 397.2] |
+
+**True-rate per history group** (weighted 1/n per HARP; HARP bootstrap 2,000, seed 0):
+- zero history: 181 episodes, 9 true; 0.0459 [0.0092, 0.0935]
+- any history: 366 episodes, 89 true; 0.1846 [0.1292, 0.2403]

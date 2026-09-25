@@ -1,0 +1,34 @@
+PHASE F F4 -- EXPLORATORY / DESCRIPTIVE, dev 2010-2019 only; workers = os.cpu_count() - 1 = 9
+F4: false 449, true 98; check: false episodes with a region M1+ in (t, t+24h]: 0; true episodes with one: 89/98
+
+class counts among false episodes (classes overlap across the history/future axes):
+  JUST_FLARED    58 / 449 = 0.1292
+  QUIET_NOW     172 / 449 = 0.3831
+  TOO_EARLY      59 / 449 = 0.1314
+  NEVER         390 / 449 = 0.8686
+
+overlaps (false episodes):
+future              NEVER  TOO_EARLY  All
+history [t-48h, t)                       
+C-only history        185         34  219
+JUST_FLARED            45         13   58
+QUIET_NOW             160         12  172
+All                   390         59  449
+
+TOO_EARLY lead (h): n 59, median 43.1, IQR [31.2, 61.6]; of which delayed (M1+ in (t+24h, t+48h]): 36
+true episodes: zero prior flares (n_C = n_M = n_X = 0): 9/98; JUST_FLARED: 42/98
+
+median [IQR] of dCV (primary) and R4a per class (primary-valid episodes with a value)
+      group   n  dCV_n  dCV_median  dCV_Q1  dCV_Q3  R4a_n  R4a_median  R4a_Q1   R4a_Q3
+JUST_FLARED  58     57      0.1231  0.0119  0.2567     57    205.8241 88.0230 359.6243
+  QUIET_NOW 172    171      0.0457  0.0117  0.0917    172      6.3742  1.8235  32.5119
+  TOO_EARLY  59     58      0.0888  0.0368  0.1556     58    104.9151 65.4680 223.7796
+      NEVER 390    386      0.0687  0.0201  0.1780    387     31.8716  5.1665  93.3895
+  all false 449    444      0.0713  0.0221  0.1755    445     41.0444  7.2610 108.8459
+       true  98     96      0.1007  0.0415  0.2142     96    201.8745 94.2559 397.1957
+
+true-rate per history group (all 547 episodes; weighted 1/n per HARP as Stage 4; CI HARP bootstrap 2000, seed 0)
+  zero history (n_C = n_M = n_X = 0)   episodes 181, true   9; weighted rate 0.0459 [0.0092, 0.0935]
+  any history                          episodes 366, true  89; weighted rate 0.1846 [0.1292, 0.2403]
+
+F4 wall time 1.1 s on 9 worker processes (os.cpu_count() = 10)
