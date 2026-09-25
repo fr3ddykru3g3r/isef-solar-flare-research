@@ -1,0 +1,7 @@
+LABEL-BLIND REPORT (no labels read): 546 dev episodes; checks: max box diff 0.0e+00, max CV_box diff 2.2e-16
+  SG   pixels: median 3056, min 0, max 19648; empty 3/546; undefined log10 CV: all 3, primary 80% set 3/541, flare-excluded 80% set 3/528
+  CORE pixels: median 3346, min 548, max 10563; empty 0/546; undefined log10 CV: all 0, primary 80% set 0/541, flare-excluded 80% set 0/528
+  SPOT pixels: median 1098, min 0, max 9003; empty 5/546; undefined log10 CV: all 6, primary 80% set 6/541, flare-excluded 80% set 6/528
+  overlap SG & SPOT / smaller mask: median 0.0000 (n 541 episodes with both non-empty)
+  overlap SG & CORE / smaller mask: median 0.1236 (n 543 episodes with both non-empty)
+  overlap CORE & SPOT / smaller mask: median 0.0206 (n 541 episodes with both non-empty)

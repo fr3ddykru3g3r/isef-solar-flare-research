@@ -4045,3 +4045,27 @@ STOP. No further analyses on test years.
 | flare-excluded A vs A + ln(R4a_nf + 3) | 528 (89/439) | 0.3359 | 0.3202 | 0.0157 | [−0.0101, 0.0372] | 0.7480 | 0.7870 |
 
 **Pre-stated reading (mechanical):** paired difference +0.0057, CI [−0.0087, +0.0204] not above 0 → **"raw vs log makes no clear difference"**.
+
+### Three localised areas — Step 1–2 RESULT (label-blind; no labels read; the evaluation, step 3, is still ON HOLD)
+`euv_masks.py selftest | timing | run | report` → `euv_masks_report.log`; outputs in `data/euv_full/masks/`.
+- **Selftest passed:**
+  - Sharp bipole: SG-PIL 512 px. Smooth bipole: SG-PIL 0 px (NL blocks inside the PIL mask have a maximum g of 38.7 G/Mm).
+  - SPOT includes |B| = 1000 G.
+  - CORE takes ceil(1%) with stable ties and is deterministic.
+  - Test-fixture change before the pass: the smooth ramp was 12 G/px, but its PIL band (columns 29–34) held no complete 4×4 block, so it did not isolate the g criterion. It was changed to 14 G/px (38.7 G/Mm).
+- **Code fix before the run:** `data/euv_full/results/` also holds `step4_choice.json` (no `eid`), which is now skipped when the stored CV_box values are read.
+- **Timing:** 3 episodes (RandomState(0)), single process, 57 s in total. Box means and CV_box reproduced (≤ 5.6e-17).
+- **Full run:** 546/546 dev episodes, 9 workers (os.cpu_count() − 1), wall 1.15 h (00:28–01:37). Checks in every episode: max frame box-mean |diff| 0.0; max CV_box |diff| 2.2e-16.
+
+**Mask pixel counts and undefined values:**
+
+| mask | pixels median / min / max | empty | undefined log10 CV: all / primary 80% (541) / flare-excluded 80% (528) |
+|---|---|---:|---|
+| SG-PIL | 3,056 / 0 / 19,648 | 3 | 3 / 3 / 3 |
+| CORE | 3,346 / 548 / 10,563 | 0 | 0 / 0 / 0 |
+| SPOT | 1,098 / 0 / 9,003 | 5 | 6 / 6 / 6 |
+
+**Median overlap** (intersection ÷ smaller mask, episodes with both masks non-empty):
+- SG ∩ SPOT: 0.0000 (n 541)
+- SG ∩ CORE: 0.1236 (n 543)
+- CORE ∩ SPOT: 0.0206 (n 541)
