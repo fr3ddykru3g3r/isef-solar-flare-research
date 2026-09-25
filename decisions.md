@@ -3432,3 +3432,19 @@ Code `euv_step6.py`, console `euv_step6.log`, outputs `data/euv_full/step6/` (pe
   - FAR = 1 − precision.
 - **CIs:** HARP bootstrap, 2,000 resamples, `np.random.RandomState(0)`. HARPs are resampled with their episodes and weights; τ is held fixed at the full-sample value; 2.5/97.5 percentiles.
 - **Differences:** Δ false removed (weighted %) = (A + R4a − A) and (A + R4a_nf − A), computed in the same resamples (paired). The count differences are also given.
+
+### Dev operating point — RESULT (EXPLORATORY; τ in-sample; numbers only)
+`euv_r4a_oppoint.py` → `euv_r4a_oppoint.log`, `data/euv_full/spatial_nf/oppoint_dev.csv`.
+- 528 episodes (89 true / 439 false), weights 1/n per HARP.
+- Check: the OOF log-losses equal the R4a flare-check evaluation.
+- CIs: HARP bootstrap, 2,000 resamples, seed 0, τ fixed.
+
+| model | τ | kept | true kept (n; weighted [CI]) | false removed (n; weighted [CI]) | precision [CI] | FAR [CI] |
+|---|---:|---:|---|---|---|---|
+| A | 0.0713 | 431 | 80/89; 0.8833 [0.7587, 0.9861] | 88/439; 0.2313 [0.1718, 0.2934] | 0.1464 [0.1008, 0.1953] | 0.8536 [0.8047, 0.8992] |
+| A + R4a | 0.0619 | 306 | 78/89; 0.9216 [0.8564, 0.9753] | 211/439; 0.4904 [0.4207, 0.5631] | 0.2125 [0.1514, 0.2797] | 0.7875 [0.7203, 0.8486] |
+| A + R4a_nf | 0.0616 | 308 | 77/89; 0.9154 [0.8466, 0.9713] | 208/439; 0.4819 [0.4132, 0.5530] | 0.2086 [0.1491, 0.2750] | 0.7914 [0.7250, 0.8509] |
+
+**Difference in false removed vs A** (paired, same resamples):
+- A + R4a − A: weighted +0.2591 [+0.1887, +0.3305]; count +123.
+- A + R4a_nf − A: weighted +0.2506 [+0.1802, +0.3227]; count +120.

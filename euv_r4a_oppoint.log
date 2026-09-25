@@ -1,0 +1,11 @@
+check: OOF log-losses equal the R4a flare-check evaluation (n 528: 89 true / 439 false)
+
+Dev OOF operating point (tau in-sample, >= 88% weighted true kept); weighted fractions; HARP bootstrap 2,000, seed 0
+   model    tau  kept true_kept_n false_removed_n  true_kept  false_removed  precision    FAR     true_kept_CI false_removed_CI     precision_CI           FAR_CI
+       A 0.0713   431       80/89          88/439     0.8833         0.2313     0.1464 0.8536 [0.7587, 0.9861] [0.1718, 0.2934] [0.1008, 0.1953] [0.8047, 0.8992]
+   A+R4a 0.0619   306       78/89         211/439     0.9216         0.4904     0.2125 0.7875 [0.8564, 0.9753] [0.4207, 0.5631] [0.1514, 0.2797] [0.7203, 0.8486]
+A+R4a_nf 0.0616   308       77/89         208/439     0.9154         0.4819     0.2086 0.7914 [0.8466, 0.9713] [0.4132, 0.5530] [0.1491, 0.2750] [0.7250, 0.8509]
+
+Difference in false removed vs A (paired, same resamples)
+  A+R4a - A: weighted +0.2591 [+0.1887, +0.3305]; count +123
+  A+R4a_nf - A: weighted +0.2506 [+0.1802, +0.3227]; count +120
