@@ -3329,3 +3329,30 @@ Code `euv_step6.py`, console `euv_step6.log`, outputs `data/euv_full/step6/` (pe
 | R4c box brightening fraction | 0.3206 | 0.3169 | 0.0037 | [−0.0058, 0.0132] | 0.7422 | 0.8020 |
 
 **3. Selection rule** (R1–R3 only): the largest Δ is R1 (−0.0023). It does not qualify (Δ ≤ 0), so no PIL candidate goes to the held-out plan. R4a–c are reported only; by the pre-registered rule they cannot be selected.
+
+## 2026-09-25 — R4a FLARE CHECK (requested by: user; EXPLORATORY; recorded BEFORE computing)
+**Label:** EXPLORATORY follow-up to Phase X (315ca5b). "R4a was not eligible under the Phase X selection rule; this check does not change that and makes no claim." Dev 2010–2019 only; no downloads.
+
+**User's text, verbatim:**
+- "Question: does R4a (whole-box running-difference kurtosis) still add to model A when frames taken during flares are removed?"
+- "Definition: R4a exactly as in 315ca5b, but computed on the FLARE-EXCLUDED frame set (P2 amended, same rule as step 6 S1: frames inside the begin–end of a C1+ SWPC event from the HARP's NOAA region(s), or any M1+ event, removed). Running differences only between consecutive VALID frames ≤ 24 min apart. Call it R4a_nf."
+- "Fill: 80% on the flare-excluded frame set (as S1). Label-blind exclusion if undefined."
+- "Pre-stated reading: \"R4a survives flare removal\" if Δ(A − A+R4a_nf) > 0 on the same episodes AND AUC(A+R4a_nf) > AUC(A). \"R4a mostly reflected flares\" if Δ ≤ 0. Either way reported; nothing is claimed from dev alone."
+  - Note (me): if Δ > 0 but AUC(A+R4a_nf) ≤ AUC(A), neither pre-stated reading applies; that case is reported as "neither condition met".
+
+**Implementation (decided by: me, before computing):**
+- **Code:** `euv_spatial.spatial_episode` gets an argument `valid` (default `"valid_primary"`, so Phase X behaviour is unchanged).
+  - R4a_nf uses `valid="valid_sens"`: the stored step 6 S1 flags (`valid_primary & ~flare`) in `data/euv_full/series/<eid>.csv`.
+  - Pairs are consecutive valid_sens frames with 0 < Δt ≤ 24 min. Everything else is the same code path, including the frame-means check against the stored series.
+  - The other Phase X quantities are also written to the JSON by that code path. They are not read or reported.
+  - Outputs go to `data/euv_full/spatial_nf/`; the pool check writes to `data/euv_full/spatial_nf_check/{single,pool}/`.
+- **Workers:** `os.cpu_count() − 1` = 9 (10 cores).
+  - **Check first:** 5 episodes drawn with `RandomState(0)` from the 546, run single-process and then in the 9-worker pool. JSON values and pair/frame CSVs must be identical (|diff| = 0). Otherwise the run falls back to 8 workers and this is reported.
+- **Valid set:** `sens_fill ≥ 0.80` (the stored S1 fill) AND R4a_nf defined. This set is a subset of the Phase X R4a set, because valid_sens frames are a subset of the valid_primary frames.
+- **Evaluation:** the Phase X/step 6 `compare` procedure, on the R4a_nf valid set only.
+  - Two comparisons on the same episodes and weights: A vs A + R4a (original, from `data/euv_full/spatial/`), and A vs A + R4a_nf.
+  - The code is moved to module level unchanged. **Check:** it must reproduce the Phase X R4a row of `data/euv_full/spatial/eval_compare.csv` (Δ, CI, AUCs; |diff| < 1e-12).
+- **Items 3–5** use the same common set (the R4a_nf valid set):
+  - Item 3: Spearman ρ (n, ρ, p) of R4a and of R4a_nf with n_C, n_M, n_X and the gate score.
+  - Item 4: 99th percentile over that set (`np.percentile`, linear). "Above" = strictly greater. "Contains ≥ 1 flare frame" = ≥ 1 frame with `valid_primary & flare` in the episode's series, i.e. a flare frame that entered the original R4a. The same definition is used for both measures.
+  - Item 5: Spearman ρ between R4a and R4a_nf.
