@@ -3897,3 +3897,51 @@ STOP. No further analyses on test years.
 **Pre-stated reading (mechanical; primary = TEST primary twins, CV_box):** ratio 1.3057 > 1, CI [0.9367, 2.2182] includes 1 → **"direction consistent, not confirmed"**.
 
 STOP. No further analyses on test years.
+
+## 2026-09-26 — EXPLORATORY: THREE LOCALISED 94 Å AREAS (decided by: user; design drafted by Claude AI, adopted by the student; recorded BEFORE computing)
+**Status:**
+- Added AFTER all held-out results (7438177, ec00afb) had been seen.
+- DEV-ONLY EXPLORATORY: dev 2010–2019 only; nothing for 2021–2024 or 2025–26 is read or computed. Frozen files unchanged.
+- Dev candidates evaluated so far: 16. This entry adds 3 (M1 SG-PIL, M2 CORE, M3 SPOT), for 19 in total.
+
+**User's definitions, verbatim:**
+- "all masks built once on the alarm-time LoS magnetogram / window, label-blind, as flat HMI-pixel index sets, mapped to every frame with euv_dctrl.hmi_to_frame exactly as S"
+- "M1 SG-PIL (strong-gradient PIL, after Falconer, Moore & Gary 2003):"
+  - "B = magnetogram (nan -> 0). mm_px = CDELT1 * RSUN_REF / RSUN_OBS / 1e6 (header)."
+  - "Block-average B in 4x4 HMI pixels (drop the incomplete edge rows/cols) -> r (~1.45 Mm, ~ the MDI resolution at which 50 G/Mm was defined)."
+  - "g = |grad r| with np.gradient(r, 4*mm_px) [G/Mm]."
+  - "NL = blocks where r changes sign against any 4-neighbour."
+  - "Keep NL blocks lying entirely inside euv_pilot.pil_mask(B) (all 16 pixels) AND g > 50."
+  - "SG-PIL = the HMI pixels of those blocks. No further dilation."
+  - "Documented deviations: Falconer's potential-transverse-field > 150 G criterion is replaced by the PIL-mask requirement; no 30° disk-centre restriction; no foreshortening correction."
+- "M2 CORE: V = per-HMI-pixel values over valid_primary frames (as in spatial_episode). Per-pixel nanmedian over those frames; CORE = top 1% of pixels with a finite median (count = ceil(0.01 * n_finite); stable argsort). The same mask is used for both versions."
+- "M3 SPOT: |B| >= 1000 G on the alarm-time magnetogram (design choice, not from a paper; LoS field, no projection correction — documented limitation)."
+- "Per-frame value = mean over the mask (euv_dctrl.frame_means). CV_M = euv_dctrl.cv over the valid frames. Feature = log10(CV_M) (reason recorded: dev CV_box skew 2.19 raw, -0.07 log10, checked label-blind). Undefined if the mask is empty or has < 3 valid frames with finite means -> label-blind exclusion, n reported."
+  - Note (me, label-blind, before recording): on the dev primary 80% set (541 CV_box values, no labels read), `scipy.stats.skew` (bias = True) gives 2.176 raw and −0.073 for log10.
+- "STEP 1 — Code (new file euv_masks.py; reuse spatial_episode's frame processing exactly: same files, update_pointing, register_cutout, SAT_DN, valid_primary rows). Selftests: (a) synthetic bipole with a sharp sign change -> SG-PIL non-empty; the same bipole with a smooth wide transition (g < 50 G/Mm) -> empty; (b) SPOT threshold at exactly 1000 G included; (c) CORE count = ceil(1%) and deterministic. Checks per episode: every frame's box mean equals the stored series (|diff| < 1e-9); recomputed CV_box equals stored primary_CV_box (|diff| < 1e-9). Assert; stop on failure."
+- "STEP 2 — Timing on 3 episodes, then the full dev run with ProcessPoolExecutor (os.cpu_count() - 1 workers). Outputs: data/euv_full/masks/<eid>.json and _frames.csv. Before any label is used, report (label-blind): mask pixel counts (median/min/max) per mask, n undefined per mask, median overlap fractions (SG∩SPOT, SG∩CORE, CORE∩SPOT, each / smaller mask), wall time. Commit."
+- "STEP 3 — Evaluation, run once (dev):"
+  - "PRIMARY per mask: euv_spatial.compare procedure (A vs A + log10 CV_M; same folds, weights 1/n per HARP, estimator; HARP bootstrap 10,000, seed 20260921) on the primary 80% set with the value defined. From the SAME resamples report the 95% CI and the Bonferroni 98.33% CI (0.833 / 99.167 percentiles). Check first: the modified function reproduces the committed Phase X R4a 95% CI exactly."
+  - "Pre-stated reading per mask: \"ELIGIBLE for independent confirmation\" only if Δ > 0 AND the 98.33% CI lower bound > 0 AND AUC(A + M) > AUC(A); otherwise \"NOT ELIGIBLE\". Apply mechanically."
+  - "SECONDARY (descriptive; cannot change any reading):"
+    - "s1 A + log10 CV_box vs A + log10 CV_box + log10 CV_M (does the area add beyond the whole region?) — Δ, 95% CI, AUC."
+    - "s2 CV_M twins ratios with the F2 ratio code: the 81 gate-score twins (data/euv_full/step6/twins_PRIMARY.csv) and the same-flare-history twins (euv_f2_replication.py dev code)."
+    - "s3 flare-excluded version (valid_sens frames, sens_fill >= 0.80): the PRIMARY comparison."
+    - "s4 Spearman rho of each log10 CV_M with n_C, n_M, n_X, gate score and log10 CV_box."
+  - "Report the tables, commit, STOP. Nothing on 2021–2024 or 2025–26."
+
+**Implementation (decided by: me, before computing):**
+- **Episodes:** the 546 dev episodes with stored series. Frames = the stored `valid_primary` rows, processed exactly as in `euv_spatial.spatial_episode`. HMI/AIA files come from `data/euv_full`; the pointing table is the same JSOC keyword query.
+- **NL (sign change):** r[i, j] · r[neighbour] < 0 for any of the 4 neighbours.
+- **g:** `np.hypot(*np.gradient(r, 4 * mm_px))`.
+- **CORE ordering:** descending per-pixel median, `np.argsort(-median, kind="stable")` over the finite-median pixels, first ceil(0.01 · n_finite).
+- **SPOT:** `np.abs(B) >= 1000` on the magnetogram with NaN pixels excluded.
+- **Per-frame mask mean:** `euv_dctrl.frame_means` on each registered frame, for box, SG-PIL and SPOT. For CORE, the identical formula (nanmean of the mapped values, NaN if none finite) is applied to the stored per-frame mapped values after the loop, because the mask needs every frame first.
+- **CV versions:** CV_M (primary) over `valid_primary` frames; CV_M_nf over `valid_sens` frames.
+- **Undefined:** the mask is empty, fewer than 3 valid frames have finite means, or CV ≤ 0.
+- **Evaluation:**
+  - The step 6 / `euv_spatial.compare` procedure, via `euv_spatial.cv_fit`; the bootstrap is drawn in the parent and evaluated in parallel (Phase F method, identical to single process).
+  - Percentiles for the Bonferroni CI: 0.833 / 99.167, as stated.
+  - s1 uses log10(`primary_CV_box`) from the stored results, on the set where both values are defined.
+  - s2 uses raw CV_M, with `phase_f.ratio_jobs` (mode ratio, 2,000 resamples, seed 0).
+  - s4 is unweighted Spearman on the PRIMARY set of each mask.
