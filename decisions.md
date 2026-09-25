@@ -3295,3 +3295,37 @@ Code `euv_step6.py`, console `euv_step6.log`, outputs `data/euv_full/step6/` (pe
   - Projection = N × (mean per-episode time inside the pool) / 8, for N = 546 dev and N = 313 test.
   - If the dev projection is > 8 h: STOP and report.
 - **Selection (only R1–R3):** the largest Δ; qualifies only if Δ > 0. R4a–c are reported but cannot be selected.
+
+### PHASE X — RESULT (EXPLORATORY on dev 2010–2019, internal 5-fold CV; numbers only)
+`euv_spatial.py` (timing | run | eval) → `euv_spatial_eval.log`. Per-episode outputs in `data/euv_full/spatial/`; timing in `data/euv_full/logs/spatial_timing.log`.
+
+**B. Timing** (10 dev episodes drawn with `RandomState(0)`):
+- Frame means reproduced (max |diff| 0.0); single-process output = pool output.
+- Single process: 23.3 s/episode. Pool of 8: 36.9 s/episode inside the workers, 68 s wall for the 10.
+- Projected: dev 546 episodes 0.70 h; test 313 episodes 0.40 h (8 workers). Dev ≤ 8 h, so step C was run.
+
+**Run:**
+- The first run stopped at 373/546 when the previous Claude session ended (the process was not detached). All 373 saved JSONs were complete.
+- The run was resumed (finished episodes skipped) and completed 546/546 at 01:28.
+
+**Checks:**
+- Frame means reproduced in all 546 episodes (max |diff| 0.0).
+- The step 6 PRIMARY Δ and CI are reproduced by the evaluation code.
+- Frame-to-frame pointing shift of the patch centre, 62,781 pairs: median 0.307 AIA px, 95th percentile 0.949, maximum 9.539.
+
+**1. n valid per candidate** (primary 80% set = 541):
+- R1–R3: 540 episodes (96 true / 444 false, 178 HARPs). 1 excluded as undefined: `4839_20141123T2259`.
+- R4a–c: 541 episodes (96 / 445, 179 HARPs). 0 excluded.
+
+**2. Δ = LL(A) − LL(A + Rk)** (positive = candidate helps). HARP bootstrap 10,000, seed 20260921. Weighted AUC.
+
+| candidate | LL(A) | LL(A + Rk) | Δ | 95% CI | AUC A | AUC A + Rk |
+|---|---:|---:|---:|---|---:|---:|
+| R1 PIL κ(ΔI) − ctrl | 0.3220 | 0.3243 | −0.0023 | [−0.0088, 0.0023] | 0.7430 | 0.7406 |
+| R2 PIL ς(ΔI) − ctrl | 0.3220 | 0.3251 | −0.0031 | [−0.0080, 0.0013] | 0.7430 | 0.7440 |
+| R3 PIL brightening fraction − ctrl | 0.3220 | 0.3254 | −0.0034 | [−0.0132, 0.0041] | 0.7430 | 0.7454 |
+| R4a box κ(ΔI) | 0.3206 | 0.3082 | 0.0124 | [−0.0048, 0.0294] | 0.7422 | 0.8003 |
+| R4b box ς(ΔI) | 0.3206 | 0.3257 | −0.0051 | [−0.0177, 0.0027] | 0.7422 | 0.7203 |
+| R4c box brightening fraction | 0.3206 | 0.3169 | 0.0037 | [−0.0058, 0.0132] | 0.7422 | 0.8020 |
+
+**3. Selection rule** (R1–R3 only): the largest Δ is R1 (−0.0023). It does not qualify (Δ ≤ 0), so no PIL candidate goes to the held-out plan. R4a–c are reported only; by the pre-registered rule they cannot be selected.
