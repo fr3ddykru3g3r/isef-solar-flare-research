@@ -3687,3 +3687,18 @@ Context (user): Leka et al. 2023 found mean intensity "surprisingly poor" at the
 
 - The trends row uses 10,000 resamples. The committed Stage 4 CI used 1,000: [−0.0114, 0.0253].
 - **Phase F wall times** (9 workers): F2 0.8 s, F3 3.4 s, F4 1.1 s, F5 4.5 s, F6 1.8 s, F7 2.8 s.
+
+### HELD-OUT EUV TEST: DATA DOWNLOAD — RESULT (files only; nothing computed on test years)
+`euv_test_download.py run` 13:29–20:43 (wall 7.24 h) → `data/euv_test/`. `euv_test_download.py verify` → `euv_test_verify.log`, `data/euv_test/verify_per_harp.csv`.
+- **Exports:** 196 (98 HMI, 98 AIA). JSOC prep 6.31 h in total; downloads 3.80 h, overlapping.
+- **Failures:** 0.
+- **Retries:** 2, both recovered — a tar read timeout at 13:57 and a status-wait timeout at 18:50.
+- **HMI:** magnetogram + bitmap for all 313/313 episode T_RECs (626 files). Header HARPNUM and T_REC match in every case.
+- **AIA:** 31,105 files of 31,290 expected (99.41%). All 31,105 have a readable header, WAVELNTH = 94 and a T_REC inside the HARP's record range. No HARP has zero files.
+- **Size:** 12.19 GB.
+- **Short HARPs:** 42 of 98, 185 frames missing in total; 33 of them are short by ≤ 3 frames. Three are below 97% of expected:
+  - 8932: 171/195 (0.877)
+  - 12055: 240/270 (0.889)
+  - 10235: 115/120 (0.958)
+- **For comparison (dev run, `data/euv_full/exports.csv`):** 67 of 179 AIA exports were short (313 frames); 4 were below 97%. Re-exporting those 4 returned identical counts (archive gaps). The 3 test HARPs below 97% have NOT been re-exported; that would be a new download.
+- **Label:** no label, model output, ΔCV or R4a has been read or computed for test years.
