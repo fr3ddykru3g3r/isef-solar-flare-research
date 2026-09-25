@@ -3830,3 +3830,37 @@ Label-blind exclusions: 0. S2 removes 42 overhang episodes.
 **d. Descriptive:** Spearman ρ(R4a, n_C) on the test R4a primary set = 0.6220 (p 3.8e-34, n 306).
 
 STOP. No further analyses on test years.
+
+## 2026-09-26 — HELD-OUT REPLICATION OF F2 (decided by: user; recorded BEFORE computing anything)
+**Recorded fact:** this replication was added AFTER the held-out R4a result (7438177) had been seen. Test years 2021/2023/2024 only.
+
+**Hypothesis (wording drafted by Claude AI, reviewed and adopted by Lokesh):** In the held-out years 2021, 2023 and 2024, among true alarms matched to false alarms with a similar gate score (magnetic twins), whole-region AIA 94 Å variability (CV_box) over the 24 hours before the alarm is higher in the true alarm than in its false-alarm twin.
+
+**User's design, verbatim:**
+- "Primary measure: CV_box (primary_CV_box, same definition as Phase F F2)."
+- "Cohort: data/stage5/cohort_test_primary.csv, primary 80% fill set (306 episodes)."
+- "Twins: each true episode matched 1:1 to a false episode on gate score, greedy nearest neighbour, frozen caliper 0.0747, same code as step 6 twins. Report n pairs."
+- "Statistic: twins ratio = median(true) / median(false); CI = pairs resampled clustered by true HARP, 2,000, seed 0 (as F2). Also the all-episodes ratio with HARP bootstrap 2,000, seed 0."
+- "Pre-stated reading: \"REPLICATED\" if twins ratio > 1 AND CI lower bound > 1; \"direction consistent, not confirmed\" if ratio > 1 with CI including 1; \"NOT REPLICATED\" otherwise."
+- "Secondary (cannot change the primary reading): twins matched within the same flare-history group (F4 definitions: JUST-FLARED / C-only / QUIET-NOW), then nearest gate score within caliper 0.0747. Same statistic. Also report CV_ctrl and CV_PIL ratios, descriptive only. Compute the same secondary on dev (2010–2019) as a reference, labelled EXPLORATORY."
+- "STEP 1 — If CV_box/CV_ctrl/CV_PIL for test episodes are not already stored, compute them from data/euv_test series with the identical code (no image reprocessing, no downloads). Check: the same code reproduces the dev F2 values (|diff| < 1e-9)."
+- "STEP 2 — Run once. Report tables (n, medians, ratios, CIs, reading). Commit. STOP. No further analyses on test years."
+
+**Implementation (decided by: me, before computing):**
+- **Code:** `euv_f2_replication.py`; log `euv_f2_replication.log`; tables in `data/euv_test/f2_replication/`.
+- **Step 1:** CV_box, CV_PIL and CV_ctrl are already stored for all 313 test episodes (`primary_CV_box`, `primary_CV_PIL`, `primary_CV_ctrl` in `data/euv_test/results/*.json`), written by `euv_full.compute_episode`, the code that produced the dev values. No new computation.
+  - **Check:** the ratio code of this script, applied to the dev values and the step 6 twins, must reproduce the committed F2 rows (`data/phase_f/F2_ratios.csv`) for CV_box, CV_PIL and CV_ctrl (|diff| < 1e-9).
+- **Test set:** `primary_fill ≥ 0.80` and CV_box defined (306 expected). Delayed episodes count as false.
+- **Twins:** the matching code of `euv_step6.twins`.
+  - The order of the true episodes is `np.random.RandomState(20260921).permutation(n_true)`.
+  - Each true episode takes the nearest unused false episode on gate score from a different HARP, if |Δscore| ≤ 0.07470488674776919.
+  - **Check:** on the dev step 6 PRIMARY set, this code must reproduce the 81 committed pairs exactly.
+- **Secondary twins:** identical, but the candidate false episodes must share the true episode's flare-history group:
+  - JUST-FLARED: n_M + n_X ≥ 1;
+  - QUIET-NOW: n_C + n_M + n_X = 0;
+  - C-only: otherwise.
+- **Statistic:** `phase_f.ratio_jobs` (the F2 code).
+  - Ratio = median(true members) ÷ median(false members).
+  - Twins CI: pairs resampled clustered by true HARP; all-episodes CI: HARP bootstrap. Both 2,000 resamples, seed 0.
+- **Readings** are applied mechanically to the primary twins CV_box row only. CV_PIL and CV_ctrl, and all secondary rows, are descriptive.
+- **Dev reference (EXPLORATORY):** the secondary history-group twins on the dev primary 80% set (541), same code.
