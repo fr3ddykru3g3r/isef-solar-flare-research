@@ -4125,3 +4125,36 @@ STOP. No further analyses on test years.
 All p < 1e-5.
 
 **Final dev candidate list closed:** 21 candidates in total. STOP.
+
+## 2026-09-26 — 2025–26 CONFIRMATION SET: DOWNLOAD + LABEL-BLIND COMPUTATION ONLY (decided by: user; recorded BEFORE doing anything)
+**User's text, verbatim:**
+- "No evaluation, no true/false split printed or inspected. Frozen files unchanged."
+- "STEP 0 — Read decisions.md for the recorded 2025–26 confirmation-set rules (frozen end T_REC 2026-08-16, subset rule, the 6 overlapping HARPs excluded, label build) and follow them exactly. … Check and report: GOES-16+ era labels are on the true flux scale (no ÷0.7 applied to post-GOES-15 data) as recorded."
+- "STEP 1 — Gate scoring (label-blind): score the frozen gate (5 fold models, threshold -0.9925) on the 2025–26 SHARP rows; build episodes with the frozen cohort rules (T1–T4). Report ONLY: number of episodes and HARPs, for single-region and for the recorded subset separately. Do not print or look at true/false counts."
+- "STEP 2 — Download plan (dry run first): same as the test-year download (euv_test_download.py pattern): AIA 94 Å, 12-min, (t−24h, t], tracked im_patch cutouts; HMI sharp_720s LoS magnetogram + bitmap at t. Output root data/euv_confirm/. Report expected episodes, exports, estimated GB (test years were 12.19 GB for 313 episodes) and estimated hours. Then run it. JSOC rules: my account only, ONE pending export at a time, never a second account."
+- "STEP 3 — Compute values with the identical code as the test years (euv_full.compute_episode, euv_spatial.spatial_episode with root = data/euv_confirm; masks and K3 not needed). Report: n episodes, fill counts at 80%, n undefined, errors, wall time. Commit."
+- "STOP. Nothing is evaluated against labels until I send a pre-registration."
+
+**Recorded rules followed** (quoted from this log):
+- "CONFIRMATION SET FROZEN … T_REC 2025-01-01 00:00 TAI → 2026-08-16 23:00 TAI"
+- Label build (Step 1 results): `data/labelled_20250101_20260817.csv`, SHA-256 `1f6673956db3599616fe4d04fbd14b285a383737156a49d393f6c5d617c49263`, identical rules — K2, missing-day (2025-12-30 and 2025-12-31 are 404 days), empty-day, history_incomplete, region_group.
+- "Confirmation set PAUSED; decisions on overlap and subset": "The 6 HARPs that also appear in 2021–2024 are excluded" and "The <= 2-region fallback applies to the confirmation set".
+- The 2026-09-21 feasibility check: "flare scale 2025+ … XRA from GOES-18/19 = true scale; `swpc.py` already treats G16–G19 as true scale (K2: used as reported)".
+- `NOAA_ARS` is used only for flare–region linking, never as a model input.
+
+**Implementation (decided by: me, before doing anything):**
+- **Code:** `euv_confirm.py check | cohort | plan | download | verify | compute`. Everything under `data/euv_confirm/`.
+- **check:**
+  - Verify the labelled-file hash.
+  - GOES scale: `swpc.FLARE_SCALE == "K2"`. For every XRA event 2024-12-29 → 2026-08-18, count events per satellite; expect none from G13/14/15. For G16–G19 events, check flux == flux_reported (no ÷0.7).
+  - Identify the 6 overlapping HARPs: confirmation-file HARPs that are in `frozen/split.csv` (read-only), count asserted = 6.
+- **cohort:** as Stage 5 (`stage5_test.py`):
+  - Rows with a missing gate feature are unscorable and dropped. Score = mean of the 5 frozen gate fold decision values; threshold −0.9924957750431066.
+  - `cohort.build` (T1–T4) on each subset's scored rows. The trend windows use every labelled confirmation row of the HARP; `swpc.label_missing_days()` is used.
+  - Subsets: single (`noaa_ar_count == 1`) and the recorded fallback ≤ 2 (`noaa_ar_count <= 2`).
+  - Cohort files are written to `data/euv_confirm/`. Only the numbers of episodes and HARPs are printed; no label column is printed or inspected.
+- **Download set:** the union of the two cohorts' episodes (same eid = same HARP and t), so both subsets are covered.
+  - Per HARP: one HMI export (magnetogram + bitmap at all union T_RECs) and one AIA 94 Å im_patch export (`euv_full.aia_spec`: the HARP's earliest t − 24 h + 12 min → latest t, 12 min).
+  - Driver: `euv_full.run_pipeline(compute=False)`: url-tar, one pending export at a time, the user's account only, resumable, progress every 30 min.
+  - Plan (dry run): prep = 72 s + 0.2 s/file per export × 1.27 (the ratio of test wall time to modelled prep time). GB from the test-year bytes per file.
+- **compute:** `euv_heldout.test_episode` logic with root `data/euv_confirm`: `euv_full.compute_episode` + `euv_spatial.spatial_episode` (valid_primary and valid_sens); 9 workers. Only counts are reported.
