@@ -3624,3 +3624,37 @@ Context (user): BADPIT reports ~5× brightenings (2 ARs, 12 s cadence). Kniezews
 |---|---|---:|---:|---|---|
 | A + S1 | −0.0042 [−0.0129, 0.0016] | 0.7422 | 0.7439 | 70/445, 0.147 [0.096, 0.200] | −0.033 [−0.076, +0.009] |
 | A + S2 | −0.0057 [−0.0123, 0.0001] | 0.7422 | 0.7398 | 96/445, 0.220 [0.158, 0.281] | +0.040 [−0.009, +0.091] |
+
+### PHASE F — F6 RESULT (PIL brightness level; EXPLORATORY; numbers only)
+`phase_f.py F6` → `phase_f_F6.log`, `data/phase_f/F6_*.csv`. 9 workers; wall 1.8 s.
+- Sets: primary 540 (96 true / 444 false); flare-excluded 527 (89 / 438).
+- Twins: 81 pairs (primary) and 77 pairs (flare-excluded, both members defined).
+
+**Ratios and differences.** B1 is a ratio on the linear scale; B2 is a difference of medians (true − false), per hour. CI: HARP bootstrap, 2,000 resamples, seed 0.
+
+| measure | median true / false | all [CI] | twins median true / false | twins [CI] |
+|---|---|---|---|---|
+| B1 | 0.1598 / 0.1029 | ratio 1.140 [1.031, 1.292] | 0.1606 / 0.0851 | 1.190 [1.066, 1.333] |
+| B2 | 0.001472 / 0.000774 | diff 0.00070 [−0.0008, 0.0026] | 0.001677 / 0.001796 | −0.00012 [−0.0018, 0.0025] |
+| B1_nf | 0.1539 / 0.1004 | ratio 1.131 [1.020, 1.266] | 0.1539 / 0.0855 | 1.171 [1.028, 1.306] |
+| B2_nf | 0.001536 / 0.000739 | diff 0.00080 [−0.0008, 0.0026] | 0.001843 / 0.001849 | −0.000006 [−0.0022, 0.0022] |
+
+**Spearman ρ:**
+
+| | n_C | gate score | R4a |
+|---|---|---|---|
+| B1 (n 540) | 0.281 (3.1e-11) | 0.106 (0.014) | 0.519 (1.6e-38) |
+| B2 (n 540) | 0.003 (0.94) | −0.001 (0.98) | 0.153 (3.6e-04) |
+| B1_nf (n 527) | 0.258 (1.9e-09) | 0.084 (0.055) | 0.503 (3.8e-35) |
+| B2_nf (n 527) | 0.011 (0.80) | 0.020 (0.65) | 0.163 (1.7e-04) |
+
+**Step 6 procedure** and operating point (≥ 88% true kept). At that point A alone removes 83/444 false (0.219) on the primary set and 83/438 (0.219) on the flare-excluded set.
+
+| model | n | Δ [95% CI] | AUC A | AUC A + x | false removed (A + x) [CI] | Δ false removed [CI] |
+|---|---:|---|---:|---:|---|---|
+| A + B1 | 540 | 0.0050 [−0.0050, 0.0149] | 0.7430 | 0.7720 | 107/444, 0.249 [0.191, 0.313] | +0.030 [−0.035, +0.099] |
+| A + B2 | 540 | −0.0018 [−0.0089, 0.0056] | 0.7430 | 0.7510 | 105/444, 0.283 [0.221, 0.345] | +0.064 [+0.005, +0.128] |
+| A + B1_nf | 527 | 0.0047 [−0.0057, 0.0150] | 0.7490 | 0.7694 | 147/438, 0.355 [0.292, 0.424] | +0.136 [+0.065, +0.199] |
+| A + B2_nf | 527 | −0.0023 [−0.0087, 0.0048] | 0.7490 | 0.7442 | 98/438, 0.265 [0.203, 0.325] | +0.045 [−0.012, +0.101] |
+
+Context (user): Leka et al. 2023 found mean intensity "surprisingly poor" at the whole-region level; the PIL-relative level was not tested there.
