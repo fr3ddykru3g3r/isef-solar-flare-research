@@ -3526,3 +3526,34 @@ Code `euv_step6.py`, console `euv_step6.log`, outputs `data/euv_full/step6/` (pe
 | CV_ctrl | 0.3304 | 0.1294 | 2.554 [1.677, 3.394] | 0.3348 / 0.1439 | 2.326 [1.471, 2.957] |
 
 Context (user): BADPIT reports ~5× brightenings (2 ARs, 12 s cadence). Kniezewski et al. 2024 report ratios > 1 (3 min cadence). The cadence here is 12 min.
+
+### PHASE F — F3 RESULT (what R4a measures: B-class activity; EXPLORATORY; numbers only)
+`phase_f.py F3` → `phase_f_F3.log`, `data/phase_f/F3_*.csv`. 9 workers; wall 3.4 s (including the single-process check).
+
+**Checks:**
+- The history join reproduces the cohort's n_C, n_M and n_X for all 547 episodes.
+- The parallel bootstrap equals the single-process loop for A + R4a (max |diff| 0.0).
+- The restated A + R4a equals Phase X.
+
+**1. B-class events** (K2 true scale, deduplicated) per year, and how many carry a region number:
+
+| year | 2010 | 2011 | 2012 | 2013 | 2014 | 2015 | 2016 | 2017 | 2018 | 2019 |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| B events | 674 | 582 | 390 | 327 | 108 | 268 | 748 | 709 | 274 | 184 |
+| with region | 493 | 427 | 248 | 260 | 87 | 230 | 589 | 559 | 241 | 161 |
+| fraction | 0.732 | 0.734 | 0.636 | 0.795 | 0.806 | 0.858 | 0.787 | 0.788 | 0.880 | 0.875 |
+
+**2. n_B on the R4a set (541):** median 0, IQR [0, 0], max 18; 412 episodes have n_B = 0.
+
+**3. Spearman ρ** (n = 541):
+- R4a vs n_B: −0.0167 (p 0.70)
+- R4a vs n_B + n_C: 0.6473 (p 1.5e-65)
+- R4a vs n_C: 0.7026 (p 1.1e-81). The earlier 0.6901 was on the 528-episode set.
+
+**4. Step 6 procedure** (541 episodes, 96 true / 445 false):
+
+| model | Δ [95% CI] | AUC A | AUC A + x | false removed at ≥ 88% true kept (A + x; A = 70/445, 0.180) | Δ false removed [CI] |
+|---|---|---:|---:|---|---|
+| A + n_B | −0.0049 [−0.0132, 0.0019] | 0.7422 | 0.7459 | 60/445, 0.149 [0.098, 0.205] | −0.032 [−0.086, +0.022] |
+| A + n_B + R4a | 0.0092 [−0.0103, 0.0281] | 0.7422 | 0.7946 | 233/445, 0.530 [0.463, 0.601] | +0.350 [+0.277, +0.430] |
+| A + R4a (restated) | 0.0124 [−0.0048, 0.0294] | 0.7422 | 0.8003 | 209/445, 0.487 [0.422, 0.557] | +0.307 [+0.240, +0.383] |

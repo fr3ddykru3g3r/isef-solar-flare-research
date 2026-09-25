@@ -1,0 +1,45 @@
+PHASE F F3 -- EXPLORATORY / DESCRIPTIVE, dev 2010-2019 only; workers = os.cpu_count() - 1 = 9
+1. B-class (K2 true flux in [1e-7, 1e-6)) events per year, deduplicated, and how many carry a region number
+ year  B_events  with_region  frac_with_region
+ 2010       674          493            0.7315
+ 2011       582          427            0.7337
+ 2012       390          248            0.6359
+ 2013       327          260            0.7951
+ 2014       108           87            0.8056
+ 2015       268          230            0.8582
+ 2016       748          589            0.7874
+ 2017       709          559            0.7884
+ 2018       274          241            0.8796
+ 2019       184          161            0.8750
+
+check: the join reproduces the cohort n_C, n_M, n_X for all 547 episodes: True
+
+2. n_B on the R4a set (541): median 0.0, IQR [0.0, 0.0], max 18, zero 412
+
+3. Spearman (R4a set)
+measure variable   n     rho        p
+    R4a      n_B 541 -0.0167 6.99e-01
+    R4a     n_BC 541  0.6473 1.50e-65
+    R4a      n_C 541  0.7026 1.07e-81
+
+check: parallel (9 workers) vs single-process bootstrap for A + R4a: max |diff| = 0.0
+check: restated A + R4a equals Phase X (315ca5b)
+
+4. step 6 procedure on the R4a set
+(dev 2010-2019, internal 5-fold CV, EXPLORATORY; delta = LL(A) - LL(A+x), + = helps; HARP bootstrap 10000, seed 20260921)
+candidate   n  true  false  HARPs  logloss_A  logloss_Ax   delta   CI_lo  CI_hi  AUC_A  AUC_Ax
+      n_B 541    96    445    179     0.3206      0.3255 -0.0049 -0.0132 0.0019 0.7422  0.7459
+n_B + R4a 541    96    445    179     0.3206      0.3114  0.0092 -0.0103 0.0281 0.7422  0.7946
+      R4a 541    96    445    179     0.3206      0.3082  0.0124 -0.0048 0.0294 0.7422  0.8003
+operating point (>= 88% weighted true kept, tau in-sample; weighted %, counts; CI HARP bootstrap 2000, seed 0)
+             n_B A    tau 0.0680  true kept 87/96 0.8815 [0.7559, 0.9857]  false removed 70/445 0.1804 [0.1256, 0.2359]  precision 0.1362 [0.0936, 0.1814]  FAR 0.8638 [0.8186, 0.9064]
+             n_B A+x  tau 0.0683  true kept 84/96 0.9030 [0.7898, 0.9804]  false removed 60/445 0.1489 [0.0984, 0.2048]  precision 0.1346 [0.0916, 0.1783]  FAR 0.8654 [0.8217, 0.9084]
+             n_B false removed (A+x) - A: -0.0315 [-0.0855, +0.0222]
+       n_B + R4a A    tau 0.0680  true kept 87/96 0.8815 [0.7559, 0.9857]  false removed 70/445 0.1804 [0.1256, 0.2359]  precision 0.1362 [0.0936, 0.1814]  FAR 0.8638 [0.8186, 0.9064]
+       n_B + R4a A+x  tau 0.0646  true kept 81/96 0.8864 [0.7733, 0.9693]  false removed 233/445 0.5300 [0.4627, 0.6007]  precision 0.2165 [0.1518, 0.2846]  FAR 0.7835 [0.7154, 0.8482]
+       n_B + R4a false removed (A+x) - A: +0.3496 [+0.2766, +0.4299]
+             R4a A    tau 0.0680  true kept 87/96 0.8815 [0.7559, 0.9857]  false removed 70/445 0.1804 [0.1256, 0.2359]  precision 0.1362 [0.0936, 0.1814]  FAR 0.8638 [0.8186, 0.9064]
+             R4a A+x  tau 0.0612  true kept 84/96 0.8805 [0.7719, 0.9645]  false removed 209/445 0.4871 [0.4215, 0.5566]  precision 0.2010 [0.1408, 0.2624]  FAR 0.7990 [0.7376, 0.8592]
+             R4a false removed (A+x) - A: +0.3067 [+0.2401, +0.3826]
+
+F3 wall time 3.4 s on 9 worker processes (os.cpu_count() = 10)
