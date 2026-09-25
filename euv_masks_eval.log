@@ -1,0 +1,58 @@
+check: modified compare reproduces Phase X R4a exactly (delta 0.0124, 95% CI [-0.0048, 0.0294])
+
+PRIMARY (dev 2010-2019, internal 5-fold CV, EXPLORATORY): A vs A + log10 CV_M; delta = LL(A) - LL(A+M), + = helps; HARP bootstrap 10,000, seed 20260921; 95% and Bonferroni 98.33% CI from the same resamples
+  SG-PIL: primary 80% set 541, excluded label-blind (undefined) 3
+  brightest core: primary 80% set 541, excluded label-blind (undefined) 0
+  SPOT: primary 80% set 541, excluded label-blind (undefined) 6
+          test   n  true  false  HARPs  logloss_base  logloss_full  AUC_base  AUC_full   delta  CI95_lo  CI95_hi  CI9833_lo  CI9833_hi
+        SG-PIL 538    96    442    177        0.3235        0.3222    0.7409    0.7637  0.0013  -0.0066   0.0095    -0.0082     0.0112
+brightest core 541    96    445    179        0.3206        0.3180    0.7422    0.7756  0.0026  -0.0049   0.0099    -0.0067     0.0115
+          SPOT 535    96    439    175        0.3264        0.3305    0.7402    0.7286 -0.0041  -0.0103   0.0018    -0.0118     0.0030
+  pre-stated reading SG-PIL: delta +0.0013, 98.33% CI lower -0.0082, AUC 0.7409 -> 0.7637 -> "NOT ELIGIBLE"
+  pre-stated reading brightest core: delta +0.0026, 98.33% CI lower -0.0067, AUC 0.7422 -> 0.7756 -> "NOT ELIGIBLE"
+  pre-stated reading SPOT: delta -0.0041, 98.33% CI lower -0.0118, AUC 0.7402 -> 0.7286 -> "NOT ELIGIBLE"
+
+SECONDARY (descriptive; cannot change any reading)
+s1: A + log10 CV_box vs A + log10 CV_box + log10 CV_M
+             test   n  true  false  logloss_base  logloss_full   delta  CI95_lo  CI95_hi  AUC_base  AUC_full
+        s1 SG-PIL 538    96    442        0.3165        0.3206 -0.0042  -0.0079  -0.0010    0.7947    0.7798
+s1 brightest core 541    96    445        0.3132        0.3150 -0.0017  -0.0032  -0.0003    0.7972    0.7929
+          s1 SPOT 535    96    439        0.3197        0.3257 -0.0060  -0.0112  -0.0017    0.7915    0.7716
+
+s2: CV_M ratios, true / false of medians (F2 ratio code; 2,000, seed 0)
+                                     measure   n  n_true  n_false  med_true  med_false  ratio_all           all_CI  pairs  twin_med_true  twin_med_false  ratio_twins         twins_CI
+                SG-PIL | 81 gate-score twins 538      96      442    0.5038     0.2885     1.7464 [1.2937, 2.2077]     81         0.5056          0.3170       1.5947 [1.0167, 2.3916]
+        brightest core | 81 gate-score twins 541      96      445    0.5730     0.3330     1.7207 [1.3435, 2.3148]     81         0.5690          0.3607       1.5778 [1.1407, 2.1802]
+                  SPOT | 81 gate-score twins 535      96      439    0.4507     0.2155     2.0921 [1.4177, 3.1948]     81         0.4491          0.2392       1.8772 [1.1162, 2.8094]
+        SG-PIL | 78 same-flare-history twins 538      96      442    0.5038     0.2885     1.7464 [1.2937, 2.2077]     78         0.5038          0.3975       1.2673 [0.8747, 1.6172]
+brightest core | 78 same-flare-history twins 541      96      445    0.5730     0.3330     1.7207 [1.3435, 2.3148]     78         0.5785          0.4782       1.2097 [0.9283, 1.6413]
+          SPOT | 78 same-flare-history twins 535      96      439    0.4507     0.2155     2.0921 [1.4177, 3.1948]     78         0.4463          0.3919       1.1388 [0.7467, 1.8119]
+
+s3: flare-excluded version (valid_sens frames, sens_fill >= 0.80): A vs A + log10 CV_M_nf
+  SG-PIL: flare-excluded 80% set 528, excluded label-blind 3
+  brightest core: flare-excluded 80% set 528, excluded label-blind 0
+  SPOT: flare-excluded 80% set 528, excluded label-blind 6
+                              test   n  true  false  HARPs  logloss_base  logloss_full  AUC_base  AUC_full   delta  CI95_lo  CI95_hi  CI9833_lo  CI9833_hi
+        s3 SG-PIL (flare-excluded) 525    89    436    177        0.3392        0.3369    0.7479    0.7688  0.0022  -0.0080   0.0125    -0.0100     0.0150
+s3 brightest core (flare-excluded) 528    89    439    179        0.3359        0.3344    0.7480    0.7746  0.0015  -0.0096   0.0110    -0.0124     0.0128
+          s3 SPOT (flare-excluded) 522    89    433    175        0.3423        0.3451    0.7467    0.7348 -0.0027  -0.0087   0.0031    -0.0102     0.0043
+
+s4: Spearman rho (PRIMARY set of each mask, unweighted)
+                measure variable   n    rho         p
+        log10 CV SG-PIL      n_C 538 0.5270  8.76e-40
+        log10 CV SG-PIL      n_M 538 0.3782  9.76e-20
+        log10 CV SG-PIL      n_X 538 0.2118  7.12e-07
+        log10 CV SG-PIL    score 538 0.2987  1.50e-12
+        log10 CV SG-PIL  lcv_box 538 0.8093 5.77e-126
+log10 CV brightest core      n_C 541 0.5691  9.39e-48
+log10 CV brightest core      n_M 541 0.3247  9.45e-15
+log10 CV brightest core      n_X 541 0.2083  1.02e-06
+log10 CV brightest core    score 541 0.3084  2.21e-13
+log10 CV brightest core  lcv_box 541 0.8526 5.04e-154
+          log10 CV SPOT      n_C 535 0.4658  3.58e-30
+          log10 CV SPOT      n_M 535 0.3328  2.67e-15
+          log10 CV SPOT      n_X 535 0.2018  2.53e-06
+          log10 CV SPOT    score 535 0.2309  6.62e-08
+          log10 CV SPOT  lcv_box 535 0.7147  8.29e-85
+
+wall 1.9 s, workers 9

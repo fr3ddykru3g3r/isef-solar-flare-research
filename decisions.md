@@ -4074,3 +4074,54 @@ STOP. No further analyses on test years.
 - User: "run the three-mask evaluation once, exactly as pre-registered in bebbfe6. Each mask evaluated SEPARATELY (one feature added to A at a time; no model combines M1, M2, M3). Name M2 \"brightest core\" in all outputs (94 Å brightness is not temperature). Record: this is the final dev candidate; total dev candidates = 21 (16 + K3 + log R4a + 3 masks). Report, commit, STOP. No further candidates after this."
 - **Recorded:** the three masks are the FINAL dev candidates. Total dev candidates = 21 (16 + K3 + log R4a + 3 masks). No further candidates after this.
 - **Implementation (me):** the bebbfe6 evaluation code is unchanged except for the output labels (SG → "SG-PIL", CORE → "brightest core", SPOT → "SPOT"). Each mask is added to A alone.
+
+### Three localised areas — Step 3 RESULT (evaluated once; EXPLORATORY; dev 2010–2019, internal 5-fold CV; numbers only)
+`euv_masks.py eval` → `euv_masks_eval.log`, `data/euv_full/masks/eval_*.csv`. 9 workers; wall 1.9 s.
+- Check: the modified compare reproduces Phase X R4a exactly (Δ 0.0124, 95% CI [−0.0048, 0.0294]).
+- Each mask is evaluated separately; no model combines M1–M3.
+
+**PRIMARY: A vs A + log10 CV_M.** HARP bootstrap 10,000, seed 20260921; the 95% and Bonferroni 98.33% CIs come from the same resamples.
+
+| mask | n (true/false) | excluded label-blind | Δ | 95% CI | 98.33% CI | AUC A | AUC A + M | reading |
+|---|---|---:|---:|---|---|---:|---:|---|
+| SG-PIL | 538 (96/442) | 3 | +0.0013 | [−0.0066, 0.0095] | [−0.0082, 0.0112] | 0.7409 | 0.7637 | NOT ELIGIBLE |
+| brightest core | 541 (96/445) | 0 | +0.0026 | [−0.0049, 0.0099] | [−0.0067, 0.0115] | 0.7422 | 0.7756 | NOT ELIGIBLE |
+| SPOT | 535 (96/439) | 6 | −0.0041 | [−0.0103, 0.0018] | [−0.0118, 0.0030] | 0.7402 | 0.7286 | NOT ELIGIBLE |
+
+**Pre-stated readings (mechanical):** none of the three masks has a 98.33% CI lower bound > 0 → all three **"NOT ELIGIBLE"**.
+
+**s1 (descriptive): A + log10 CV_box vs A + log10 CV_box + log10 CV_M**
+
+| mask | n | Δ | 95% CI | AUC base → full |
+|---|---:|---:|---|---|
+| SG-PIL | 538 | −0.0042 | [−0.0079, −0.0010] | 0.7947 → 0.7798 |
+| brightest core | 541 | −0.0017 | [−0.0032, −0.0003] | 0.7972 → 0.7929 |
+| SPOT | 535 | −0.0060 | [−0.0112, −0.0017] | 0.7915 → 0.7716 |
+
+**s2 (descriptive): CV_M ratios, true ÷ false of medians** (2,000 resamples, seed 0):
+
+| mask | all-episodes ratio [CI] | 81 gate-score twins [CI] | 78 same-flare-history twins [CI] |
+|---|---|---|---|
+| SG-PIL | 1.746 [1.294, 2.208] | 1.595 [1.017, 2.392] | 1.267 [0.875, 1.617] |
+| brightest core | 1.721 [1.344, 2.315] | 1.578 [1.141, 2.180] | 1.210 [0.928, 1.641] |
+| SPOT | 2.092 [1.418, 3.195] | 1.877 [1.116, 2.809] | 1.139 [0.747, 1.812] |
+
+**s3 (descriptive): flare-excluded, A vs A + log10 CV_M_nf**
+
+| mask | n (true/false) | Δ | 95% CI | 98.33% CI | AUC A → A + M |
+|---|---|---:|---|---|---|
+| SG-PIL | 525 (89/436) | +0.0022 | [−0.0080, 0.0125] | [−0.0100, 0.0150] | 0.7479 → 0.7688 |
+| brightest core | 528 (89/439) | +0.0015 | [−0.0096, 0.0110] | [−0.0124, 0.0128] | 0.7480 → 0.7746 |
+| SPOT | 522 (89/433) | −0.0027 | [−0.0087, 0.0031] | [−0.0102, 0.0043] | 0.7467 → 0.7348 |
+
+**s4 (descriptive): Spearman ρ of log10 CV_M**
+
+| mask | n_C | n_M | n_X | gate score | log10 CV_box |
+|---|---|---|---|---|---|
+| SG-PIL (n 538) | 0.527 | 0.378 | 0.212 | 0.299 | 0.809 |
+| brightest core (n 541) | 0.569 | 0.325 | 0.208 | 0.308 | 0.853 |
+| SPOT (n 535) | 0.466 | 0.333 | 0.202 | 0.231 | 0.715 |
+
+All p < 1e-5.
+
+**Final dev candidate list closed:** 21 candidates in total. STOP.

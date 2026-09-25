@@ -198,6 +198,7 @@ if __name__ == "__main__" and sys.argv[1:] == ["eval"]:
     from euv_spatial import cv_fit
     from phase_f import load_base, prep, boot_many, wlogloss, ratio_jobs, pct, A_COLS, W
     from euv_f2_replication import twins as hist_twins
+    LAB = {"SG": "SG-PIL", "CORE": "brightest core", "SPOT": "SPOT"}      # output names (user, 2026-09-26)
     t00 = time.time(); pd.set_option("display.width", 250); pd.set_option("display.max_columns", 40)
     dv = load_base()
     J = pd.DataFrame([json.load(open(p)) for p in glob.glob(f"{OUT}/*.json")])
@@ -233,8 +234,8 @@ if __name__ == "__main__" and sys.argv[1:] == ["eval"]:
         print("\nPRIMARY (dev 2010-2019, internal 5-fold CV, EXPLORATORY): A vs A + log10 CV_M; delta = LL(A) - LL(A+M), + = helps; "
               "HARP bootstrap 10,000, seed 20260921; 95% and Bonferroni 98.33% CI from the same resamples")
         for k in MASKS:
-            print(f"  {k}: primary 80% set {int(dv.P.sum())}, excluded label-blind (undefined) {int((dv.P & dv[f'lcv_{k}'].isna()).sum())}")
-        T = evaluate([(k, prep(dv, dv.P & dv[f"lcv_{k}"].notna()), A_COLS, A_COLS + [f"lcv_{k}"]) for k in MASKS], pool)
+            print(f"  {LAB[k]}: primary 80% set {int(dv.P.sum())}, excluded label-blind (undefined) {int((dv.P & dv[f'lcv_{k}'].isna()).sum())}")
+        T = evaluate([(LAB[k], prep(dv, dv.P & dv[f"lcv_{k}"].notna()), A_COLS, A_COLS + [f"lcv_{k}"]) for k in MASKS], pool)
         print(T.to_string(index=False, float_format=fmt))
         for _, r in T.iterrows():
             el = r.delta > 0 and r.CI9833_lo > 0 and r.AUC_full > r.AUC_base
@@ -242,7 +243,7 @@ if __name__ == "__main__" and sys.argv[1:] == ["eval"]:
                   f"{r.AUC_full:.4f} -> \"{'ELIGIBLE for independent confirmation' if el else 'NOT ELIGIBLE'}\"")
         print("\nSECONDARY (descriptive; cannot change any reading)")
         print("s1: A + log10 CV_box vs A + log10 CV_box + log10 CV_M")
-        T1 = evaluate([(f"s1 {k}", prep(dv, dv.P & dv[f"lcv_{k}"].notna() & dv.lcv_box.notna()), A_COLS + ["lcv_box"],
+        T1 = evaluate([(f"s1 {LAB[k]}", prep(dv, dv.P & dv[f"lcv_{k}"].notna() & dv.lcv_box.notna()), A_COLS + ["lcv_box"],
                         A_COLS + ["lcv_box", f"lcv_{k}"]) for k in MASKS], pool)
         print(T1[["test", "n", "true", "false", "logloss_base", "logloss_full", "delta", "CI95_lo", "CI95_hi", "AUC_base", "AUC_full"]]
               .to_string(index=False, float_format=fmt))
@@ -251,7 +252,7 @@ if __name__ == "__main__" and sys.argv[1:] == ["eval"]:
         ests, jobs = [], {}
         for lab, tw in [("81 gate-score twins", tw81), (f"{len(twh)} same-flare-history twins", twh)]:
             for k in MASKS:
-                e, j = ratio_jobs(f"{k} | {lab}", dv[dv.P], f"CV_{k}", "ratio", tw); ests.append(e); jobs.update(j)
+                e, j = ratio_jobs(f"{LAB[k]} | {lab}", dv[dv.P], f"CV_{k}", "ratio", tw); ests.append(e); jobs.update(j)
         B = boot_many(jobs, pool)
         for e in ests:
             e["all_CI"] = "[%.4f, %.4f]" % pct(B[(e["measure"], "all")]); e["twins_CI"] = "[%.4f, %.4f]" % pct(B[(e["measure"], "tw")])
@@ -260,15 +261,15 @@ if __name__ == "__main__" and sys.argv[1:] == ["eval"]:
                   "twin_med_false", "ratio_twins", "twins_CI"]].to_string(index=False, float_format=fmt))
         print("\ns3: flare-excluded version (valid_sens frames, sens_fill >= 0.80): A vs A + log10 CV_M_nf")
         for k in MASKS:
-            print(f"  {k}: flare-excluded 80% set {int(dv.S.sum())}, excluded label-blind {int((dv.S & dv[f'lcv_{k}_nf'].isna()).sum())}")
-        T3 = evaluate([(f"s3 {k}_nf", prep(dv, dv.S & dv[f"lcv_{k}_nf"].notna()), A_COLS, A_COLS + [f"lcv_{k}_nf"]) for k in MASKS], pool)
+            print(f"  {LAB[k]}: flare-excluded 80% set {int(dv.S.sum())}, excluded label-blind {int((dv.S & dv[f'lcv_{k}_nf'].isna()).sum())}")
+        T3 = evaluate([(f"s3 {LAB[k]} (flare-excluded)", prep(dv, dv.S & dv[f"lcv_{k}_nf"].notna()), A_COLS, A_COLS + [f"lcv_{k}_nf"]) for k in MASKS], pool)
         print(T3.to_string(index=False, float_format=fmt))
     print("\ns4: Spearman rho (PRIMARY set of each mask, unweighted)")
     rows = []
     for k in MASKS:
         c = dv[dv.P & dv[f"lcv_{k}"].notna()]
         for v in ["n_C", "n_M", "n_X", "score", "lcv_box"]:
-            r, p = spearmanr(c[f"lcv_{k}"], c[v]); rows.append(dict(measure=f"log10 CV_{k}", variable=v, n=len(c), rho=r, p=p))
+            r, p = spearmanr(c[f"lcv_{k}"], c[v]); rows.append(dict(measure=f"log10 CV {LAB[k]}", variable=v, n=len(c), rho=r, p=p))
     T4 = pd.DataFrame(rows); print(T4.to_string(index=False, formatters={"rho": "{:.4f}".format, "p": "{:.2e}".format}))
     for nm, t in [("primary", T), ("s1", T1), ("s2", T2), ("s3", T3), ("s4", T4)]:
         t.to_csv(f"{OUT}/eval_{nm}.csv", index=False)
