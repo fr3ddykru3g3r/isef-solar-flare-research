@@ -3598,3 +3598,29 @@ Context (user): BADPIT reports ~5× brightenings (2 ARs, 12 s cadence). Kniezews
 **True-rate per history group** (weighted 1/n per HARP; HARP bootstrap 2,000, seed 0):
 - zero history: 181 episodes, 9 true; 0.0459 [0.0092, 0.0935]
 - any history: 366 episodes, 89 true; 0.1846 [0.1292, 0.2403]
+
+### PHASE F — F5 RESULT (size; EXPLORATORY; numbers only)
+`phase_f.py F5` → `phase_f_F5.log`, `data/phase_f/F5_*.csv`. 9 workers; wall 4.5 s. 541 primary-valid episodes (96 true / 445 false); S1 and S2 are defined for all 541.
+- AREA_ACR and USFLUX are from the dev SHARP headers at t.
+- **Note:** S2 (median over frames of n_bright_px / npix_box) equals the F2 box brightening fraction (median of frac_box) in 524 of 541 episodes (max |diff| 8.0e-06). In F2 the denominator is the box pixels with a finite value, in S2 all box pixels.
+
+**Ratios** (CI: HARP bootstrap, 2,000 resamples, seed 0):
+
+| measure | median true / false | ratio (all) [CI] | twins median true / false | ratio (twins) [CI] |
+|---|---|---|---|---|
+| S1 log10 total 94 Å | 6.135 / 5.999 | 1.368 [1.056, 1.958] (linear scale) | 6.104 / 6.112 | 0.981 [0.776, 1.407] |
+| S2 bright-pixel fraction | 0.001133 / 0.000632 | 1.793 [1.137, 2.395] | 0.000997 / 0.000828 | 1.203 [0.838, 1.707] |
+
+**Spearman ρ** (n = 541):
+
+| | AREA_ACR | USFLUX | gate score | R4a |
+|---|---|---|---|---|
+| S1 | 0.836 (1.1e-142) | 0.701 (4.0e-81) | 0.535 (2.5e-41) | 0.366 (1.4e-18) |
+| S2 | 0.371 (3.9e-19) | 0.502 (7.1e-36) | 0.469 (5.9e-31) | 0.695 (3.9e-79) |
+
+**Step 6 procedure** (541 episodes). At ≥ 88% true kept, A alone removes 70/445 false (0.180):
+
+| model | Δ [95% CI] | AUC A | AUC A + x | false removed (A + x) [CI] | Δ false removed [CI] |
+|---|---|---:|---:|---|---|
+| A + S1 | −0.0042 [−0.0129, 0.0016] | 0.7422 | 0.7439 | 70/445, 0.147 [0.096, 0.200] | −0.033 [−0.076, +0.009] |
+| A + S2 | −0.0057 [−0.0123, 0.0001] | 0.7422 | 0.7398 | 96/445, 0.220 [0.158, 0.281] | +0.040 [−0.009, +0.091] |
