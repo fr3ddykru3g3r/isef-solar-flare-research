@@ -3356,3 +3356,24 @@ Code `euv_step6.py`, console `euv_step6.log`, outputs `data/euv_full/step6/` (pe
   - Item 3: Spearman ρ (n, ρ, p) of R4a and of R4a_nf with n_C, n_M, n_X and the gate score.
   - Item 4: 99th percentile over that set (`np.percentile`, linear). "Above" = strictly greater. "Contains ≥ 1 flare frame" = ≥ 1 frame with `valid_primary & flare` in the episode's series, i.e. a flare frame that entered the original R4a. The same definition is used for both measures.
   - Item 5: Spearman ρ between R4a and R4a_nf.
+
+## 2026-09-25 — HELD-OUT EUV TEST: DATA DOWNLOAD ONLY — started (requested by: user; recorded before the first export)
+**User's text, verbatim:**
+- "HELD-OUT DATA DOWNLOAD ONLY (user). No ΔCV, no R4a, no labels, no model outputs on test years — download and verify files only."
+- "Cohort: data/stage5/cohort_test_primary.csv (313 episodes, 98 HARPs, 2021/2023/2024, single-region), exactly as pre-registered in 3283478 item 1h."
+- "Per-HARP HMI exports (the verified dev method; NOT the untested combined export) … Per-HARP AIA im_patch url-tar exports, 94 Å, 12 min, same record-set rule and im_patch settings as dev. Pipelined, ONE pending JSOC export at a time, the user's account only, resumable, progress logged every 30 min. Output to data/euv_test/ (never overwrite data/euv_full/)."
+- "When complete: verify files (counts per HARP vs expected, headers readable, HARP/T_REC match), report counts, missing/short HARPs, GB and wall time. Record in decisions.md, commit. STOP. Compute nothing on test years."
+
+**Implementation (me):**
+- `euv_test_download.py run | verify`.
+  - The episode list reads only `harpnum`, `t`, `noaa_ars` from the cohort file. T_REC (TAI) comes from the labelled file with `usecols` = harpnum, t_rec_utc, t_rec_tai. No label or model column is read.
+- Driver: `euv_full.run_pipeline` with a new argument `compute=False` (default True; dev behaviour unchanged). No worker pool is created and no episode is computed.
+  - HMI: `hmi.sharp_720s[H][t1,…]{magnetogram,bitmap}`, one export per HARP.
+  - AIA: `aia_spec`, the same record-set and im_patch rule as dev. The HMI magnetograms are read only to size the im_patch, exactly as in dev.
+  - url-tar; the next export is submitted after the previous one completes; one pending export; the user's account (`euv_download.EMAIL`); resumable; 3 tries per export.
+  - Progress is logged every 30 min to `data/euv_test/logs/progress.log`. Logs, `exports.csv` and `failed.csv` go under `data/euv_test/`.
+- **Verify:** per HARP:
+  - HMI: magnetogram + bitmap present for each episode T_REC, with header HARPNUM and T_REC matching.
+  - AIA: files with a readable header; WAVELNTH = 94; T_REC inside the HARP's record range; count vs `expected_frames`.
+  - Also reported: GB, failures, and export prep/download times.
+- Runs in parallel with the R4a flare check (dev, 9 CPU workers). The download is network-bound.

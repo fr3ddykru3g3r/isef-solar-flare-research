@@ -286,13 +286,14 @@ def compute_episode(ep, hmi_dir, aia_dir, series_dir):
 
 
 # ================================================================ driver (dry run and full run)
-def run_pipeline(eps, root, workers=8, progress_every=7200):
+def run_pipeline(eps, root, workers=8, progress_every=7200, compute=True):
     import threading
     from concurrent.futures import ProcessPoolExecutor
     for sub in ["hmi", "aia", "series", "results"]:
         os.makedirs(f"{root}/{sub}", exist_ok=True)
     elog = f"{root}/exports.csv"; flog = f"{root}/failed.csv"
-    pool = ProcessPoolExecutor(workers); futs = {}; threads = []; t_start = time.time(); last_prog = time.time()
+    pool = ProcessPoolExecutor(workers) if compute else None                  # compute=False: download only
+    futs = {}; threads = []; t_start = time.time(); last_prog = time.time()
     lock = threading.Lock()
 
     def rec(row, path):
@@ -300,6 +301,8 @@ def run_pipeline(eps, root, workers=8, progress_every=7200):
             pd.DataFrame([row]).to_csv(path, mode="a", header=not os.path.exists(path), index=False)
 
     def dispatch(h, g):
+        if not compute:
+            return
         for e in g.itertuples():
             if os.path.exists(f"{root}/results/{e.eid}.json"):
                 continue
@@ -369,6 +372,8 @@ def run_pipeline(eps, root, workers=8, progress_every=7200):
             json.dump({k: str(v) for k, v in f.result().items()}, open(f"{root}/results/{eid}.json", "w"))
         except Exception as err:
             rec(dict(harpnum=eid.split("_")[0], kind="compute", request_id=eid, error=repr(err)), flog)
+    if not compute:
+        return None
     pool.shutdown()
     res = [json.load(open(p)) for p in sorted(glob.glob(f"{root}/results/*.json"))]
     pd.DataFrame(res).to_csv(f"{root}/episode_results.csv", index=False)
