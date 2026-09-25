@@ -3448,3 +3448,65 @@ Code `euv_step6.py`, console `euv_step6.log`, outputs `data/euv_full/step6/` (pe
 **Difference in false removed vs A** (paired, same resamples):
 - A + R4a − A: weighted +0.2591 [+0.1887, +0.3305]; count +123.
 - A + R4a_nf − A: weighted +0.2506 [+0.1802, +0.3227]; count +120.
+
+## 2026-09-25 — PHASE F: FINDINGS FROM EXISTING DEV DATA — EXPLORATORY / DESCRIPTIVE (requested by: user; recorded BEFORE computing)
+**Label:** the whole phase is EXPLORATORY / DESCRIPTIVE on dev 2010–2019. Nothing here is confirmation; every candidate is reported regardless of outcome.
+- No downloads.
+- Nothing after 2019 is read, scored or computed: no 2020+ rows, no test files, nothing in `data/euv_test/`. The running held-out download is not touched.
+- Frozen files and FINAL results unchanged.
+
+**Candidate count:**
+- Before this phase: 9 candidates evaluated on dev — trends (model B), ΔCV_94, R1, R2, R3, R4a, R4b, R4c, R4a_nf.
+- This phase adds 7: n_B, S1 (size), S2 (size), B1, B2, B1_nf, B2_nf. Total 16.
+- F3 also fits one combination model (A + n_B + R4a); it is listed in F7 as a combination row.
+
+**User's rules, verbatim:**
+- "Common evaluation (\"step 6 procedure\"): candidate added to model A; same fold assignment (data/stage4/oof_cohort_dev.csv), weights 1/n per HARP, estimator and preprocessing as frozen_spec.json; weighted Δ = logloss(A) − logloss(A+x) with HARP bootstrap 10,000 (seed 20260921); weighted AUC; Deshmukh-style operating point (≥ 88% true kept, as 04b6f4f). Twins = the 81 gate-score-matched pairs (caliper 0.0747). Ratio CIs = HARP bootstrap 2,000, seed 0. Primary frame rules (flare frames kept), 80% fill, label-blind exclusion; where stated, also the flare-excluded version."
+- "Selection rule for any later held-out use (not run in this phase): a candidate may be proposed for a held-out test only if dev Δ > 0; that would be pre-registered separately; dev selection is not confirmation."
+- Parallelism: "workers = os.cpu_count() − 1 … Parallelise: HARP-bootstrap resamples … per-episode series/frame computations (F5, F6), and independent candidates within an item … Report wall time per item and the core count used."
+- The item texts F2–F7 are those of the user's request of 2026-09-25 (Phase F).
+
+**Implementation (decided by: me, before computing):**
+- **Code and outputs:** `phase_f.py F2 | F3 | F4 | F5 | F6 | F7`; logs `phase_f_F*.log`; tables in `data/phase_f/`. Workers = os.cpu_count() − 1 = 9.
+- **Parallel bootstrap (exactly reproducible):**
+  - For each bootstrap, the parent process draws all resamples from ONE `np.random.RandomState(seed)`, in the same order as the sequential step 6 loop (`rng.choice(n_HARPs, n_HARPs, replace=True)` per resample, which is the same stream as `rng.choice(harps, …)`).
+  - The evaluation of the resamples is split into chunks across the 9 workers, and all candidates of an item are submitted to the same pool concurrently.
+  - Results are therefore identical to a single-process run. This replaces per-worker seeds, so that restated numbers equal the committed ones.
+  - **Check (F3):** for A + R4a, the parallel bootstrap distribution must equal a single-process sequential loop exactly (|diff| = 0).
+- **Evaluation sets:**
+  - Each candidate uses the primary 80% set (`primary_fill ≥ 0.80`, 541 episodes) with the candidate defined; flare-excluded candidates use `sens_fill ≥ 0.80`. Weights 1/n per HARP over the set.
+  - Trends (model B) use the Stage 4 cohort of 547.
+  - n_B and A + n_B + R4a use the R4a set (541).
+- **Restated rows must reproduce** their committed Δ/CI/AUC (|diff| < 1e-12): trends (Stage 4 pooled Δ), ΔCV (step 6), R1–R4c (Phase X), R4a_nf (flare check), and the 04b6f4f operating point for A + R4a_nf on 528.
+- **Operating point:** as 04b6f4f — τ in-sample on the OOF probabilities, ≥ 88% weighted true kept. Reported per model: true kept, false removed (weighted %, counts), precision, FAR. Bootstrap 2,000 with seed 0, τ fixed; paired difference in false removed (A + x − A).
+- **Ratios** (F2, F5, F6):
+  - true ÷ false of unweighted episode medians. CI: HARP bootstrap, 2,000 resamples, seed 0.
+  - Twins: the 81 pairs of `data/euv_full/step6/twins_PRIMARY.csv`, restricted to pairs with both values defined. Ratio = median of the true members ÷ median of the false members. CI: pairs resampled clustered by true HARP, 2,000, seed 0.
+  - Log-scale measures (S1, B1): the ratio is on the linear scale, 10^(median_true − median_false). B2 (a slope that can be negative): the difference of medians (true − false) is reported instead of a ratio.
+  - A ratio with a zero median in the denominator is reported as undefined.
+- **F2 per-episode values:**
+  - box brightening = median over frames of `frac_box`;
+  - PIL brightening = median over frames of the per-frame mean over the 20 `frac_pil_k` (both from `data/euv_full/spatial/*_frames.csv`);
+  - CV_box, CV_PIL, CV_ctrl = `primary_CV_box`, `primary_CV_PIL`, `primary_CV_ctrl` from `data/euv_full/results`.
+- **F3:**
+  - Events: `swpc.load` / `swpc.fetch` on the 2010–2019 daily files only.
+  - B class = K2 true-scale flux in [1e-7, 1e-6) (`swpc.class_of` == "B").
+  - Coverage: deduplicated B events per year, and how many carry a region number.
+  - n_B uses the join of `build_dataset.label`: joinable events whose region is in the episode's `noaa_ars`, start in [t − 48 h, t), union over regions, duplicates dropped.
+  - **Check:** the same code reproduces the cohort's n_C, n_M and n_X for all 547 episodes.
+- **F4:**
+  - Region = the episode's `noaa_ars`; M1+ = joinable K2 events with flux ≥ 1e-5.
+  - HARP labelled span end = the HARP's last row in `data/stage2/oof_scores_dev.csv`. This is the dev hourly file (all dev rows with a gate score, ≤ 2019-12-31); it is used so that no post-2019 row is read. Rows without a gate score are not in it.
+  - JUST-FLARED = n_M + n_X ≥ 1; QUIET-NOW = n_C + n_M + n_X = 0.
+  - TOO-EARLY = the first region M1+ after t starts > 24 h after t and ≤ the span end. NEVER = no region M1+ in (t, span end].
+  - True-rate per history group: weighted (1/n per HARP, Stage 4 weights) with HARP-bootstrap CI (2,000, seed 0), plus counts.
+  - ΔCV = step 6 primary; R4a = Phase X.
+- **F5:**
+  - S1 = log10(median over valid-primary frames of [series `box` × HMI patch pixel count `npix_box`]).
+  - S2 = median over frames of `n_bright_px` / `npix_box` (spatial frames).
+  - AREA_ACR and USFLUX come from the SHARP magnetogram FITS header at t (`data/euv_full/hmi`, dev).
+- **F6:**
+  - Per frame, r = mean_k(`pil_k`) / mean_k(`ctrl_k`) from `data/euv_full/series`.
+  - B1 = log10(median over valid frames of r); B2 = least-squares slope of log10(r) against hours.
+  - Primary uses `valid_primary`; nf uses `valid_sens`. At least 3 valid frames are needed, otherwise undefined.
+- Spearman: `scipy.stats.spearmanr`, unweighted, on each candidate's set.
