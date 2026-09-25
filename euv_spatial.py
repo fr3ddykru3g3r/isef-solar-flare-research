@@ -15,7 +15,7 @@ def _kurt_skew(x):
     return (float(kurtosis(x, fisher=True, bias=True)), float(skew(x, bias=True))) if len(x) >= 4 else (np.nan, np.nan)
 
 
-def spatial_episode(ep, out_dir, valid="valid_primary"):
+def spatial_episode(ep, out_dir, valid="valid_primary", root=R):     # root: data/euv_test for the held-out test
     import sunpy.map, astropy.units as u
     from astropy.io import fits
     from astropy.time import Time
@@ -29,14 +29,14 @@ def spatial_episode(ep, out_dir, valid="valid_primary"):
     from euv_full import hmi_files, trec_of
     warnings.filterwarnings("ignore")
     t0 = time.time(); h, t = ep["harpnum"], pd.Timestamp(ep["t"])
-    mp, bp = hmi_files(f"{R}/hmi/{h}", ep["t_rec_tai"])
+    mp, bp = hmi_files(f"{root}/hmi/{h}", ep["t_rec_tai"])
     mag = sunpy.map.Map(mp); bitmap = fits.open(bp)[-1].data
     S, short, n = samples(mag.data, bitmap)
     ny, nx = mag.data.shape
     centre = mag.pixel_to_world((nx - 1) / 2 * u.pix, (ny - 1) / 2 * u.pix)
-    s = pd.read_csv(f"{R}/series/{ep['eid']}.csv", parse_dates=["t_obs", "t_rec"], float_precision="round_trip")
+    s = pd.read_csv(f"{root}/series/{ep['eid']}.csv", parse_dates=["t_obs", "t_rec"], float_precision="round_trip")
     rows = s[s[valid]].to_dict("records")                      # valid_sens = R4a_nf (flare check)
-    files = {trec_of(p): p for p in glob.glob(f"{R}/aia/{h}/*.fits")}
+    files = {trec_of(p): p for p in glob.glob(f"{root}/aia/{h}/*.fits")}
     ptab = get_pointing_table("JSOC", time_range=(Time(t - pd.Timedelta("26h")), Time(t + pd.Timedelta("2h"))))
     V = np.full((len(rows), ny * nx), np.nan); IDX = np.full((len(rows), ny * nx), -1, np.int32)
     pil_same = not short                                           # pil_k == full PIL for every k: compute once

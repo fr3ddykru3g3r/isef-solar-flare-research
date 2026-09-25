@@ -3760,3 +3760,18 @@ Check: `grep` found no earlier "HELD-OUT R4a TEST" or "HELD-OUT OPERATING-POINT 
 - **Δ bootstrap:** HARP bootstrap over the test HARPs of each set, 10,000 resamples, `RandomState(20260921)`, drawn in the parent; parallel evaluation identical to single process (Phase F method). AUC is weighted.
 - **Readings** are applied mechanically as written above. The operating-point differences are in weighted percentage points.
 - **(d):** Spearman ρ of R4a with n_C on the test R4a primary set (unweighted).
+
+### Step 2 — test-year EUV values: RESULT (counts only)
+`euv_heldout.py compute` → `data/euv_test/{series,results,spatial,spatial_nf}/`; counts in `euv_test_step2_counts.log`.
+- **Run:** same code as dev (`euv_full.compute_episode`; `euv_spatial.spatial_episode` with root = data/euv_test). 9 workers (os.cpu_count() − 1). Wall 2.10 h (21:38–23:44). 313/313 episodes, 0 errors.
+- **Frames:** 37,370 in total.
+  - QUALITY ≠ 0: 1,127
+  - exposure rule: 351
+  - in P2 flare intervals (removed in the sensitivity version only): 1,848
+  - saturation-flagged: 81
+- Frame means are reproduced between the spatial pass and the series (max |diff| 0.0).
+- **Fill ≥ 80%:**
+  - primary: 306/313 (true 44/45, false 262/268);
+  - flare-excluded: 294/313 (true 39/45, false 255/268).
+- **Label-blind exclusions** (fill passes, value undefined): 0 for ΔCV (both versions), R4a, R4c and R4a_nf.
+- **Coverage flag** (HMI pixels outside the cutout on a valid frame; used for S2): 42 episodes in the primary 80% set.
