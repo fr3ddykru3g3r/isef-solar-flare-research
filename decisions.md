@@ -3982,3 +3982,11 @@ STOP. No further analyses on test years.
   - s2: `sens_fill ≥ 0.80` AND K3_nf and R4a_nf defined.
 - **s3 lead:** `data/euv_full/step6/explore_2_timing.csv` (`lead_h`, the step 6 diagnostic), true episodes with K3 defined.
 - **s4:** unweighted Spearman on the PRIMARY set.
+
+### K3 — Step 1 RESULT (label-blind; no labels read)
+`euv_k3.py compute` → `euv_k3_compute.log`, `data/euv_full/k3/k3_values.csv`. 547 dev episodes; pairs files for 546 (HARP 8 has no AIA).
+
+| version | set | defined | excluded (LATE < 5 pairs) | LATE pairs median / min / max | K3 percentiles 0 / 5 / 25 / 50 / 75 / 95 / 100 |
+|---|---|---:|---:|---|---|
+| K3 | primary 80% (541) | 540 | 1 | 16 / 4 / 16 | −1.6132 / −0.6717 / −0.2131 / 0.0201 / 0.3443 / 1.1349 / 2.9062 |
+| K3_nf | flare-excluded 80% (528) | 526 | 2 | 16 / 4 / 16 | −1.6745 / −0.6648 / −0.2098 / 0.0217 / 0.3621 / 1.1475 / 2.9062 |
