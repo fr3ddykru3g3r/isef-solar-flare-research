@@ -4158,3 +4158,31 @@ All p < 1e-5.
   - Driver: `euv_full.run_pipeline(compute=False)`: url-tar, one pending export at a time, the user's account only, resumable, progress every 30 min.
   - Plan (dry run): prep = 72 s + 0.2 s/file per export × 1.27 (the ratio of test wall time to modelled prep time). GB from the test-year bytes per file.
 - **compute:** `euv_heldout.test_episode` logic with root `data/euv_confirm`: `euv_full.compute_episode` + `euv_spatial.spatial_episode` (valid_primary and valid_sens); 9 workers. Only counts are reported.
+
+### Confirmation set — Step 0 check, Step 1 cohort and download plan: RESULTS (label-blind; no true/false count printed or inspected)
+`euv_confirm.py check | cohort | plan` → `data/euv_confirm/logs/{check,cohort,plan}.log`.
+
+**Step 0 checks:**
+- Labelled-file hash verified (`1f667395…`).
+- **GOES scale:**
+  - `swpc.FLARE_SCALE = K2`.
+  - XRA events 2024-12-29 → 2026-08-18: 5,292 — G18 3,860, G16 801, G19 631.
+  - Events from GOES-13/14/15: 0. GOES-16+ events with flux ≠ reported (i.e. ÷0.7 applied): 0. Other observatories: 0.
+  - → the labels of the GOES-16+ era are on the true flux scale, with no ÷0.7 applied, as recorded.
+- **Overlapping HARPs** (in `frozen/split.csv`, i.e. 2010–2024): 6 — 12471, 12481, 12492, 12506, 12511, 12519 — excluded.
+
+**Step 1 (gate scoring + frozen cohort rules T1–T4):**
+- Rows after the exclusion: 49,604 (396 HARPs); scorable 49,597.
+
+| subset | eligible episodes | HARPs |
+|---|---:|---:|
+| single-region | 165 | 62 |
+| ≤ 2 regions (recorded subset) | 387 | 101 |
+
+The cohort files are in `data/euv_confirm/cohort_{single,le2}.csv`; they were not inspected.
+
+**Step 2 dry run** (nothing submitted):
+- Union of the two cohorts: 387 episodes, 101 HARPs. All single-region episodes are also in the ≤ 2 cohort.
+- 202 exports (101 HMI + 101 AIA); expected files: AIA 33,370, HMI 774.
+- Estimated 13.16 GB (test-year 0.385 MB/file; test years were 12.19 GB for 313 episodes) and 7.56 h (prep model × 1.27).
+- Free disk: 628 GiB.
