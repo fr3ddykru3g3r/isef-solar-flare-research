@@ -3990,3 +3990,24 @@ STOP. No further analyses on test years.
 |---|---|---:|---:|---|---|
 | K3 | primary 80% (541) | 540 | 1 | 16 / 4 / 16 | −1.6132 / −0.6717 / −0.2131 / 0.0201 / 0.3443 / 1.1349 / 2.9062 |
 | K3_nf | flare-excluded 80% (528) | 526 | 2 | 16 / 4 / 16 | −1.6745 / −0.6648 / −0.2098 / 0.0217 / 0.3621 / 1.1475 / 2.9062 |
+
+### K3 — Step 2 RESULT (evaluated once; EXPLORATORY; dev 2010–2019, internal 5-fold CV; numbers only)
+`euv_k3.py eval` → `euv_k3_eval.log`, `data/euv_full/k3/`. 9 workers; wall 3.5 s.
+- Check: A vs A + R4a on the Phase X 541 set reproduces Phase X exactly (Δ 0.0124 [−0.0048, 0.0294], AUC 0.7422 → 0.8003).
+- Sets: PRIMARY 540 of the 541 primary-80% episodes (1 excluded label-blind); s2 526 of 528 (2 excluded).
+
+| test | n (true/false) | HARPs | LL(base) | LL(base + x) | Δ | 95% CI | AUC base | AUC base + x |
+|---|---|---:|---:|---:|---:|---|---:|---:|
+| PRIMARY A + R4a vs A + R4a + K3 | 540 (96/444) | 179 | 0.3082 | 0.3068 | 0.0013 | [−0.0069, 0.0095] | 0.8008 | 0.8039 |
+| s1 A vs A + K3 | 540 (96/444) | 179 | 0.3206 | 0.3207 | −0.0001 | [−0.0062, 0.0060] | 0.7423 | 0.7515 |
+| s2 A + R4a_nf vs A + R4a_nf + K3_nf | 526 (88/438) | 179 | 0.3229 | 0.3229 | −0.0000 | [−0.0071, 0.0069] | 0.7975 | 0.7942 |
+
+**Pre-stated reading (mechanical, PRIMARY):** Δ +0.0013 > 0, but the 95% CI lower bound (−0.0069) is not > 0 → **"NOT ELIGIBLE"**.
+
+**s3** (true episodes; lead from the step 6 diagnostic): median K3 0.1272 for lead (0, 6] h (n 31) and 0.0364 for lead (6, 24] h (n 65).
+
+**s4 Spearman ρ of K3** (n 540):
+
+| n_C | n_M | n_X | gate score | R4a |
+|---|---|---|---|---|
+| −0.170 (p 7.2e-05) | −0.131 (0.0023) | 0.042 (0.33) | −0.102 (0.017) | −0.135 (0.0017) |
