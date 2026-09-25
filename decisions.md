@@ -3510,3 +3510,19 @@ Code `euv_step6.py`, console `euv_step6.log`, outputs `data/euv_full/step6/` (pe
   - B1 = log10(median over valid frames of r); B2 = least-squares slope of log10(r) against hours.
   - Primary uses `valid_primary`; nf uses `valid_sens`. At least 3 valid frames are needed, otherwise undefined.
 - Spearman: `scipy.stats.spearmanr`, unweighted, on each candidate's set.
+
+### PHASE F — F2 RESULT (literature ratios under magnetic matching; EXPLORATORY; numbers only)
+`phase_f.py F2` → `phase_f_F2.log`, `data/phase_f/F2_ratios.csv`. 9 workers; wall 0.8 s.
+- Episodes: 541 primary-valid (96 true / 445 false); the PIL-based measures have 540.
+- Ratio = true ÷ false of medians. CI: HARP bootstrap, 2,000 resamples, seed 0.
+- Twins: the 81 step 6 pairs; CI by pairs resampled per true HARP.
+
+| measure | median true | median false | ratio (all) [CI] | twins median true / false | ratio (twins) [CI] |
+|---|---:|---:|---|---|---|
+| box brightening fraction | 0.001133 | 0.000632 | 1.793 [1.137, 2.395] | 0.000997 / 0.000828 | 1.203 [0.838, 1.707] |
+| PIL brightening fraction | 0.002428 | 0.001262 | 1.924 [1.228, 2.601] | 0.002305 / 0.001679 | 1.373 [0.887, 2.027] |
+| CV_box | 0.2751 | 0.1098 | 2.506 [1.727, 3.772] | 0.2594 / 0.1319 | 1.966 [1.474, 3.173] |
+| CV_PIL | 0.4601 | 0.2538 | 1.813 [1.217, 2.540] | 0.4696 / 0.2899 | 1.620 [0.968, 2.585] |
+| CV_ctrl | 0.3304 | 0.1294 | 2.554 [1.677, 3.394] | 0.3348 / 0.1439 | 2.326 [1.471, 2.957] |
+
+Context (user): BADPIT reports ~5× brightenings (2 ARs, 12 s cadence). Kniezewski et al. 2024 report ratios > 1 (3 min cadence). The cadence here is 12 min.
