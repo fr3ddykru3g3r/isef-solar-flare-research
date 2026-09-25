@@ -3413,3 +3413,22 @@ Code `euv_step6.py`, console `euv_step6.log`, outputs `data/euv_full/step6/` (pe
 **C5.** Spearman ρ(R4a, R4a_nf) = 0.9990 (n = 528).
 
 **Pre-stated reading, applied mechanically:** Δ(A − A + R4a_nf) = 0.0133 > 0 and AUC(A + R4a_nf) 0.7990 > AUC(A) 0.7480 → "R4a survives flare removal". EXPLORATORY; nothing is claimed from dev alone. R4a's Phase X status (not eligible) is unchanged.
+
+## 2026-09-25 — EXPLORATORY: Deshmukh-style operating point on dev OOF predictions, A vs A + R4a and A vs A + R4a_nf (requested by: user; recorded BEFORE running)
+**Label:** EXPLORATORY, dev only, no claims. The held-out download continues untouched.
+**User's text, verbatim:** "Deshmukh-style operating point on dev out-of-fold predictions for A vs A+R4a and A vs A+R4a_nf, same 528 episodes. For each model: threshold = the highest value keeping ≥ 88% of true episodes (weighted as step 6). Report: true kept, false removed (count and %), precision, FAR, each with HARP-bootstrap 95% CI (2,000, seed 0); and the difference in false removed (A+R4a − A) with its CI."
+
+**Implementation (decided by: me, before running):**
+- **Code:** `euv_r4a_oppoint.py`.
+- **Episodes:** the 528 of the R4a flare check, weights 1/n per HARP over the 528 (as step 6).
+- **OOF probabilities:** from `euv_spatial.cv_fit` (the step 6 procedure) for A, A + R4a and A + R4a_nf.
+  - **Check:** the weighted log-losses must equal `data/euv_full/spatial_nf/eval_nf_compare.csv` (|diff| < 1e-12).
+- **Threshold τ:** the rule of `diag_operating_point.tau_keep`. True episodes are sorted by probability (descending); τ = the probability at which the cumulative weighted fraction first reaches ≥ 0.88. Kept = probability ≥ τ.
+  - τ is chosen on the same dev OOF probabilities it is evaluated on (in-sample operating point).
+- **Metrics** (per model; weighted % plus unweighted counts):
+  - true kept;
+  - false removed;
+  - precision = weighted true among kept / weighted kept;
+  - FAR = 1 − precision.
+- **CIs:** HARP bootstrap, 2,000 resamples, `np.random.RandomState(0)`. HARPs are resampled with their episodes and weights; τ is held fixed at the full-sample value; 2.5/97.5 percentiles.
+- **Differences:** Δ false removed (weighted %) = (A + R4a − A) and (A + R4a_nf − A), computed in the same resamples (paired). The count differences are also given.
