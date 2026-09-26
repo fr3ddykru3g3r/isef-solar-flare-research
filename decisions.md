@@ -4202,3 +4202,20 @@ The cohort files are in `data/euv_confirm/cohort_{single,le2}.csv`; they were no
   - 13599: 151/160
   - 14610: 656/680
 - These have NOT been re-exported. In dev and test, re-exports of short HARPs returned identical counts (archive gaps).
+
+### Confirmation set — Step 3 RESULT (label-blind; counts only; nothing evaluated)
+`euv_confirm.py compute` → `data/euv_confirm/{series,results,spatial,spatial_nf}/`; counts in `euv_confirm_step3_counts.log`. No label column was read.
+- **Run:** the same code as the test years (`euv_full.compute_episode`; `euv_spatial.spatial_episode`, root data/euv_confirm, valid_primary and valid_sens). 9 workers. Wall 2.89 h (09:30–12:23). 387/387 episodes, 0 errors.
+- **Frames:** 46,221 in total.
+  - QUALITY ≠ 0: 1,236
+  - exposure rule: 412
+  - in P2 flare intervals (sensitivity version only): 1,574
+  - saturation-flagged: 127
+- Frame means are reproduced between the spatial pass and the series (max |diff| 0.0).
+
+| subset | episodes (HARPs) | primary fill ≥ 80% | flare-excluded fill ≥ 80% | undefined (fill passes): ΔCV p / ΔCV nf / R4a / R4c / R4a_nf | coverage flag (primary 80% set) |
+|---|---|---:|---:|---|---:|
+| single-region | 165 (62) | 163 | 159 | 0 / 0 / 0 / 0 / 0 | 6 |
+| ≤ 2 regions (recorded fallback) | 387 (101) | 378 | 373 | 0 / 0 / 0 / 0 / 0 | 38 |
+
+STOP. Nothing is evaluated against labels until the user sends a pre-registration.

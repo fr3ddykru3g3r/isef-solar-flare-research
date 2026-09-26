@@ -1,0 +1,4 @@
+STEP 3 (counts only; no label read): 387 episodes with results; frames 46221; QUALITY!=0 1236; exposure rule 412; flare frames (sens only) 1574; saturation-flagged 127
+frame-mean check spatial vs series: max |diff| 0.0e+00
+subset single: episodes 165 (HARPs 62); primary fill >= 80%: 163; flare-excluded fill >= 80%: 159; undefined (fill ok): {'dCV primary': 0, 'dCV flare-excl': 0, 'R4a': 0, 'R4c': 0, 'R4a_nf': 0}; coverage flag in primary 80% set: 6
+subset le2: episodes 387 (HARPs 101); primary fill >= 80%: 378; flare-excluded fill >= 80%: 373; undefined (fill ok): {'dCV primary': 0, 'dCV flare-excl': 0, 'R4a': 0, 'R4c': 0, 'R4a_nf': 0}; coverage flag in primary 80% set: 38
