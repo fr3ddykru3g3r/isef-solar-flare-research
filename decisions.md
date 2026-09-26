@@ -4316,3 +4316,44 @@ User: "Descriptive only (cannot change any reading; no new tests): (a) sign and 
   - Grouped by the calendar year of t: n, median, Q1, Q3.
   - All episodes with a defined value, plus the same restricted to primary fill ≥ 80%.
   - No label column is read.
+
+### Descriptive follow-up — RESULT (cannot change any reading; numbers only)
+`euv_descriptive_after.py` → `euv_descriptive_after.log`, `data/euv_confirm/cv_box_by_year.csv`.
+
+**(a) Model C = A + log(1 + R)** (dev fold models). Coefficients are standardized, per 1 SD, after the training-fold StandardScaler.
+
+| fold | score | n_C | n_M | n_X | log(1+R) | log(1+R) per unit | SD of log(1+R) |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 0.738 | 0.043 | 0.071 | 0.058 | −0.179 | −0.149 | 1.200 |
+| 1 | 0.533 | −0.071 | 0.358 | 0.030 | −0.362 | −0.299 | 1.213 |
+| 2 | 0.874 | 0.069 | 0.202 | −0.168 | −0.266 | −0.226 | 1.181 |
+| 3 | 0.782 | −0.327 | 0.257 | −0.077 | −0.332 | −0.279 | 1.187 |
+| 4 | 0.594 | −0.011 | 0.230 | 0.051 | −0.358 | −0.285 | 1.254 |
+
+- **log(1 + R) across folds:** mean standardized coefficient −0.299 (odds ratio 0.741 per 1 SD); per unit −0.248 (odds ratio 0.781). The sign is negative in 5 of 5 folds.
+- **Dev log(1 + R):** median 3.027; 33.1% of episodes are at the cap (no C1+ in 48 h).
+- **Direction (mechanical):** negative → a shorter time since the last C1+ flare gives a HIGHER predicted probability.
+
+**(b) CV_box by calendar year** (all episodes with a value; label-blind): n, median [Q1, Q3].
+- Dev (single-region):
+  - 2010: 40, 0.051 [0.032, 0.081]
+  - 2011: 88, 0.233 [0.128, 0.396]
+  - 2012: 61, 0.159 [0.062, 0.231]
+  - 2013: 95, 0.116 [0.061, 0.220]
+  - 2014: 110, 0.117 [0.057, 0.221]
+  - 2015: 111, 0.164 [0.058, 0.356]
+  - 2016: 10, 0.181 [0.117, 0.479]
+  - 2017: 24, 0.142 [0.079, 0.269]
+  - 2018: 3, 0.097 [0.080, 0.198]
+  - 2019: 4, 0.392 [0.086, 0.784]
+- Test (single-region):
+  - 2021: 22, 0.131 [0.071, 0.175]
+  - 2023: 181, 0.114 [0.058, 0.186]
+  - 2024: 110, 0.136 [0.084, 0.267]
+- Confirmation (≤ 2 union):
+  - 2025: 266, 0.084 [0.043, 0.184]
+  - 2026: 121, 0.078 [0.040, 0.207]
+- Confirmation, single-region only:
+  - 2025: 102, 0.107 [0.038, 0.237]
+  - 2026: 63, 0.110 [0.044, 0.250]
+- The fill ≥ 80% versions are within 0.004 of these medians (see log).
