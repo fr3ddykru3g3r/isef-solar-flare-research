@@ -4458,3 +4458,12 @@ STOP. Do not evaluate until I say "run the pre-registered filter test once".
 - `thresholds.json` `7a34507c20d37756906e4ad6dfaf9069c48ad74bff5b42521a4dd4f1c573c6ad`
 - `dev_rows.csv` `a32b3afe915743f4022a35b83f9084b3adb002a7a6ac8231254ea238f37590b3`
 - The 20 fold-model files (`models/{A,A_CV,C,C_CV}_fold{0-4}.joblib`) are listed in `euv_extra_models.log` and `model_hashes.json`, e.g. A_fold0 `547b5d2c…`, A_CV_fold0 `a28363dc…`, C_fold0 `bb0ef14b…`, C_CV_fold0 `e5bd214c…`.
+
+### EUV-unseen follow-up — Step 3 dry run (nothing submitted)
+`euv_extra.py plan`. Outputs go to separate roots `data/euv_extra/primary/` and `data/euv_extra/s2022/`, so a HARP in both sets can never mix files. Same pipeline as test/confirmation (`euv_full.run_pipeline`, compute = False), PRIMARY first, then 2022; one pending export at a time, the user's account only; no other JSOC job running.
+
+| set | episodes | HARPs | exports | AIA files | HMI files | ~GB | ~hours |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| PRIMARY | 158 | 40 | 80 | 17,645 | 316 | 6.92 | 3.31 |
+| 2022 | 152 | 44 | 88 | 14,770 | 304 | 5.81 | 3.31 |
+| total | 310 | 84 | 168 | 32,415 | 620 | 12.73 | 6.62 |

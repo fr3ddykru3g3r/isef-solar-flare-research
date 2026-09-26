@@ -142,3 +142,39 @@ if __name__ == "__main__" and sys.argv[1:] == ["models"]:
         print(f"  {name:5s} cols {o['cols']}: tau {o['tau']:.6f}; dev OOF weighted true alarm episodes kept {o['dev_oof_weighted_true_kept']:.4f}")
     for f, h in hashes.items():
         print(f"  sha256 {h}  {f}")
+
+
+def set_episodes(s):
+    """INCLUDED episodes of a set (harpnum, t, noaa_ars, t_rec_tai, eid); no label column read."""
+    M = pd.read_csv(f"{ROOT}/manifest.csv", parse_dates=["t"]); M = M[(M.set == s) & (M.reason == "INCLUDED")]
+    c = pd.read_csv(f"{ROOT}/cohort_{s}_all_eligible.csv", usecols=["harpnum", "t", "noaa_ars"], parse_dates=["t"])
+    e = M[["harpnum", "t"]].merge(c, on=["harpnum", "t"], how="left", validate="one_to_one")
+    lab = pd.read_csv(SPEC["data"]["labelled_file"], usecols=["harpnum", "t_rec_utc", "t_rec_tai"], parse_dates=["t_rec_utc"], low_memory=False)
+    e = e.merge(lab, left_on=["harpnum", "t"], right_on=["harpnum", "t_rec_utc"], how="left", validate="one_to_one").drop(columns="t_rec_utc")
+    assert e.t_rec_tai.notna().all() and e.noaa_ars.notna().all()
+    e["eid"] = [f"{h}_{t:%Y%m%dT%H%M}" for h, t in zip(e.harpnum, e.t)]
+    return e.sort_values(["harpnum", "t"]).reset_index(drop=True)
+
+
+if __name__ == "__main__" and sys.argv[1:] == ["plan"]:
+    from euv_full import expected_frames
+    x = pd.read_csv("data/euv_test/exports.csv"); bpf = x.bytes.sum() / x.files.sum()
+    model = lambda n_exp, files: 72 * n_exp + 0.2 * files; ratio = 7.24 / (model(len(x), x.files.sum()) / 3600)
+    tot = [0, 0]
+    for s in ["primary", "s2022"]:
+        e = set_episodes(s); Hn = e.harpnum.nunique()
+        aia = sum(expected_frames(g) for _, g in e.groupby("harpnum")); hmi = 2 * len(e)
+        gb, hrs = (aia + hmi) * bpf / 1e9, (model(Hn, aia) + model(Hn, hmi)) / 3600 * ratio
+        tot = [tot[0] + gb, tot[1] + hrs]
+        print(f"DRY RUN {s}: {len(e)} episodes, {Hn} HARPs; exports {2 * Hn} ({Hn} HMI + {Hn} AIA); files AIA {aia}, HMI {hmi}; "
+              f"~{gb:.2f} GB, ~{hrs:.2f} h")
+    print(f"total ~{tot[0]:.2f} GB, ~{tot[1]:.2f} h (test-year bytes/file {bpf / 1e6:.3f} MB; prep model x {ratio:.2f}); order: primary, then 2022")
+
+if __name__ == "__main__" and sys.argv[1:] == ["download"]:
+    import euv_full
+    euv_full.R = ROOT                                             # logs under data/euv_extra/logs
+    for s in ["primary", "s2022"]:                                # PRIMARY first, then 2022; one pending export at a time
+        e = set_episodes(s); t0 = time.time()
+        euv_full.log(f"EUV-EXTRA DOWNLOAD {s} start: {len(e)} episodes, {e.harpnum.nunique()} HARPs (download only)")
+        euv_full.run_pipeline(e, f"{ROOT}/{s}", progress_every=1800, compute=False)
+        euv_full.log(f"EUV-EXTRA DOWNLOAD {s} done: wall {(time.time() - t0) / 3600:.2f} h")
