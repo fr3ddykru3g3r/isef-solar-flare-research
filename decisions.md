@@ -4665,3 +4665,4 @@ Report tables after Step 2, commit, STOP.
   - For F_new_nf the threshold is taken over the valid_sens frames, exactly as the stored `spatial_nf` run did. Its per-frame counts are checked against `data/euv_full/spatial_nf/<eid>_frames.csv`.
 - **NEW:** frames are in time order. A bright pixel-frame is NEW if that HMI pixel was not bright in any earlier frame of the same frame set (primary or nf).
 - **Workers:** 4 processes.
+- **Decision (user, 2026-09-27, answering my question):** "Wait for download". Step 1, which needs the JSOC pointing-table keyword queries, runs only after the euv_extra download and its computation have finished. No JSOC call is made while the download runs. Selftests passed (one spot flashing 5 times → F_new 0.2 (9/45); five different spots once each → 1.0).
