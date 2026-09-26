@@ -4506,3 +4506,31 @@ Report the tables, commit, STOP. No other analyses.
 - **LL(C) check:** C is refit with `euv_heldout.fit_folds`, the same path as `euv_confirm_tests.py`. Its weighted OOF log-loss must round to 0.3356.
 - **Bootstrap:** drawn in the parent and evaluated on 9 workers (Phase F method, identical to single process).
 - **Coefficients:** standardized (training-fold StandardScaler), per fold.
+
+### RECHARGE vs CLUSTERING — RESULT (EXPLORATORY; dev 2010–2019 only; nothing claimed as confirmed; numbers only)
+`euv_recharge.py` → `euv_recharge.log`. 9 workers; wall 3.2 s. No images, JSOC calls or 2021–2026 data; the running download was not touched.
+
+**Checks:**
+- (R < 48) ⇔ a real last flare, for all 547 episodes.
+- The event join reproduces n_C, n_M and n_X.
+- LL(C) = 0.3356, matching Step B dev.
+
+**Δ = LL(C) − LL(C_S)** (positive = S_last helps): **+0.0017 [−0.0144, 0.0184]** (HARP bootstrap 10,000, seed 20260921). LL(C) 0.3356, LL(C_S) 0.3338. Weighted AUC: C 0.7645, C_S 0.7503.
+
+**C_S coefficients** (per 1 SD):
+
+| fold | score | n_C | n_M | n_X | log(1+R) | S_last |
+|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 0.689 | 0.090 | −0.061 | 0.060 | −0.084 | +0.372 |
+| 1 | 0.492 | −0.025 | 0.211 | 0.029 | −0.278 | +0.369 |
+| 2 | 0.810 | 0.153 | −0.038 | −0.169 | −0.151 | +0.555 |
+| 3 | 0.740 | −0.309 | 0.002 | −0.038 | −0.220 | +0.494 |
+| 4 | 0.528 | 0.020 | 0.040 | 0.055 | −0.228 | +0.548 |
+
+The S_last sign is positive in 5 of 5 folds (negative 0/5).
+
+**Descriptive:**
+- 181 of 547 episodes are at the floor (no C1+ in (t − 48 h, t)).
+- Spearman ρ of S_last: with n_M 0.493 (p 7.4e-35), with n_X 0.206 (p 1.2e-06), with log(1+R) −0.701 (p 6.3e-82).
+
+**Pre-stated reading (mechanical):** Δ +0.0017, but the CI lower bound (−0.0144) is not > 0 → **"NO DETECTABLE EFFECT"**.

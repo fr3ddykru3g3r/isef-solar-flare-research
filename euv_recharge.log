@@ -1,0 +1,21 @@
+EXPLORATORY (dev 2010-2019 only; nothing claimed as confirmed)
+checks: (R < 48) <=> real last flare for all 547 episodes; event join reproduces n_C, n_M, n_X; LL(C) 0.3356 = Step B dev 0.3356
+
+Delta = LL(C) - LL(C_S) (+ = S_last helps): 0.0017 [-0.0144, 0.0184] (HARP bootstrap 10,000, seed 20260921); LL(C) 0.3356, LL(C_S) 0.3338; weighted AUC C 0.7645, C_S 0.7503
+
+C_S coefficients per fold (per 1 SD, training-fold StandardScaler)
+ fold  std_score  std_n_C  std_n_M  std_n_X  std_logR  std_S_last
+    0     0.6893   0.0904  -0.0605   0.0603   -0.0839      0.3717
+    1     0.4915  -0.0254   0.2107   0.0289   -0.2782      0.3688
+    2     0.8101   0.1533  -0.0384  -0.1690   -0.1514      0.5550
+    3     0.7395  -0.3088   0.0022  -0.0375   -0.2196      0.4941
+    4     0.5282   0.0198   0.0404   0.0545   -0.2283      0.5483
+S_last coefficient signs: [1, 1, 1, 1, 1] (negative 0/5, positive 5/5)
+
+descriptive: episodes at the floor (no C1+ in (t-48h, t)): 181 of 547
+  Spearman rho(S_last, n_M) = 0.4931 (p 7.35e-35, n 547)
+  Spearman rho(S_last, n_X) = 0.2060 (p 1.17e-06, n 547)
+  Spearman rho(S_last, logR) = -0.7006 (p 6.31e-82, n 547)
+
+PRE-STATED READING (mechanical): Delta +0.0017, CI lower -0.0144, negative folds 0/5 -> "NO DETECTABLE EFFECT"
+wall 3.2 s, workers 9
