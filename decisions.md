@@ -4437,3 +4437,24 @@ STOP. Do not evaluate until I say "run the pre-registered filter test once".
 
 - PRIMARY by year: 2021 8 episodes (2 HARPs); 2023 94 (23); 2024 56 (15).
 - **SIZE RULE:** PRIMARY 158 ≥ 100 episodes and 40 ≥ 30 HARPs → **PASS**; continue to Step 2.
+
+### EUV-unseen follow-up — Step 2 RESULT: dev models and FROZEN thresholds (dev 2010–2019 only; before any new-set download)
+`euv_extra.py models` → `euv_extra_models.log`; artifacts in `data/euv_extra/`, all new; nothing overwritten.
+- **Dev rows:** 541 episodes, 179 HARPs (primary 80% set, CV_box finite and > 0), listed in `dev_rows.csv` with fold and weight.
+- **Fitting:** step 6 settings (fold column, weights 1/n per HARP over the 541, training-fold StandardScaler, frozen LogisticRegression).
+- **log(1+R)** follows the Step B definition.
+- **Check:** A reproduces the Phase X dev log-loss exactly.
+
+**FROZEN thresholds** (τ = highest dev OOF threshold keeping ≥ 88% of weighted true alarm episodes, as 04b6f4f):
+
+| model | features | τ (frozen) | dev OOF weighted true alarm episodes kept |
+|---|---|---:|---:|
+| A | score, n_C, n_M, n_X | **0.067970** | 0.8815 |
+| A_CV | A + log10 CV_box | **0.074657** | 0.8817 |
+| C | A + log(1+R) | **0.062570** | 0.8807 |
+| C_CV | C + log10 CV_box | **0.068936** | 0.8803 |
+
+**SHA-256:**
+- `thresholds.json` `7a34507c20d37756906e4ad6dfaf9069c48ad74bff5b42521a4dd4f1c573c6ad`
+- `dev_rows.csv` `a32b3afe915743f4022a35b83f9084b3adb002a7a6ac8231254ea238f37590b3`
+- The 20 fold-model files (`models/{A,A_CV,C,C_CV}_fold{0-4}.joblib`) are listed in `euv_extra_models.log` and `model_hashes.json`, e.g. A_fold0 `547b5d2c…`, A_CV_fold0 `a28363dc…`, C_fold0 `bb0ef14b…`, C_CV_fold0 `e5bd214c…`.

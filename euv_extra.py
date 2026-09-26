@@ -107,3 +107,38 @@ if __name__ == "__main__" and sys.argv[1:] == ["sets"]:
     print(f"\nSIZE RULE (PRIMARY >= 100 episodes and >= 30 HARPs): {len(inc)} episodes, {inc.harpnum.nunique()} HARPs -> "
           f"{'PASS' if size_ok else 'too small; not run'}")
     print(f"manifest sha256 {H(f'{ROOT}/manifest.csv')}; excluded_ids sha256 {H(f'{ROOT}/excluded_ids.json')}")
+
+if __name__ == "__main__" and sys.argv[1:] == ["models"]:
+    import joblib
+    from phase_f import load_base, prep, tau_keep, wlogloss, A_COLS
+    from euv_heldout import fit_folds
+    from euv_confirm_tests import log_r
+    os.makedirs(f"{ROOT}/models", exist_ok=True)
+    dv = load_base()
+    m = dv.P & np.isfinite(dv.primary_CV_box) & (dv.primary_CV_box > 0)
+    c = prep(dv, m); c["log10_CV_box"] = np.log10(c.primary_CV_box)
+    c["logR"] = log_r(c, pd.Timestamp("2010-04-28"), pd.Timestamp("2019-12-31 23:59"))
+    y, w = c.true_alarm.to_numpy(), c.weight.to_numpy()
+    MODELS = {"A": A_COLS, "A_CV": A_COLS + ["log10_CV_box"], "C": A_COLS + ["logR"], "C_CV": A_COLS + ["logR", "log10_CV_box"]}
+    px = pd.read_csv("data/euv_full/spatial/eval_compare.csv", float_precision="round_trip").set_index("candidate").loc["R4a"]
+    out, hashes = {}, {}
+    for name, cols in MODELS.items():
+        ms, p = fit_folds(c, cols)
+        if name == "A":
+            assert abs(wlogloss(y, p, w) - px.logloss_A) < 1e-12, "A on the dev 541 set does not reproduce Phase X"
+        tau = tau_keep(p, y, w); k = p >= tau
+        out[name] = dict(cols=cols, tau=tau, dev_oof_weighted_true_kept=float((w * y * k).sum() / (w * y).sum()),
+                         dev_oof_logloss=wlogloss(y, p, w))
+        for f, (sc, mdl, cl) in enumerate(ms):
+            fn = f"{ROOT}/models/{name}_fold{f}.joblib"
+            assert not os.path.exists(fn), f"{fn} exists; never overwrite"
+            joblib.dump({"scaler": sc, "model": mdl, "cols": cl}, fn); hashes[fn] = H(fn)
+    c[["eid", "harpnum", "t", "fold", "weight"]].to_csv(f"{ROOT}/dev_rows.csv", index=False)
+    json.dump(out, open(f"{ROOT}/thresholds.json", "w"), indent=1)
+    hashes[f"{ROOT}/dev_rows.csv"] = H(f"{ROOT}/dev_rows.csv"); hashes[f"{ROOT}/thresholds.json"] = H(f"{ROOT}/thresholds.json")
+    json.dump(hashes, open(f"{ROOT}/model_hashes.json", "w"), indent=1)
+    print(f"dev rows: {len(c)} episodes, {c.harpnum.nunique()} HARPs (primary 80% set, CV_box finite and > 0); check: A reproduces Phase X dev log-loss")
+    for name, o in out.items():
+        print(f"  {name:5s} cols {o['cols']}: tau {o['tau']:.6f}; dev OOF weighted true alarm episodes kept {o['dev_oof_weighted_true_kept']:.4f}")
+    for f, h in hashes.items():
+        print(f"  sha256 {h}  {f}")
