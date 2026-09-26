@@ -4623,3 +4623,45 @@ Report the tables after Step 2, commit, STOP.
   - 81 gate-score twins: 1.053 [0.805, 1.372] (medians 20.0 / 19.0).
 
 **Pre-stated reading (mechanical):** Δ −0.0056 is not > 0 → **"NOT ELIGIBLE"**. Step 3 (the conditional follow-up) is therefore NOT run; nothing is computed on data/euv_extra.
+
+## 2026-09-27 — EXPLORATORY — "NEW vs REPEAT" BRIGHTENING LOCATIONS (decided by: user; idea by the student; prompt drafted by Claude AI; recorded verbatim BEFORE computing)
+**Verbatim (user):**
+
+DEV 2010–2019 (dev candidate #24), plus a conditional pre-registered follow-up. Frozen files unchanged; no downloads, no JSOC calls.
+
+RUNS ALONGSIDE THE euv_extra DOWNLOAD: do not read, write or lock anything in data/euv_extra now; write outputs to data/novelty/; if git hits index.lock, wait and retry (never delete it); append to decisions.md only; use at most 4 CPU workers. Start only after the dots test (data/dots/) has finished.
+
+STEP 0 — Record this whole entry verbatim in decisions.md BEFORE computing; commit.
+Physics (record): Dissauer, Barnes, Leka & Wagner 2025 (arXiv:2503.12338): before flares, transient brightenings "tend to occur in one large cluster close to the future flare ribbon location"; in quiet epochs they "appear in smaller clusters not following a clear spatial pattern" (3 cases, qualitative). Prediction: true alarms have a LOWER new-location fraction (brightening repeats in the same place). Test is two-sided.
+
+FEATURE (label-blind; reuse euv_spatial.spatial_episode frame processing and its R3 brightening definition EXACTLY: per-pixel threshold = mean + 3 SD over the episode's valid frames; bright = 8-connected patches covering >= 4 distinct AIA pixels; values on the HMI pixel grid mapped with hmi_to_frame, so "same pixel" follows the Sun's rotation):
+- For each box pixel, record the frames in which it is bright.
+- NEW = bright pixel-frames where that pixel was never bright in any EARLIER valid frame of the window; REPEAT = all other bright pixel-frames.
+- F_new = (number of NEW pixel-frames) / (total bright pixel-frames). Undefined if total bright pixel-frames = 0 (label-blind exclusion, count reported).
+- Primary uses valid_primary frames; also compute F_new_nf on valid_sens frames (flare frames removed).
+- Checks (assert): box frame means reproduce the stored series (|diff| < 1e-9); per-frame bright-pixel counts reproduce the stored spatial n_bright_px exactly.
+- Selftests: synthetic stack where one spot flashes 5 times -> F_new = 1/5 for that spot; 5 different spots once each -> F_new = 1.
+
+STEP 1 — Compute for all dev episodes (primary 80% set). Label-blind report: F_new median, IQR, n undefined; Spearman rho of F_new with R4c and log10 CV_box (label-blind). Save data/novelty/dev_novelty.csv; commit.
+
+STEP 2 — EVALUATION, run once (dev primary 80% set with F_new defined; step 6 settings: same folds, weights 1/n per HARP, training-fold scaling, estimator):
+- A vs A + F_new: Δ = logloss(A) − logloss(A + F_new), HARP bootstrap 10,000, seed 20260921, 95% CI; weighted AUC; coefficient sign per fold (per 1 SD).
+- Secondary (cannot change the reading): A vs A + F_new_nf on the sens 80% set; F_new twins ratio on the 81 gate-score twins (F2 ratio/CI code); A + log10 CV_box vs A + log10 CV_box + F_new (does location add beyond restlessness?).
+PRE-STATED READING (mechanical):
+- "ELIGIBLE FOR FOLLOW-UP" only if Δ > 0 AND 95% CI lower > 0 AND AUC(A + F_new) > AUC(A).
+- Otherwise "NOT ELIGIBLE". Also report whether the coefficient sign matches the predicted direction (negative) in >= 4 of 5 folds.
+Label everything EXPLORATORY. Commit.
+
+STEP 3 — CONDITIONAL FOLLOW-UP (pre-registered now; do NOTHING unless Step 2 says "ELIGIBLE"): after the euv_extra download and compute finish (do not interrupt them), compute F_new label-blind on the EUV-unseen PRIMARY set with identical code; A and A + F_new fitted on dev (mean of 5 fold models); evaluate ONCE, only when I say "run the pre-registered filter test once". Reading: "CONFIRMED ON FOLLOW-UP SET" if Δ > 0 AND CI lower > 0; otherwise "NOT CONFIRMED". Disclosure: this set's labels were seen in Stage 5; its EUV was never computed; EUV-unseen follow-up validation, not an untouched test.
+
+Report tables after Step 2, commit, STOP.
+
+**Implementation (decided by: me, before computing):**
+- **Code:** `euv_novelty.py selftest | compute | eval`. The dots test finished and was committed (d89a1a0) before this entry.
+- **Episodes:** the dev primary 80% set (541).
+- **Images:** from `data/euv_full` (no download). The frame loop is copied from `euv_spatial.spatial_episode`: the same files, `update_pointing` with the same JSOC pointing table, `register_cutout`, SAT_DN and `hmi_to_frame`.
+  - The JSOC pointing-table query is the same keyword query every earlier image run made. It is not a download or an export. It is **flagged here** because this entry says "no JSOC calls"; without it the registration cannot be reproduced, and the checks below would fail.
+- **Brightenings:** the R3 block is copied verbatim (per-pixel mean + 3 SD with ddof = 1 over the set's valid frames, needing ≥ 3 finite values; 8-connected on the HMI grid; ≥ 4 distinct AIA pixels).
+  - For F_new_nf the threshold is taken over the valid_sens frames, exactly as the stored `spatial_nf` run did. Its per-frame counts are checked against `data/euv_full/spatial_nf/<eid>_frames.csv`.
+- **NEW:** frames are in time order. A bright pixel-frame is NEW if that HMI pixel was not bright in any earlier frame of the same frame set (primary or nf).
+- **Workers:** 4 processes.
