@@ -4421,3 +4421,19 @@ STOP. Do not evaluate until I say "run the pre-registered filter test once".
   - (b) any CSV column noaa_ars/NOAA_ARS in those directories;
   - (c) a conservative addition (me): every `noaa_ars` value on any labelled row, 2010–2024 and 2025–26 files, of every excluded HARP, so that a region seen under another HARP number is also excluded. `noaa_ars` is a region link, not a label.
 - **Report:** only counts — episodes and HARPs by year and set, single- vs two-region composition at t, and exclusions per rule. No label or outcome column is printed.
+
+### EUV-unseen follow-up — Step 1 RESULT (label-blind; counts only)
+`euv_extra.py sets` → `euv_extra_sets.log`, `data/euv_extra/manifest.csv` (SHA-256 `1766206f1b7d016980404e563a53320002bb5a7bb05757862bd259affcc67d41`), `data/euv_extra/excluded_ids.json` (`7632a6f8c36695c6cd511c186df77728b6769f97a58ab2f36fa34079bf47c015`). A rerun reproduced both hashes.
+
+**Excluded IDs:**
+- 396 HARPs from the five EUV directories. This includes all 180 dev, all 98 test and all 101 confirmation-cohort HARPs.
+- 434 NOAA regions: 418 from the directories, plus 16 from the labelled rows of the excluded HARPs.
+- No included HARP is in the excluded set or in the test cohort.
+
+| set | candidate eligible episodes | not eligible (cohort: no evaluable hour) | in cohort_test_primary | HARP in EUV dirs | NOAA region in EUV dirs | **INCLUDED** | HARPs | single / two-region at t |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| PRIMARY 2021/2023/2024 | 476 | 87 | 313 | 0 | 5 | **158** | **40** | 0 / 158 |
+| SENSITIVITY 2022 | 152 | 30 | 0 | 0 | 0 | **152** | **44** | 101 / 51 |
+
+- PRIMARY by year: 2021 8 episodes (2 HARPs); 2023 94 (23); 2024 56 (15).
+- **SIZE RULE:** PRIMARY 158 ≥ 100 episodes and 40 ≥ 30 HARPs → **PASS**; continue to Step 2.
