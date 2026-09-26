@@ -4186,3 +4186,19 @@ The cohort files are in `data/euv_confirm/cohort_{single,le2}.csv`; they were no
 - 202 exports (101 HMI + 101 AIA); expected files: AIA 33,370, HMI 774.
 - Estimated 13.16 GB (test-year 0.385 MB/file; test years were 12.19 GB for 313 episodes) and 7.56 h (prep model × 1.27).
 - Free disk: 628 GiB.
+
+### Confirmation set — Step 2 download RESULT (files only; label-blind)
+`euv_confirm.py download` 01:48–09:25 (wall 7.63 h) → `data/euv_confirm/`; `verify` → `euv_confirm_verify.log`, `data/euv_confirm/verify_per_harp.csv`.
+- **Exports:** 202 (101 HMI + 101 AIA), one pending at a time, the user's account only. Failures: 0.
+- **Recovered retries:**
+  - JSOC status 4 ("Cant save new export-request hash") on the AIA export of HARPs 13574, 14117 and 14610. Each resubmission was then refused with status 7 while the account's own single request was still pending, and completed.
+  - A few submit/tar timeouts.
+- **HMI:** magnetogram + bitmap for all 387/387 episode T_RECs; header HARPNUM and T_REC match.
+- **AIA:** 33,179 files of 33,370 expected (99.43%). All have a readable header, are 94 Å and fall inside the HARP's record range. No HARP has zero files.
+- **Size:** 15.03 GB.
+- **Short HARPs:** 40 (191 frames missing). Below 97%:
+  - 12997: 290/315
+  - 13004: 589/625
+  - 13599: 151/160
+  - 14610: 656/680
+- These have NOT been re-exported. In dev and test, re-exports of short HARPs returned identical counts (archive gaps).
