@@ -4224,3 +4224,41 @@ STOP. Nothing is evaluated against labels until the user sends a pre-registratio
 AIA re-exported once for HARPs 12997, 13004, 13599 and 14610 (`euv_confirm.py reexport`, one pending export, the user's account) into `data/euv_confirm/reexport/<H>/`.
 - Counts are identical: 12997 290/290; 13004 589/589; 13599 151/151; 14610 656/656. 0 new frames, 0 missing.
 - **Recorded as: archive gaps.** Nothing was copied, overwritten or recomputed.
+
+## 2026-09-26 — PRE-REGISTRATION — 2025–26 CONFIRMATION (decided by: user; wording drafted by Claude AI, reviewed and adopted by Lokesh; recorded BEFORE any 2025–26 label is used in evaluation)
+**Verbatim (user):**
+
+Context: added after 2021–24 results (7438177, ec00afb) and 21 dev candidates. Primary subset = noaa_ar_count <= 2 per the recorded fallback (lines 199–200, 223, 1853–1860); the 23-positive-HARP count predates the 6-HARP exclusion; not recounted. Dev and 2021–24 used single-region; this is a broader population.
+
+TEST 1 — Hypothesis: In 2025–26, among true alarms matched to false alarms with a similar gate score (magnetic twins), whole-region AIA 94 Å variability (CV_box) over the 24 hours before the alarm is higher in the true alarm than in its false-alarm twin.
+PRIMARY: CV_box twins ratio = median(true)/median(false); step 6 twins code (seeded order 20260921, greedy nearest, caliper 0.0747, partner from a different HARP, no reuse); <= 2 set, primary 80% fill; delayed episodes count as false. CI: pairs resampled by true HARP, 2,000, seed 0. Reading: "REPLICATED" if ratio > 1 AND CI lower > 1; "direction consistent, not confirmed" if ratio > 1 with CI including 1; "NOT REPLICATED" otherwise.
+SECONDARY (cannot change the reading): s1 same-flare-history twins (F4 groups); s2 all-episodes ratio (HARP bootstrap 2,000, seed 0); s3 R4a: A vs A + R4a with dev-fitted fold models as 2021–24, "adds information" only if Δ > 0 AND CI excludes 0; s4 single-region subset, primary statistic, descriptive; s5 pooled CV_box twins ratio over 2021–24 (existing 40 pairs) + 2025–26 primary pairs, same code, labelled "includes 2021–24 data already analysed (ec00afb); not a confirmation". No 2020 or 2022.
+
+TEST 2 — STEP B (pre-registered 2026-09-21, lines ~1665–1680), finalised now: evaluation set = 2025–26, <= 2 primary, all eligible episodes (no EUV fill requirement); single-region descriptive. τ_A = max weighted TSS on A's dev out-of-fold probabilities; τ_C = threshold on C's dev OOF probabilities with the same weighted TPR. A and C fitted on dev with frozen A settings; test prediction = mean of 5 fold models. Metric: weighted Δ = logloss(A) − logloss(C), HARP bootstrap 10,000, seed 20260921; AUC; false alarms at τ_A vs τ_C. Reading: "C beats A" only if Δ > 0 AND 95% CI excludes 0; else "not confirmed". Also report dev OOF Δ (exploratory); the confirmation run happens regardless.
+
+Run TEST 1 and TEST 2 once each. Report all tables, commit, STOP. Nothing else on 2025–26.
+
+**Implementation (decided by: me, before any 2025–26 label is used):**
+- **Code:** `euv_confirm_tests.py` (run once) → `euv_confirm_tests.log`, `data/euv_confirm/test1_ratios.csv`, `test2_stepB.csv`, `twins_le2.csv`.
+- **Cohorts:** `data/euv_confirm/cohort_le2.csv` (387) and `cohort_single.csv` (165), written label-blind in step 1. Values from `data/euv_confirm/results` (`primary_fill`, `primary_CV_box`) and `spatial` (R4a).
+- **TEST 1:**
+  - Primary set = ≤ 2 cohort with `primary_fill ≥ 0.80` and CV_box defined (378 expected).
+  - Twins = `euv_f2_replication.twins` (the step 6 matching code; it reproduced the 81 dev pairs in ec00afb). s1 = the same with `by_group=True` (F4 groups JUST-FLARED / C-only / QUIET-NOW).
+  - Ratio and CIs = `phase_f.ratio_jobs` (mode ratio; the twins CI resamples pairs clustered by true HARP; the all-episodes CI is a HARP bootstrap; 2,000 each, seed 0). s2 = the all-episodes ratio of the primary row.
+  - s4 = the same on the single-region cohort (primary 80% fill).
+  - s5: the 40 pairs of `data/euv_test/f2_replication/twins_test_primary.csv` (2021/2023/2024 values from `data/euv_test/results`) plus the 2025–26 primary pairs. Ratio = median(true members) ÷ median(false members) over the pooled pairs; pairs resampled by true HARP (the HARP numbers do not overlap between the two sets).
+  - s3: A and A + R4a fitted on the dev R4a set (541) with the step 6 settings (`euv_heldout.fit_folds`; check: they reproduce the Phase X dev log-losses). Test prediction = mean of the 5 fold models. Set = the TEST 1 primary set with R4a defined; weights 1/n per HARP. HARP bootstrap 10,000, seed 20260921.
+- **TEST 2 (Step B):**
+  - **R:** as recorded 2026-09-21 — hours since the most recent C1+ (K2 flux ≥ 1e-6, joinable SWPC events) start in (t − 48 h, t) from the episode's `noaa_ars`, capped at 48; feature log(1 + R).
+    - Events: `swpc.fetch` 2010-04-28 → 2019-12-31 for dev and 2024-12-29 → 2026-08-18 for 2025–26.
+    - **Check:** (R < 48) ⇔ (n_C + n_M + n_X ≥ 1) for every episode (the same window and events as the history counts).
+  - **A:** the frozen Stage 4 A fold models (hash-verified against `frozen_spec.json`). Check: a refit with `fit_folds` on the dev cohort (547, fold column, Stage 4 weights) reproduces them and the stored `p_A`.
+  - **C:** fitted the same way with A_COLS + [log(1 + R)].
+  - **τ_A:** over the distinct dev OOF probabilities of A in descending order, kept = p ≥ τ; weighted TPR/FPR with the Stage 4 weights; τ_A = the first maximum of weighted TSS.
+  - **τ_C:** the highest distinct dev OOF probability of C whose weighted TPR is ≥ A's weighted TPR at τ_A.
+  - **Evaluation:**
+    - 2025–26 sets: the ≤ 2 cohort (all 387 eligible episodes, primary) and single-region (165, descriptive). Weights 1/n per HARP over the set.
+    - Δ with a HARP bootstrap of 10,000, seed 20260921; weighted AUC.
+    - False alarms = false episodes with p ≥ τ (count and weighted fraction of false episodes). True kept is also reported.
+  - **Dev OOF Δ** (exploratory): the same bootstrap on the dev 547.
+- **Readings** are applied mechanically as written. TEST 1's reading uses the PRIMARY row only; TEST 2's uses the ≤ 2 row only.
