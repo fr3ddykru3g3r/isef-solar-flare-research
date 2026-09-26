@@ -4591,3 +4591,14 @@ Report the tables after Step 2, commit, STOP.
 4. **Episodes:** HMI files from `data/euv_full/hmi/<HARP>`, found with `euv_full.hmi_files`. T_REC comes from `data/stage2/oof_scores_dev.csv` (dev only), so the 2010–2024 labelled file is not read.
 5. **Workers:** 4 (`ProcessPoolExecutor(4)`) for the episodes and the bootstrap. The bootstrap is drawn in the parent (Phase F method, identical to single process).
 6. **Outputs:** only `data/dots/` and repo-root code/log files. Nothing in `data/euv_extra` is read or written.
+
+### DOTS — Step 1 RESULT (label-blind; no labels read)
+`euv_dots.py selftest | compute` → `euv_dots_compute.log`, `data/dots/dev_dots.csv`.
+- **Selftests passed:**
+  - (a) a 4.7 Mm² opposite patch (6×6 px) in the PIL zone → N_dots = 1;
+  - (b) the same patch far from the PIL → 0;
+  - (c) a 29.5 Mm² patch → 0;
+  - (d) deterministic.
+- **Run:** 547 dev episodes, 4 workers, 43.5 s. Missing magnetogram: 0.
+- **N_dots:** median 15, IQR [9, 22], max 67. Zero in 3 of 547 episodes (0.5%).
+- **Phi_dots:** median 9.98e19 Mx.

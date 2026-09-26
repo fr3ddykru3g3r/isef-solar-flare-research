@@ -1,0 +1,2 @@
+LABEL-BLIND REPORT (no labels read): 547 dev episodes; missing magnetogram 0 (excluded label-blind)
+N_dots: median 15, IQR [9, 22], max 67; zero in 0.5% (3/547); Phi_dots median 9.977e+19 Mx; wall 43.5 s, workers 4
