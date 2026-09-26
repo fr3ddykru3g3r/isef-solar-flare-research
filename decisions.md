@@ -4398,3 +4398,26 @@ STEP 2 — On dev only: fit A, A_CV, C, C_CV; compute and freeze all four thresh
 STEP 3 — Download AIA 94 Å (12-min, (t−24h, t], tracked im_patch) + HMI magnetogram/bitmap at t, same pattern as the test/confirmation downloads, to data/euv_extra/ (PRIMARY first, then 2022). Dry run first: report episodes, exports, GB, hours. Then run it.
 STEP 4 — Compute values with the identical code (euv_full.compute_episode); report fill counts, undefined values, errors, wall time. Commit.
 STOP. Do not evaluate until I say "run the pre-registered filter test once".
+
+**Implementation of Step 1 (decided by: me, before building the sets):**
+- **Code:** `euv_extra.py sets` → `data/euv_extra/manifest.csv` (every candidate episode with its set, year, region count at t and the reason it was included or excluded), `data/euv_extra/excluded_ids.json`; hashes recorded here.
+- **Candidates:** as Stage 5 (`stage5_test.py`), label-blind.
+  - `frozen/split.csv` test HARPs; rows of `data/labelled_20100501_20250101.csv` (hash-verified) in the set's years.
+  - Rows with a missing gate feature are dropped. Score = mean of the 5 frozen gate fold models.
+  - `noaa_ar_count <= 2`; `cohort.build` (T1–T4) with the trend windows over every labelled row of the HARP and `swpc.label_missing_days()`.
+  - PRIMARY = years 2021, 2023, 2024 in one build (as Stage 5's primary period); SENSITIVITY = 2022 alone.
+  - `stage5_test.py` is not run.
+- **Exclusion order (the first matching reason is recorded):**
+  1. (harpnum, t) in `data/stage5/cohort_test_primary.csv`;
+  2. HARP in the excluded HARP set;
+  3. any NOAA region of the candidate HARP (the union of `noaa_ars` over all its labelled rows) in the excluded region set.
+- **Excluded HARP set:** every HARP number found anywhere under data/euv_full, data/euv_test, data/euv_confirm, data/euv_pilot, data/euv_cad (recursive):
+  - digit-only directory names;
+  - `<HARP>_<yyyymmdd>T<hhmm>` prefixes of file and directory names;
+  - HMI FITS file names (`hmi.sharp_720s.<HARP>.…`) and FITS header `HARPNUM`;
+  - any CSV column named harpnum/HARPNUM.
+- **Excluded NOAA region set:**
+  - (a) header `NOAA_ARS` of every HMI FITS file in those directories;
+  - (b) any CSV column noaa_ars/NOAA_ARS in those directories;
+  - (c) a conservative addition (me): every `noaa_ars` value on any labelled row, 2010–2024 and 2025–26 files, of every excluded HARP, so that a region seen under another HARP number is also excluded. `noaa_ars` is a region link, not a label.
+- **Report:** only counts — episodes and HARPs by year and set, single- vs two-region composition at t, and exclusions per rule. No label or outcome column is printed.
