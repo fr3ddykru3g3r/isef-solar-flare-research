@@ -4357,3 +4357,44 @@ User: "Descriptive only (cannot change any reading; no new tests): (a) sign and 
   - 2025: 102, 0.107 [0.038, 0.237]
   - 2026: 63, 0.110 [0.044, 0.250]
 - The fill ≥ 80% versions are within 0.004 of these medians (see log).
+
+## 2026-09-26 — EUV-UNSEEN FOLLOW-UP VALIDATION — CV_box AS A FALSE-ALARM FILTER (decided by: user; wording drafted by Claude AI, reviewed and adopted by Lokesh; recorded verbatim BEFORE anything else)
+**Verbatim (user):**
+
+Frozen files unchanged; never overwrite existing models or results. Do not run stage5_test.py (it prints outcomes). JSOC: my account only, ONE pending export at a time across ALL running jobs.
+
+STEP 0 — Record this whole entry verbatim in decisions.md BEFORE anything else; commit.
+Disclosure (record verbatim): added after the 2021–24 and 2025–26 results (ec00afb, ae1b174) and after 21 dev candidates. The hypothesis was chosen after earlier EUV results. Flare labels and magnetic results for 2021–2024 were seen in Stage 5; EUV values for this set have never been computed or seen. This is an "EUV-unseen follow-up validation", not an untouched test. The model is trained on single-region dev episodes and evaluated on <= 2-region episodes (population change; reported).
+
+HYPOTHESIS: Adding whole-region AIA 94 Å variability (log10 CV_box) to Model A removes more false alarms at fixed, dev-frozen thresholds while keeping true alarm episodes.
+
+SETS (label-blind construction; outcomes never printed or inspected):
+- PRIMARY: eligible <= 2-region episodes (frozen cohort rules T1–T4) from 2021, 2023, 2024 that are NOT in data/stage5/cohort_test_primary.csv.
+- SENSITIVITY: the same rule for 2022 only (2022 is excluded from primary by Decision L2, line 921: attribution completeness 89.7% < 90%). Reported separately, never pooled into the primary reading.
+- Exclusions for both: every HARP AND every NOAA region that appears anywhere in data/euv_full, data/euv_test, data/euv_confirm, data/euv_pilot or data/euv_cad (raw data directories, manifests and results).
+- SIZE RULE (label-blind, decided now): if PRIMARY has < 100 episodes or < 30 HARPs, STOP after Step 1 and report "too small; not run".
+
+MODELS AND THRESHOLDS (dev 2010–2019 only; frozen BEFORE any new-set download):
+- Dev rows: the dev primary 80% set with CV_box finite and > 0 (same rows for both models). log10 because CV is skewed (recorded: 2.176 raw, −0.073 log10).
+- Models, as NEW artifacts (do not overwrite Stage 4 A): A = A_COLS; A_CV = A_COLS + log10 CV_box; C = A_COLS + log(1+R) (Step B definition); C_CV = C + log10 CV_box. Step 6 settings (same folds, weights 1/n per HARP, training-fold scaling, estimator). New-set prediction = mean of the 5 fold models.
+- Thresholds: τ for each model = highest dev OOF threshold keeping >= 88% of weighted true episodes (p >= τ), exactly as 04b6f4f. Each model has its own frozen τ.
+- Save and hash: model files, thresholds, the exact dev row list.
+
+EVALUATION (later, only on command). New set at primary 80% fill with CV_box finite and > 0; weights 1/n per HARP; delayed episodes count as false. Failed downloads or undefined values = label-blind exclusion, counted.
+PRIMARY comparison: A vs A_CV at their frozen thresholds. From the SAME paired HARP resamples (2,000, seed 0) compute:
+ D_false = weighted % false alarms removed (A_CV minus A), with 95% CI;
+ D_true  = weighted % true alarm episodes kept (A_CV minus A), with 95% CI.
+READING (mechanical, decided now):
+ "CONFIRMED SAFE FILTER" if D_false CI lower > 0 AND D_true CI lower >= −10 points.
+ "MEETS OPERATING CRITERION" if D_false CI lower > 0 AND D_true point estimate >= −10 points (but its CI lower < −10).
+ "REMOVES FALSE ALARMS BUT LOSES TOO MANY TRUE ALARMS (point estimate)" if D_false CI lower > 0 AND D_true point estimate < −10 points.
+ "INCONCLUSIVE" if the CIs cannot be computed (e.g. no true episodes in resamples).
+ "NOT CONFIRMED" otherwise.
+Wording in all outputs: "true alarm episodes kept", not "real flares".
+SECONDARY (cannot change the reading): counts kept/removed per model; Δ log-loss (A minus A_CV; HARP bootstrap 10,000, seed 20260921); AUC; the same comparison for C vs C_CV; CV_box twins ratio (step 6 twins code, same CI procedure as TEST 1); PRIMARY set composition (single- vs two-region, by year). SENSITIVITY: all of the above on 2022, labelled separately.
+
+STEP 1 — Build PRIMARY and SENSITIVITY sets label-blind. Save and hash the inclusion/exclusion manifest (every episode, reason). Report ONLY: episodes and HARPs by year and set, single- vs two-region composition, numbers excluded per rule. Apply the SIZE RULE. Commit. If too small: STOP here.
+STEP 2 — On dev only: fit A, A_CV, C, C_CV; compute and freeze all four thresholds; save and hash; record τ values in decisions.md. Commit.
+STEP 3 — Download AIA 94 Å (12-min, (t−24h, t], tracked im_patch) + HMI magnetogram/bitmap at t, same pattern as the test/confirmation downloads, to data/euv_extra/ (PRIMARY first, then 2022). Dry run first: report episodes, exports, GB, hours. Then run it.
+STEP 4 — Compute values with the identical code (euv_full.compute_episode); report fill counts, undefined values, errors, wall time. Commit.
+STOP. Do not evaluate until I say "run the pre-registered filter test once".
