@@ -4467,3 +4467,42 @@ STOP. Do not evaluate until I say "run the pre-registered filter test once".
 | PRIMARY | 158 | 40 | 80 | 17,645 | 316 | 6.92 | 3.31 |
 | 2022 | 152 | 44 | 88 | 14,770 | 304 | 5.81 | 3.31 |
 | total | 310 | 84 | 168 | 32,415 | 620 | 12.73 | 6.62 |
+
+## 2026-09-27 — EXPLORATORY — RECHARGE vs CLUSTERING TEST (decided by: user; design drafted by Claude AI, adopted by the student; recorded verbatim BEFORE computing)
+**Verbatim (user):**
+
+DEV 2010–2019 ONLY (dev candidate #22). Do NOT read or compute anything for 2021–2026. No images, no downloads, no JSOC calls (the euv_extra download is running — do not touch it). Frozen files unchanged; do not overwrite existing models.
+
+Physics (record): the recharge/"saturation" picture (Hudson 2020, MNRAS 491:4435: waiting time AFTER a flare correlates with its size; Sun et al. 2012, ApJ 748:77: free energy drops ~0.3e32 erg within 1 h of an X2.2 flare) predicts a NEGATIVE effect of the last flare's size on the chance of an M1+ in (t, t+24h]. The clustering/active-phase picture (Step B: log(1+R) coefficient negative in 5/5 folds, i.e. recent flaring raises probability) predicts a POSITIVE effect. Question: among gate alarms, after accounting for recency, does the size of the region's last flare help separate true from false alarms, and which way?
+
+FEATURE:
+- S_last = log10(K2-scale peak flux of the region's most recent C1+ SWPC flare whose start is in (t − 48 h, t)), using exactly the same event source, K2 scaling and noaa_ars region join as Step B's R (euv_confirm_tests.log_r logic).
+- If no such flare: S_last = log10(1e-6) (floor). log(1+R) = log(49) already flags "none".
+- Check (assert): for every episode, (R < 48) ⇔ (S_last came from a real flare); and the same event join reproduces the cohort's n_C, n_M, n_X.
+
+MODELS (dev 547 episodes, data/stage4/oof_cohort_dev.csv, Stage 4 fold column and weights):
+- C = A_COLS + log(1+R) (must reproduce the committed Step B dev result: LL(C) 0.3356)
+- C_S = C + S_last
+- Step 6 / Step B settings (same folds, weights 1/n per HARP, training-fold scaling, estimator).
+
+REPORT:
+- Δ = logloss(C) − logloss(C_S) (positive = S_last helps), HARP bootstrap 10,000, seed 20260921; 95% CI; weighted AUC for both.
+- S_last coefficient in each of the 5 folds (per 1 SD) and its sign.
+- Descriptive: Spearman ρ of S_last with n_M, n_X, log(1+R); number of episodes at the floor.
+
+PRE-STATED READING (applied mechanically):
+- "RECHARGE SUPPORTED" if Δ > 0 AND CI lower > 0 AND coefficient negative in >= 4 of 5 folds.
+- "CLUSTERING SUPPORTED" if Δ > 0 AND CI lower > 0 AND coefficient positive in >= 4 of 5 folds.
+- Otherwise "NO DETECTABLE EFFECT".
+Label everything EXPLORATORY (dev only; nothing claimed as confirmed).
+
+Report the tables, commit, STOP. No other analyses.
+
+**Implementation (decided by: me, before computing):**
+- **Code:** `euv_recharge.py` → `euv_recharge.log`.
+- **Events:** `swpc.fetch(2010-04-28, 2019-12-31 23:59)` (local daily files only; no network), C1+ = flux ≥ 1e-6.
+- **Tie rule:** if several joinable events share the most recent start time, S_last uses the largest flux among them.
+- **n_C/M/X check:** the `build_dataset.label` join (all joinable events, window [t − 48 h, t), union over regions, duplicates on (start, class) dropped) must equal the cohort columns.
+- **LL(C) check:** C is refit with `euv_heldout.fit_folds`, the same path as `euv_confirm_tests.py`. Its weighted OOF log-loss must round to 0.3356.
+- **Bootstrap:** drawn in the parent and evaluated on 9 workers (Phase F method, identical to single process).
+- **Coefficients:** standardized (training-fold StandardScaler), per fold.
