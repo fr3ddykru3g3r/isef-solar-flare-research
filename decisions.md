@@ -4602,3 +4602,24 @@ Report the tables after Step 2, commit, STOP.
 - **Run:** 547 dev episodes, 4 workers, 43.5 s. Missing magnetogram: 0.
 - **N_dots:** median 15, IQR [9, 22], max 67. Zero in 3 of 547 episodes (0.5%).
 - **Phi_dots:** median 9.98e19 Mx.
+
+### DOTS — Step 2 RESULT (evaluated once; EXPLORATORY; dev 2010–2019 only; numbers only)
+`euv_dots.py eval` → `euv_dots_eval.log`. 4 workers. Check: A reproduces Stage 4 `p_A` (max |diff| < 1e-12).
+
+**A vs A + log(1+N_dots)** (dev 547: 98 true / 449 false, 180 HARPs):
+- LL(A) 0.3336, LL(A + dots) 0.3392.
+- **Δ −0.0056 [−0.0218, +0.0083]** (HARP bootstrap 10,000, seed 20260921).
+- AUC 0.7432 → 0.7469.
+- log(1+N_dots) coefficient per fold (per 1 SD): +0.587, +0.417, +0.197, +0.533, +0.243 (positive 5/5).
+
+**Descriptive:**
+- Spearman ρ of log(1+N_dots) with:
+  - gate score: +0.563 (p 3.8e-47)
+  - n_C: +0.513 (4.4e-38)
+  - n_M: +0.383 (1.5e-20)
+  - log10 CV_box: +0.371 (2.8e-19, n 546)
+- **N_dots ratio** (F2 code; 2,000 resamples, seed 0):
+  - all episodes: 1.464 [1.143, 2.077] (medians 20.5 / 14.0);
+  - 81 gate-score twins: 1.053 [0.805, 1.372] (medians 20.0 / 19.0).
+
+**Pre-stated reading (mechanical):** Δ −0.0056 is not > 0 → **"NOT ELIGIBLE"**. Step 3 (the conditional follow-up) is therefore NOT run; nothing is computed on data/euv_extra.
