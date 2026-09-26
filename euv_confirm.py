@@ -144,3 +144,22 @@ if __name__ == "__main__" and sys.argv[1:] == ["compute"]:
                 open(log, "a").write(f"{pd.Timestamp.now():%H:%M} {i}/{len(jobs)}, elapsed {(time.time() - t0) / 3600:.2f} h\n")
     open(log, "a").write(f"compute done: {len(jobs)} episodes, {len(errs)} errors, wall {(time.time() - t0) / 3600:.2f} h, workers {W}\n")
     pd.DataFrame(errs, columns=["eid", "error"]).to_csv(f"{ROOT}/compute_errors.csv", index=False)
+
+if __name__ == "__main__" and sys.argv[1:2] == ["reexport"]:
+    # re-export check (user 2026-09-26; same procedure as the test-year check f3d6489): AIA once per HARP into
+    # data/euv_confirm/reexport/<H>/; files not already in aia/<H> are copied there (kept); nothing deleted or overwritten
+    import shutil
+    from euv_full import aia_spec, submit, wait, download, expected_frames, valid_fits, log
+    eps = episodes_confirm(); rows = []
+    for h in [int(x) for x in sys.argv[2:]]:
+        g = eps[eps.harpnum == h]; dest = f"{ROOT}/reexport/{h}"
+        ds, proc = aia_spec(h, g, f"{ROOT}/hmi/{h}")
+        r = submit(ds, proc); prep = wait(r); nb, dl = download(r, dest)
+        old = {os.path.basename(p) for p in glob.glob(f"{ROOT}/aia/{h}/*.fits") if valid_fits(p)}
+        new = {os.path.basename(p) for p in glob.glob(f"{dest}/*.fits") if valid_fits(p)}
+        for f in sorted(new - old):
+            shutil.copy2(f"{dest}/{f}", f"{ROOT}/aia/{h}/{f}")
+        rows.append(dict(harpnum=h, request_id=r.id, prep_s=round(prep, 1), expected=expected_frames(g), before=len(old),
+                         reexport=len(new), new_frames_added=len(new - old), missing_in_reexport=len(old - new)))
+        log(f"re-export HARP {h}: {rows[-1]}")
+    pd.DataFrame(rows).to_csv(f"{ROOT}/reexport.csv", index=False); print(pd.DataFrame(rows).to_string(index=False))

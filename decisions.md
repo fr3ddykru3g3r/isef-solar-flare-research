@@ -4219,3 +4219,8 @@ The cohort files are in `data/euv_confirm/cohort_{single,le2}.csv`; they were no
 | ≤ 2 regions (recorded fallback) | 387 (101) | 378 | 373 | 0 / 0 / 0 / 0 / 0 | 38 |
 
 STOP. Nothing is evaluated against labels until the user sends a pre-registration.
+
+### Confirmation set — re-export check: RESULT (label-blind; same procedure as the test-year check f3d6489)
+AIA re-exported once for HARPs 12997, 13004, 13599 and 14610 (`euv_confirm.py reexport`, one pending export, the user's account) into `data/euv_confirm/reexport/<H>/`.
+- Counts are identical: 12997 290/290; 13004 589/589; 13599 151/151; 14610 656/656. 0 new frames, 0 missing.
+- **Recorded as: archive gaps.** Nothing was copied, overwritten or recomputed.
