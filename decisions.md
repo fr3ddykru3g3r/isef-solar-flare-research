@@ -4302,3 +4302,17 @@ Run TEST 1 and TEST 2 once each. Report all tables, commit, STOP. Nothing else o
 **TEST 2 pre-stated reading (mechanical, PRIMARY):** Δ 0.0173 > 0 and CI [0.0016, 0.0350] excludes 0 → **"C beats A"**.
 
 STOP. Nothing else on 2025–26.
+
+## 2026-09-26 — DESCRIPTIVE ONLY after the confirmation (requested by: user; recorded before computing)
+User: "Descriptive only (cannot change any reading; no new tests): (a) sign and size of the log(1+R) coefficient in the dev-fitted model C (does recent flaring raise or lower the predicted probability?); (b) label-blind distribution of CV_box by year for all episodes 2010–2026 (median, IQR) to check for instrument drift between periods."
+
+**Implementation (me):** `euv_descriptive_after.py` → `euv_descriptive_after.log`.
+- **(a)** The 5 dev fold models of C (refit exactly as in `euv_confirm_tests.py`). Reported per fold and as the fold mean:
+  - the standardized coefficient (per 1 SD of log(1 + R)) with its odds ratio;
+  - the per-unit coefficient (coef ÷ training-fold SD);
+  - the other coefficients of C for context.
+- Direction, stated mechanically: R = hours since the most recent C1+ flare (48 = none in 48 h). A negative coefficient means a shorter time since a flare gives a higher predicted probability.
+- **(b)** `primary_CV_box` from every stored episode result: dev `data/euv_full/results` (single-region, 2010–2019); test `data/euv_test/results` (single-region, 2021/2023/2024); confirmation `data/euv_confirm/results` (≤ 2 union, 2025–2026).
+  - Grouped by the calendar year of t: n, median, Q1, Q3.
+  - All episodes with a defined value, plus the same restricted to primary fill ≥ 80%.
+  - No label column is read.
