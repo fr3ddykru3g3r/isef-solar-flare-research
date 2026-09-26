@@ -4534,3 +4534,60 @@ The S_last sign is positive in 5 of 5 folds (negative 0/5).
 - Spearman ρ of S_last: with n_M 0.493 (p 7.4e-35), with n_X 0.206 (p 1.2e-06), with log(1+R) −0.701 (p 6.3e-82).
 
 **Pre-stated reading (mechanical):** Δ +0.0017, but the CI lower bound (−0.0144) is not > 0 → **"NO DETECTABLE EFFECT"**.
+
+## 2026-09-27 — EXPLORATORY — PARASITIC-POLARITY "DOTS" NEAR THE PIL (decided by: user; design drafted by Claude AI, adopted by the student; recorded verbatim BEFORE computing)
+(The user's first version of this request was interrupted; the second version, below, is the one followed.)
+
+**Verbatim (user):**
+
+DEV 2010–2019 (dev candidate #23), plus a conditional pre-registered follow-up. Frozen files unchanged; do not overwrite existing models or results. No downloads, no JSOC calls.
+
+RUNS ALONGSIDE THE euv_extra DOWNLOAD: do not read, write or lock anything in data/euv_extra now; write all outputs to data/dots/; if a git commit hits index.lock, wait and retry (never delete the lock); append to decisions.md only (never rewrite other entries). Use at most 4 CPU workers.
+
+STEP 0 — Record this whole entry verbatim in decisions.md BEFORE computing anything; commit.
+Physics (record): Kusano et al. 2012 (ApJ 760:31): small magnetic structures near the PIL with flux "reversed to the potential component or the nonpotential component" of the main field trigger eruptions. Limit (record): Bamba & Kusano 2018 (ApJ 856:43) found only ~30% of 32 flares > M5 consistent with that model using vector + chromospheric data; this project uses one line-of-sight magnetogram at alarm time only, so this is a crude proxy.
+Question: among gate alarms, does the number of small opposite-polarity patches ("dots") inside the PIL zone help separate true from false alarms beyond Model A?
+
+FEATURE (label-blind; alarm-time LoS magnetogram per dev episode in data/euv_full/hmi, read with the same hmi_files() lookup as compute_episode):
+- B = magnetogram data (nan -> 0). mm_px = CDELT1 * RSUN_REF / RSUN_OBS / 1e6 (from header).
+- Background sign map: sign of B smoothed with a Gaussian of sigma = 5 Mm (sigma_px = 5 / mm_px).
+- Candidate dots: 8-connected components of |B| >= 100 G in which >= 90% of pixels have sign OPPOSITE to the background sign map, with area between 1 and 20 Mm^2 (area = n_pixels * mm_px^2).
+- Keep dots whose centroid pixel lies inside euv_pilot.pil_mask(B).
+- N_dots = number of kept dots; feature = log(1 + N_dots).
+- Descriptive only: Phi_dots = sum of |B| * pixel area over kept dots (Mx).
+- Selftests (assert): (a) synthetic bipole with one 5 Mm^2 opposite-polarity patch inside the PIL zone -> N_dots = 1; (b) the same patch placed far from the PIL -> 0; (c) a 30 Mm^2 opposite patch -> 0 (too big); (d) deterministic on repeat.
+
+STEP 1 — Compute N_dots for all 547 dev episodes. Label-blind report first: N_dots median, IQR, max, % of episodes with 0; any episode with a missing magnetogram (count, excluded label-blind). Save data/dots/dev_dots.csv; commit.
+
+STEP 2 — EVALUATION, run once (dev 547, data/stage4/oof_cohort_dev.csv, Stage 4 fold column and weights; step 6 settings: same folds, weights 1/n per HARP, training-fold scaling, estimator):
+- A vs A + log(1+N_dots): Δ = logloss(A) − logloss(A + dots) (+ = helps), HARP bootstrap 10,000, seed 20260921, 95% CI; weighted AUC both; coefficient per fold (per 1 SD, sign).
+- Check first: A reproduces the committed Stage 4 dev p_A (max |diff| < 1e-12).
+- Descriptive: Spearman rho of log(1+N_dots) with gate score, n_C, n_M and (where defined) log10 CV_box; N_dots twins ratio on the 81 gate-score twins (data/euv_full/step6/twins_PRIMARY.csv), same ratio/CI code as F2.
+PRE-STATED READING (mechanical):
+- "ELIGIBLE FOR FOLLOW-UP" only if Δ > 0 AND 95% CI lower > 0 AND AUC(A + dots) > AUC(A).
+- Otherwise "NOT ELIGIBLE".
+Label everything EXPLORATORY (dev only). Commit.
+
+STEP 3 — CONDITIONAL FOLLOW-UP (pre-registered now; do NOTHING here unless Step 2 says "ELIGIBLE"):
+- Wait until the euv_extra download and compute have finished; do not interrupt them.
+- Compute the same feature label-blind on the EUV-unseen PRIMARY set magnetograms (data/euv_extra) with identical code; report the N_dots distribution; commit.
+- A and A + log(1+N_dots) fitted on dev (Step 2 models, mean of 5 fold models); evaluate ONCE, only when I say "run the pre-registered filter test once" (same run as the filter test). Δ log-loss with 95% CI (HARP bootstrap 10,000, seed 20260921), AUC.
+- Reading: "CONFIRMED ON FOLLOW-UP SET" if Δ > 0 AND CI lower > 0; otherwise "NOT CONFIRMED".
+- Disclosure (record): this set's labels were seen in Stage 5; its magnetogram features were never computed; it is an EUV-unseen follow-up validation, not an untouched test.
+
+Report the tables after Step 2, commit, STOP.
+
+**Implementation clarifications (decided by: me, before computing; flagged for the user):**
+1. **Components per sign.**
+   - The components are 8-connected components of {B ≥ +100 G} and of {B ≤ −100 G}, labelled SEPARATELY. The ≥ 90%-opposite and area rules are then applied to each same-sign component.
+   - Reason: labelling {|B| ≥ 100} as one mask merges touching opposite polarities. A dot embedded in strong field of the other sign would then join its surroundings, and selftest (a) could not pass.
+2. **Background sign.**
+   - `np.sign(scipy.ndimage.gaussian_filter(B, 5 / mm_px))` (default reflect boundary). A pixel counts as opposite if sign(B) = −background and the background is ≠ 0.
+   - "Centroid pixel" = the component's unweighted centre of mass, rounded to the nearest pixel.
+3. **Synthetic tests.**
+   - The bipole is two finite ±800 G blocks meeting at a sharp PIL, inside a weak +50 G surround (below 100 G, so the surround forms no component).
+   - Placing test (b)'s patch in the weak surround means `pil_mask` finds no strong field of the other polarity near it. Inside strong field, any dot creates its own local PIL overlap and would count by construction.
+   - mm_px = 0.362; the patches are 5 Mm² (≈ 38 px) and 30 Mm² (≈ 229 px).
+4. **Episodes:** HMI files from `data/euv_full/hmi/<HARP>`, found with `euv_full.hmi_files`. T_REC comes from `data/stage2/oof_scores_dev.csv` (dev only), so the 2010–2024 labelled file is not read.
+5. **Workers:** 4 (`ProcessPoolExecutor(4)`) for the episodes and the bootstrap. The bootstrap is drawn in the parent (Phase F method, identical to single process).
+6. **Outputs:** only `data/dots/` and repo-root code/log files. Nothing in `data/euv_extra` is read or written.
