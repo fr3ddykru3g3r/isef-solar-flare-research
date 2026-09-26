@@ -4262,3 +4262,43 @@ Run TEST 1 and TEST 2 once each. Report all tables, commit, STOP. Nothing else o
     - False alarms = false episodes with p ≥ τ (count and weighted fraction of false episodes). True kept is also reported.
   - **Dev OOF Δ** (exploratory): the same bootstrap on the dev 547.
 - **Readings** are applied mechanically as written. TEST 1's reading uses the PRIMARY row only; TEST 2's uses the ≤ 2 row only.
+
+### 2025–26 CONFIRMATION — RESULTS (run once; numbers only)
+`euv_confirm_tests.py` → `euv_confirm_tests.log`, `data/euv_confirm/test1_ratios.csv`, `test2_stepB.csv`, `twins_le2.csv`. 9 workers; wall 3.6 s.
+
+**Checks:**
+- Frozen A fold models hash-verified; the refit reproduces them and Stage 4 `p_A`.
+- The dev R4a models reproduce the Phase X dev log-losses.
+- The R window is consistent with the history counts on dev and on 2025–26.
+
+**TEST 1 — CV_box magnetic twins.** ≤ 2 set, primary 80% fill: 378 episodes (56 true / 322 false, 101 HARPs). 50 twin pairs of 56 true episodes; max |Δscore| 0.0598. By history group: C-only 24, JUST-FLARED 23, QUIET-NOW 3.
+- Ratio = median(true) ÷ median(false).
+- Twins CI: pairs resampled by true HARP; all-episodes CI: HARP bootstrap. Both 2,000 resamples, seed 0.
+
+| row | n (true/false) | median true / false | all-episodes ratio [CI] | pairs | twins median true / false | twins ratio [CI] |
+|---|---|---|---|---:|---|---|
+| **PRIMARY (≤ 2)** | 378 (56/322) | 0.2378 / 0.0720 | s2: 3.301 [1.370, 6.457] | 50 | 0.2218 / 0.0680 | **3.262 [1.296, 9.489]** |
+| s1 same-flare-history twins (≤ 2) | 378 | | | 47 | 0.2245 / 0.0797 | 2.817 [1.017, 6.823] |
+| s4 single-region subset (descriptive) | 163 (19/144) | 0.2192 / 0.0963 | 2.276 [0.863, 5.431] | 16 | 0.2352 / 0.0683 | 3.443 [1.363, 7.305] |
+| s5 POOLED 2021–24 (40 pairs) + 2025–26 (50 pairs) — "includes 2021–24 data already analysed (ec00afb); not a confirmation" | 691 (101/590) | 0.1959 / 0.0903 | 2.170 [1.466, 3.711] | 90 | 0.1817 / 0.0965 | 1.883 [1.226, 3.369] |
+
+**TEST 1 pre-stated reading (mechanical, PRIMARY):** twins ratio 3.2624 > 1 and CI lower bound 1.2956 > 1 → **"REPLICATED"**.
+
+**s3 R4a** (dev 541 fold models; mean of 5): n 378 (56/322, 101 HARPs).
+- LL(A) 0.3933, LL(A + R4a) 0.3679; Δ 0.0254 [−0.0067, 0.0629]; AUC 0.7631 → 0.7606.
+- The CI includes 0 → "adds information" condition not met.
+
+**TEST 2 — STEP B (A vs C = A + log(1 + R))**
+- **Dev** (EXPLORATORY, OOF, 547 episodes): LL(A) 0.3336, LL(C) 0.3356; Δ −0.0020 [−0.0129, 0.0084]; AUC 0.7432 → 0.7645.
+- **Frozen dev thresholds:**
+  - τ_A = 0.094958 (max weighted TSS 0.4516; weighted TPR 0.6482, FPR 0.1966).
+  - τ_C = 0.100840 (the highest threshold with weighted TPR ≥ 0.6482: TPR 0.6688, FPR 0.2905).
+
+| set | n (true/false) | HARPs | LL(A) | LL(C) | Δ [95% CI] | AUC A → C | false alarms at τ_A / τ_C (count; weighted) | true kept A / C (count; weighted TPR) |
+|---|---|---:|---:|---:|---|---|---|---|
+| **PRIMARY ≤ 2, all eligible** | 387 (56/331) | 101 | 0.3930 | 0.3757 | **0.0173 [0.0016, 0.0350]** | 0.7489 → 0.7527 | 90 / 107; 0.2163 / 0.3165 | 37 / 40; 0.5799 / 0.6809 |
+| single-region (descriptive) | 165 (19/146) | 62 | 0.3659 | 0.3558 | 0.0101 [−0.0091, 0.0332] | 0.7555 → 0.7245 | 27 / 41; 0.1707 / 0.3023 | 10 / 13; 0.4651 / 0.6256 |
+
+**TEST 2 pre-stated reading (mechanical, PRIMARY):** Δ 0.0173 > 0 and CI [0.0016, 0.0350] excludes 0 → **"C beats A"**.
+
+STOP. Nothing else on 2025–26.
