@@ -269,3 +269,90 @@ if __name__ == "__main__" and sys.argv[1:2] == ["reexport"]:
                          reexport=len(new), new_frames_added=len(new - old), missing_in_reexport=len(old - new)))
         euv_full.log(f"re-export {s} HARP {h}: {rows[-1]}")
     pd.DataFrame(rows).to_csv(f"{R_}/reexport.csv", index=False); print(pd.DataFrame(rows).to_string(index=False))
+
+if __name__ == "__main__" and sys.argv[1:] == ["filter"]:
+    # PRE-REGISTERED FILTER TEST (338c0aa; implementation f7c6646) -- RUN ONCE
+    import joblib
+    from concurrent.futures import ProcessPoolExecutor
+    from sklearn.metrics import roc_auc_score
+    from phase_f import boot_many, wlogloss, ratio_jobs, pct, A_COLS, W
+    from euv_confirm_tests import log_r
+    from euv_f2_replication import twins
+    t00 = time.time(); os.makedirs(f"{ROOT}/filter_test", exist_ok=True); pd.set_option("display.width", 250); pd.set_option("display.max_columns", 40)
+    hs = json.load(open(f"{ROOT}/model_hashes.json"))
+    assert all(H(f) == v for f, v in hs.items()) and H(f"{ROOT}/thresholds.json") == "7a34507c20d37756906e4ad6dfaf9069c48ad74bff5b42521a4dd4f1c573c6ad"
+    TH = json.load(open(f"{ROOT}/thresholds.json"))
+    NAMES = ["A", "A_CV", "C", "C_CV"]
+    MOD = {m: [(d["scaler"], d["model"], d["cols"]) for d in (joblib.load(f"{ROOT}/models/{m}_fold{k}.joblib") for k in range(5))] for m in NAMES}
+    pred = lambda ms, c: np.mean([m.predict_proba(sc.transform(c[cols]))[:, 1] for sc, m, cols in ms], axis=0)
+    print("PRE-REGISTERED FILTER TEST (338c0aa) — EUV-unseen follow-up validation, not an untouched test. RUN ONCE.")
+    print(f"integrity: {len(hs)} model/threshold/dev-row files match their recorded SHA-256; frozen tau: "
+          + ", ".join(f"{m} {TH[m]['tau']:.6f}" for m in NAMES))
+    pool = ProcessPoolExecutor(W); summary = []
+    for s, lab in [("primary", "PRIMARY 2021/2023/2024"), ("s2022", "SENSITIVITY 2022 (reported separately; never pooled)")]:
+        M = pd.read_csv(f"{ROOT}/manifest.csv", parse_dates=["t"]); M = M[(M.set == s) & (M.reason == "INCLUDED")]
+        coh = pd.read_csv(f"{ROOT}/cohort_{s}_all_eligible.csv", parse_dates=["t"])
+        c = M[["harpnum", "t"]].merge(coh, on=["harpnum", "t"], how="left", validate="one_to_one")
+        c["eid"] = [f"{h}_{t:%Y%m%dT%H%M}" for h, t in zip(c.harpnum, c.t)]
+        r = pd.DataFrame([json.load(open(p)) for p in glob.glob(f"{ROOT}/{s}/results/*.json")])[["eid", "primary_fill", "primary_CV_box"]]
+        r[["primary_fill", "primary_CV_box"]] = r[["primary_fill", "primary_CV_box"]].apply(pd.to_numeric, errors="coerce")
+        c = c.merge(r, on="eid", how="left"); n_inc = len(c)
+        c = c[(c.primary_fill >= 0.80) & np.isfinite(c.primary_CV_box) & (c.primary_CV_box > 0)].reset_index(drop=True)
+        c["log10_CV_box"] = np.log10(c.primary_CV_box)
+        c["logR"] = log_r(c, pd.Timestamp("2020-12-29"), pd.Timestamp("2025-01-01"))
+        assert ((c.logR < np.log1p(48)) == ((c.n_C + c.n_M + c.n_X) >= 1)).all(), "R window inconsistent with history counts"
+        c["weight"] = 1 / c.groupby("harpnum").harpnum.transform("size")
+        y, w, h = c.true_alarm.to_numpy(), c.weight.to_numpy(), c.harpnum.to_numpy(); groups = [np.where(h == v)[0] for v in np.unique(h)]
+        P = {m: pred(MOD[m], c) for m in NAMES}; K = {m: P[m] >= TH[m]["tau"] for m in NAMES}
+        comp = c.assign(year=c.t.dt.year, regions=c.noaa_ars.astype(str).str.count(",") + 1).groupby(["year", "regions"]).size()
+        print(f"\n=== {lab}: INCLUDED {n_inc}; evaluable (fill >= 80%, CV_box > 0) {len(c)} (true {int(y.sum())}, false {int((y == 0).sum())}, "
+              f"HARPs {len(groups)}); label-blind exclusions {n_inc - len(c)}")
+        print("composition (year, regions at t -> episodes): " + ", ".join(f"{yy}/{rr}: {v}" for (yy, rr), v in comp.items()))
+        rows = []
+        for m in NAMES:
+            k = K[m]
+            rows.append(dict(model=m, tau=TH[m]["tau"], true_kept=f"{int((k & (y == 1)).sum())}/{int(y.sum())}",
+                             true_kept_w=(w * y * k).sum() / (w * y).sum() if y.sum() else np.nan,
+                             false_kept=int((k & (y == 0)).sum()), false_removed=f"{int((~k & (y == 0)).sum())}/{int((y == 0).sum())}",
+                             false_removed_w=(w * (1 - y) * ~k).sum() / (w * (1 - y)).sum() if (y == 0).any() else np.nan,
+                             AUC=roc_auc_score(y, P[m], sample_weight=w) if 0 < y.sum() < len(y) else np.nan, logloss=wlogloss(y, P[m], w)))
+        CT = pd.DataFrame(rows); CT.to_csv(f"{ROOT}/filter_test/{s}_counts.csv", index=False)
+        print("per model at its frozen tau (weighted fractions; 'true alarm episodes kept'):")
+        print(CT.to_string(index=False, float_format=lambda v: f"{v:.4f}"))
+        jobs = {"op": ("op", dict(y=y, w=w, kept=[K[m] for m in NAMES], groups=groups), 2000, 0),
+                "dA": ("dll", dict(y=y, w=w, pA=P["A"], pE=P["A_CV"], groups=groups), 10000, 20260921),
+                "dC": ("dll", dict(y=y, w=w, pA=P["C"], pE=P["C_CV"], groups=groups), 10000, 20260921)}
+        B = boot_many(jobs, pool); op = np.array(B["op"], float)            # resamples x 4 models x (true kept, false removed, precision)
+        cmp_rows = []
+        for a, b, ia, ib in [("A", "A_CV", 0, 1), ("C", "C_CV", 2, 3)]:
+            df_pt = CT.false_removed_w[ib] - CT.false_removed_w[ia]; dt_pt = CT.true_kept_w[ib] - CT.true_kept_w[ia]
+            dfb, dtb = op[:, ib, 1] - op[:, ia, 1], op[:, ib, 0] - op[:, ia, 0]; ok = np.isfinite(dfb) & np.isfinite(dtb)
+            (fl, fh), (tl, th) = (np.percentile(dfb[ok], [2.5, 97.5]), np.percentile(dtb[ok], [2.5, 97.5])) if ok.any() else ((np.nan,) * 2, (np.nan,) * 2)
+            ll = B["dA"] if a == "A" else B["dC"]; dl = CT.logloss[ia] - CT.logloss[ib]; lo, hi = pct(ll)
+            cmp_rows.append(dict(set=s, comparison=f"{a} vs {b}", D_false_pts=100 * df_pt, D_false_lo=100 * fl, D_false_hi=100 * fh,
+                                 D_true_pts=100 * dt_pt, D_true_lo=100 * tl, D_true_hi=100 * th, resamples_used=int(ok.sum()),
+                                 dlogloss=dl, dlogloss_lo=lo, dlogloss_hi=hi, AUC_base=CT.AUC[ia], AUC_cv=CT.AUC[ib]))
+        CM = pd.DataFrame(cmp_rows); CM.to_csv(f"{ROOT}/filter_test/{s}_comparisons.csv", index=False)
+        print("D_false = weighted % false alarms removed (model with CV_box minus without); D_true = weighted % true alarm episodes kept (same); "
+              "percentage points; paired HARP bootstrap 2,000, seed 0; delta log-loss = base - CV model (+ = CV helps), HARP bootstrap 10,000, seed 20260921")
+        print(CM.drop(columns="set").to_string(index=False, float_format=lambda v: f"{v:.4f}"))
+        tw, nt = twins(c); e, j = ratio_jobs(f"{s} CV_box twins", c, "primary_CV_box", "ratio", tw); RB = boot_many(j, pool)
+        print(f"CV_box twins ratio (step 6 twins code; median true / median false; pairs by true HARP, 2,000, seed 0): {len(tw)} pairs of {nt} true; "
+              f"twins {e['ratio_twins']:.4f} {'[%.4f, %.4f]' % pct(RB[(e['measure'], 'tw')])} (medians {e['twin_med_true']:.4f} / {e['twin_med_false']:.4f}); "
+              f"all episodes {e['ratio_all']:.4f} {'[%.4f, %.4f]' % pct(RB[(e['measure'], 'all')])}")
+        if s == "primary":
+            p = CM.iloc[0]
+            if y.sum() == 0 or (y == 0).sum() == 0 or p.resamples_used == 0:
+                reading = "INCONCLUSIVE"
+            elif p.D_false_lo > 0 and p.D_true_lo >= -10:
+                reading = "CONFIRMED SAFE FILTER"
+            elif p.D_false_lo > 0 and p.D_true_pts >= -10:
+                reading = "MEETS OPERATING CRITERION"
+            elif p.D_false_lo > 0:
+                reading = "REMOVES FALSE ALARMS BUT LOSES TOO MANY TRUE ALARMS (point estimate)"
+            else:
+                reading = "NOT CONFIRMED"
+            summary.append(f"PRE-STATED READING (mechanical; PRIMARY, A vs A_CV): D_false {p.D_false_pts:+.2f} pts [{p.D_false_lo:+.2f}, {p.D_false_hi:+.2f}], "
+                           f"D_true {p.D_true_pts:+.2f} pts [{p.D_true_lo:+.2f}, {p.D_true_hi:+.2f}] -> \"{reading}\"")
+    pool.shutdown()
+    print("\n" + "\n".join(summary)); print(f"wall {time.time() - t00:.1f} s, workers {W}")

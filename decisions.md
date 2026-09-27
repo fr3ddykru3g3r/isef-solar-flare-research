@@ -4744,3 +4744,43 @@ AIA re-exported once for the PRIMARY set's range of HARP 8923 (`euv_extra.py ree
   - CV_box twins ratio (`euv_f2_replication.twins` = the step 6 code; `phase_f.ratio_jobs`; pairs resampled by true HARP, 2,000, seed 0);
   - composition by year × single/two-region.
 - **Wording:** "true alarm episodes kept".
+
+### EUV-unseen follow-up — PRE-REGISTERED FILTER TEST: RESULTS (run once; numbers only)
+`euv_extra.py filter` → `euv_extra_filter_test.log`, `data/euv_extra/filter_test/`. Integrity: all 22 model/threshold/dev-row files matched their recorded SHA-256. A label-free smoke test of the data path ran before the single run. The dots follow-up was NOT run (dots: "NOT ELIGIBLE").
+
+**PRIMARY 2021/2023/2024:**
+- INCLUDED 158; evaluable 155 (32 true / 123 false, 40 HARPs); 3 label-blind exclusions (fill).
+- Composition: all two-region — 2021: 8, 2023: 94, 2024: 53.
+
+| model | τ (frozen) | true alarm episodes kept (n; weighted) | false alarms kept | false alarms removed (n; weighted) | AUC | log-loss |
+|---|---:|---|---:|---|---:|---:|
+| A | 0.0680 | 32/32; 1.0000 | 123 | 0/123; 0.0000 | 0.8006 | 0.3954 |
+| A_CV | 0.0747 | 26/32; 0.8383 | 53 | 70/123; 0.6020 | 0.8075 | 0.3905 |
+| C | 0.0626 | 28/32; 0.8978 | 101 | 22/123; 0.1701 | 0.7752 | 0.3922 |
+| C_CV | 0.0689 | 27/32; 0.8717 | 62 | 61/123; 0.5232 | 0.8075 | 0.3912 |
+
+| comparison | D_false (pts) [95% CI] | D_true (pts) [95% CI] | Δ log-loss (base − CV) [95% CI] | AUC base → CV |
+|---|---|---|---|---|
+| **A vs A_CV** | **+60.20 [+46.92, +72.77]** | **−16.17 [−37.58, −1.98]** | +0.0050 [−0.0181, +0.0256] | 0.8006 → 0.8075 |
+| C vs C_CV | +35.32 [+17.11, +51.85] | −2.60 [−13.33, +3.49] | +0.0011 [−0.0240, +0.0224] | 0.7752 → 0.8075 |
+
+- 2,000/2,000 resamples were used.
+- CV_box twins ratio: 23 pairs of 32 true episodes; 1.630 [0.791, 3.839] (medians 0.1563 / 0.0959). All-episodes ratio 1.706 [0.878, 2.837].
+
+**PRE-STATED READING (mechanical; PRIMARY, A vs A_CV):** D_false CI lower +46.92 > 0, but D_true point −16.17 < −10 → **"REMOVES FALSE ALARMS BUT LOSES TOO MANY TRUE ALARMS (point estimate)"**.
+
+**SENSITIVITY 2022** (reported separately; never pooled; cannot change the reading):
+- 152 evaluable (28 true / 124 false, 44 HARPs); 101 single-region, 51 two-region.
+
+| model | true alarm episodes kept | false alarms removed | AUC | log-loss |
+|---|---|---|---:|---:|
+| A | 28/28; 1.0000 | 0/124; 0.0000 | 0.7397 | 0.4177 |
+| A_CV | 22/28; 0.8567 | 68/124; 0.6068 | 0.8222 | 0.3749 |
+| C | 26/28; 0.9435 | 18/124; 0.2444 | 0.7484 | 0.4028 |
+| C_CV | 22/28; 0.8567 | 66/124; 0.5536 | 0.8217 | 0.3758 |
+
+- A vs A_CV: D_false +60.68 [+49.02, +72.57]; D_true −14.33 [−32.52, −3.42]; Δ log-loss +0.0427 [+0.0010, +0.0945].
+- C vs C_CV: D_false +30.92 [+15.36, +46.18]; D_true −8.68 [−27.03, +1.89]; Δ log-loss +0.0270 [−0.0040, +0.0591].
+- CV_box twins ratio: 25 pairs; 3.235 [1.255, 4.545]. All-episodes ratio 2.766 [1.019, 6.291].
+
+STOP.
