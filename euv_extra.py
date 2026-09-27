@@ -178,3 +178,73 @@ if __name__ == "__main__" and sys.argv[1:] == ["download"]:
         euv_full.log(f"EUV-EXTRA DOWNLOAD {s} start: {len(e)} episodes, {e.harpnum.nunique()} HARPs (download only)")
         euv_full.run_pipeline(e, f"{ROOT}/{s}", progress_every=1800, compute=False)
         euv_full.log(f"EUV-EXTRA DOWNLOAD {s} done: wall {(time.time() - t0) / 3600:.2f} h")
+
+if __name__ == "__main__" and sys.argv[1:] == ["verify"]:
+    from astropy.io import fits
+    from euv_full import expected_frames, valid_fits, hmi_files, trec_of
+    for s in ["primary", "s2022"]:
+        R_ = f"{ROOT}/{s}"; eps = set_episodes(s); rows = []
+        for h, g in eps.groupby("harpnum"):
+            hd, ad = f"{R_}/hmi/{h}", f"{R_}/aia/{h}"
+            ok = 0
+            for x in g.t_rec_tai:
+                mb = hmi_files(hd, x) if os.path.isdir(hd) else (None, None)
+                ok += bool(mb[0] and mb[1] and all(int(fits.getheader(f, 1)["HARPNUM"]) == h and str(fits.getheader(f, 1)["T_REC"])[:19] == x[:19] for f in mb))
+            files = sorted(glob.glob(f"{ad}/*.fits")) if os.path.isdir(ad) else []
+            lo, hi = g.t.min() - pd.Timedelta("24h") + pd.Timedelta("11min"), g.t.max() + pd.Timedelta("1min")
+            good = [p for p in files if valid_fits(p) and int(fits.getheader(p, 1 if len(fits.open(p)) > 1 else 0).get("WAVELNTH", -1)) == 94
+                    and lo <= trec_of(p) <= hi]
+            rows.append(dict(harpnum=h, episodes=len(g), hmi_ok=ok, aia_expected=expected_frames(g), aia_files=len(files), aia_ok=len(good),
+                             GB=(sum(os.path.getsize(p) for p in files) + sum(os.path.getsize(p) for p in glob.glob(f"{hd}/*.fits"))) / 1e9))
+        v = pd.DataFrame(rows); v.to_csv(f"{R_}/verify_per_harp.csv", index=False); sh = v[v.aia_ok < v.aia_expected]
+        print(f"{s}: HARPs {len(v)}, episodes {v.episodes.sum()}; HMI pairs OK {v.hmi_ok.sum()}/{v.episodes.sum()}; AIA valid {v.aia_ok.sum()} of "
+              f"expected {v.aia_expected.sum()} (files {v.aia_files.sum()}); {v.GB.sum():.2f} GB; short HARPs {len(sh)} "
+              f"({int((sh.aia_expected - sh.aia_ok).sum())} frames); < 97%: {sh.loc[sh.aia_ok < 0.97 * sh.aia_expected, ['harpnum', 'aia_ok', 'aia_expected']].values.tolist()}; "
+              f"no AIA {v.loc[v.aia_files == 0, 'harpnum'].tolist()}; failures file: {os.path.exists(f'{R_}/failed.csv')}")
+
+
+def extra_episode(args):
+    from euv_full import compute_episode
+    ep, R_ = args; h, e = ep["harpnum"], ep["eid"]; err = ""
+    try:
+        if not os.path.exists(f"{R_}/results/{e}.json"):
+            r = compute_episode(ep, f"{R_}/hmi/{h}", f"{R_}/aia/{h}", f"{R_}/series")
+            json.dump({k: str(v) for k, v in r.items()}, open(f"{R_}/results/{e}.json", "w"))
+    except Exception as x:
+        err = repr(x)
+    return e, err
+
+
+if __name__ == "__main__" and sys.argv[1:] == ["compute"]:
+    from concurrent.futures import ProcessPoolExecutor, as_completed
+    W = os.cpu_count() - 1; t0 = time.time(); log = f"{ROOT}/logs/compute.log"; errs = []; jobs = []
+    for s in ["primary", "s2022"]:
+        R_ = f"{ROOT}/{s}"
+        for d in ["series", "results"]:
+            os.makedirs(f"{R_}/{d}", exist_ok=True)
+        jobs += [(dict(eid=x.eid, harpnum=int(x.harpnum), t=str(x.t), t_rec_tai=x.t_rec_tai, noaa_ars=str(x.noaa_ars)), R_)
+                 for x in set_episodes(s).itertuples() if os.path.isdir(f"{R_}/aia/{int(x.harpnum)}")]
+    open(log, "a").write(f"{pd.Timestamp.now():%Y-%m-%d %H:%M} compute start: {len(jobs)} episodes (with AIA), workers {W}\n")
+    with ProcessPoolExecutor(W) as pool:
+        futs = [pool.submit(extra_episode, j) for j in jobs]
+        for i, f in enumerate(as_completed(futs), 1):
+            e, err = f.result()
+            if err:
+                errs.append((e, err)); open(log, "a").write(f"ERROR {e}: {err}\n")
+            if i % 25 == 0 or i == len(jobs):
+                open(log, "a").write(f"{pd.Timestamp.now():%H:%M} {i}/{len(jobs)}, elapsed {(time.time() - t0) / 3600:.2f} h\n")
+    open(log, "a").write(f"compute done: {len(jobs)} episodes, {len(errs)} errors, wall {(time.time() - t0) / 3600:.2f} h, workers {W}\n")
+    pd.DataFrame(errs, columns=["eid", "error"]).to_csv(f"{ROOT}/compute_errors.csv", index=False)
+
+if __name__ == "__main__" and sys.argv[1:] == ["counts"]:
+    num = ["frames", "primary_fill", "sens_fill", "primary_CV_box", "primary_dCV", "sens_dCV", "excl_quality", "excl_exposure", "excl_flare"]
+    for s in ["primary", "s2022"]:
+        e = set_episodes(s); R_ = f"{ROOT}/{s}"
+        r = pd.DataFrame([json.load(open(p)) for p in glob.glob(f"{R_}/results/*.json")])
+        r = r[["eid"] + num] if len(r) else pd.DataFrame(columns=["eid"] + num)
+        r[num] = r[num].apply(pd.to_numeric, errors="coerce"); d = e.merge(r, on="eid", how="left")
+        P = d.primary_fill >= 0.8; ok = P & np.isfinite(d.primary_CV_box) & (d.primary_CV_box > 0)
+        print(f"{s} (counts only; no label read): episodes {len(d)}, with results {int(d.frames.notna().sum())}, no result {int(d.frames.isna().sum())}; "
+              f"frames {int(d.frames.sum())}, QUALITY!=0 {int(d.excl_quality.sum())}, exposure {int(d.excl_exposure.sum())}, flare (sens only) {int(d.excl_flare.sum())}; "
+              f"primary fill >= 80%: {int(P.sum())}; of these CV_box undefined / <= 0: {int((P & ~ok).sum())}; evaluable (fill ok, CV_box > 0): {int(ok.sum())} "
+              f"({d.loc[ok, 'harpnum'].nunique()} HARPs); flare-excluded fill >= 80%: {int((d.sens_fill >= 0.8).sum())}")

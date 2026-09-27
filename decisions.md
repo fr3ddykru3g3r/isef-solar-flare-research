@@ -4666,3 +4666,22 @@ Report tables after Step 2, commit, STOP.
 - **NEW:** frames are in time order. A bright pixel-frame is NEW if that HMI pixel was not bright in any earlier frame of the same frame set (primary or nf).
 - **Workers:** 4 processes.
 - **Decision (user, 2026-09-27, answering my question):** "Wait for download". Step 1, which needs the JSOC pointing-table keyword queries, runs only after the euv_extra download and its computation have finished. No JSOC call is made while the download runs. Selftests passed (one spot flashing 5 times → F_new 0.2 (9/45); five different spots once each → 1.0).
+
+### EUV-unseen follow-up — Step 3 download + Step 4 computation: RESULT (label-blind; counts only; nothing evaluated)
+**Download** (`euv_extra.py download`; one pending export at a time, the user's account only):
+- PRIMARY 23:11–02:32 (3.35 h); 2022 02:32–05:43 (3.18 h). Failures: 0. Tar timeouts at 01:10 recovered on retry.
+- **File checks** (`euv_extra_verify.log`):
+  - PRIMARY: HMI 158/158; AIA 17,498 of 17,645 (99.2%); 11.05 GB. 22 short HARPs (147 frames); below 97%: HARP 8923 (753/790).
+  - 2022: HMI 152/152; AIA 14,742 of 14,770 (99.8%); 6.35 GB. 13 short HARPs (28 frames); none below 97%.
+  - No HARP without AIA.
+
+**Computation** (`euv_extra.py compute`, `euv_full.compute_episode`, 9 workers): 310/310 episodes, 0 errors, wall 0.70 h.
+
+**Counts** (`euv_extra_counts.log`; no label read):
+
+| set | episodes | with results | frames | QUALITY ≠ 0 | exposure | flare (sens only) | primary fill ≥ 80% | CV_box undefined/≤ 0 (fill ok) | evaluable (HARPs) | flare-excl. fill ≥ 80% |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|
+| PRIMARY | 158 | 158 | 18,865 | 446 | 209 | 1,176 | 155 | 0 | 155 (40) | 146 |
+| 2022 | 152 | 152 | 18,203 | 364 | 165 | 771 | 152 | 0 | 152 (44) | 149 |
+
+STOP (filter test not run). It is evaluated only when the user says "run the pre-registered filter test once".
