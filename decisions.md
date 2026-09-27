@@ -5252,3 +5252,19 @@ Nothing has been computed or read beyond code and file counts. Per the entry, I 
 Consequences are listed in the report to the user.
 
 **Also flagged (with precedent; not treated as blocking):** reproducing the frame pipeline needs aiapy's pointing table, which is a JSOC keyword query (`aia.master_pointing3h`). Earlier entries recorded it as "not a data export or download" (Phase X; `euv_masks`; novelty #24).
+
+### 2026-09-27 — PROSPECTIVE PRE-REGISTRATION (2f62f88): CLARIFICATION of BF part b) and implementation defaults, made BEFORE any BF value is computed (decided by: user)
+**Verbatim (user):**
+
+Use Option 1 for BF part b): the existing per-pixel stack on the alarm-time HMI grid (existing mapping with differential rotation), the same pixels and weighting as CV_box. Record this in decisions.md as a clarification of part b), made before any BF value is computed: "co-registration reference = the alarm-time HMI grid used by the existing CV_box code, instead of the last valid AIA frame; chosen so BF uses exactly the same pixels and weighting as CV_box and is checkable against the stored series."
+
+Accept your defaults and record them the same way:
+- 5th percentile = numpy default (linear) over each pixel's finite values;
+- BF frame fill = stored primary_fill;
+- CV6 slots = t − 5 h 48 min … t, a slot counts if a valid frame lies within ±6 min (existing fill rule).
+
+The aiapy pointing-table keyword query is NOT a download or export (as in earlier entries); allowed.
+
+These choices also apply unchanged to the prospective test. Add a per-episode check that the per-frame box means from the per-pixel stack reproduce the stored CV_box series (|diff| < 1e-9); STOP if any episode fails. The episode without stored series counts as undefined.
+
+Commit the clarification, then run Step 1 (label-blind). Report as specified and STOP.
