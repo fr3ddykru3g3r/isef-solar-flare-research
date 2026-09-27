@@ -5382,3 +5382,26 @@ Decisions (label-blind; record verbatim in decisions.md BEFORE Step 2, then comm
    Rationale (record): BF is noise-dominated at 12-min single-exposure pixel scale; BF(a) is largely redundant with CV_box; the confirmed measure is the most valuable to replicate prospectively.
 
 3. Then run Step 2 (dev exploration, EXPLORATORY) exactly as specified, for BF(a), CV6 and CV_box. Report and STOP.
+
+### 2026-09-27 — PROSPECTIVE STEP 2 (dev exploration, EXPLORATORY): implementation, recorded before running (decided by: me)
+**Values:**
+- BF(a) = `BF_a` in `data/prospective/noise_values.csv` (SHA-256 0d0b2802…). Its 6 undefined episodes are undefined by the same rules as BF: fill < 80% (5) and no series (1).
+- CV6 = `data/prospective/dev_values.csv` (SHA-256 15113e5c…).
+- CV_box = the stored primary_CV_box.
+
+**Analysis set for each measure:** the Stage 4 dev cohort (`phase_f.load_base`, with the fold column) restricted to episodes where x is defined by its own rules, with log10(x) finite. Weights are 1/n per HARP, recomputed within that set (`phase_f.prep`).
+- CV_box: primary_fill ≥ 0.80 and CV_box > 0, i.e. the set of all earlier CV_box analyses.
+- BF(a): its own rules.
+- CV6: its 6-h fill rule only.
+
+**Twins ratio:** `phase_f.ratio_jobs` on `data/euv_full/step6/twins_PRIMARY.csv` (81 pairs), keeping pairs with both values defined. The statistic is median true / median false on the raw x, with CI from pairs resampled by true HARP (2,000, seed 0).
+
+**Δ log-loss:**
+- A = A_COLS and C = A_COLS + logR, where logR = `euv_confirm_tests.log_r` over 2010-04-28 to 2019-12-31 23:59 (Step B).
+- A vs A + log10(x) and C vs C + log10(x), each fitted with `euv_heldout.fit_folds` (Step 6 settings).
+- Δ = LL(base) − LL(base + x), with a HARP bootstrap (10,000, seed 20260921) via `phase_f.boot_many`. Weighted AUC is reported for every model.
+
+**Checks (STOP on failure):**
+- On the full dev 547, LL(C) = 0.3356 (Step B).
+- The CV_box twins ratio and CI reproduce `data/phase_f/F2_ratios.csv`.
+- On the CV_box set, the out-of-fold LL of A, A + log10 CV_box, C and C + log10 CV_box equals the frozen `data/euv_extra/thresholds.json` dev values exactly.
