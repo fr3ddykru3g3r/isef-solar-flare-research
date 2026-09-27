@@ -1,0 +1,19 @@
+PROSPECTIVE PRE-REGISTRATION — STEP 1: DEV 2010-2019, LABEL-BLIND (true_alarm and delayed never read). 2f62f88 + bb8a137.
+checks: BF self-test: constant cube -> BF 0; cube with added bursts -> BF 0.2216; undefined rules trigger. Per-episode (all 546 with stored series): per-frame box means of the per-pixel stack reproduce the stored series (max |diff| 0.0e+00); euv_dctrl.cv on the full 24-h valid_primary frames reproduces stored CV_box (max |diff| 2.2e-16)
+
+episodes: 547 (stored series 546; without stored series 1: ['8_20100504T2059'])
+  BF: defined 541, undefined 6 by rule {'fill': 5, 'no series': 1}; median 0.5902, IQR [0.5413, 0.6724]
+  CV6: defined 522, undefined 25 by rule {'fill6': 24, 'no series': 1}; median 0.0647, IQR [0.0252, 0.1518]
+  BF kept-pixel fraction (episodes with fill >= 80%): median 1.0000, min 0.9547
+
+Spearman rho (label-free; pairwise complete)
+  BF vs primary_CV_box: rho +0.3769 (p 1.05e-19, n 541)
+  BF vs n_C           : rho +0.0616 (p 1.53e-01, n 541)
+  BF vs score         : rho -0.0660 (p 1.25e-01, n 541)
+  CV6 vs primary_CV_box: rho +0.7617 (p 4.46e-100, n 522)
+  CV6 vs n_C           : rho +0.5021 (p 1.08e-34, n 522)
+  CV6 vs score         : rho +0.2956 (p 5.49e-12, n 522)
+  BF vs CV6           : rho +0.2815 (p 6.87e-11, n 518)
+
+saved data/prospective/dev_values.csv sha256 15113e5ca707b6d2398e75052ca4ac4fbf2de859f9cbeb7a1aaa5b07c44532a6
+wall (compute) 1.54 h, workers 9

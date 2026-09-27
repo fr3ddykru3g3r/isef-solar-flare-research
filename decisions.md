@@ -5268,3 +5268,29 @@ The aiapy pointing-table keyword query is NOT a download or export (as in earlie
 These choices also apply unchanged to the prospective test. Add a per-episode check that the per-frame box means from the per-pixel stack reproduce the stored CV_box series (|diff| < 1e-9); STOP if any episode fails. The episode without stored series counts as undefined.
 
 Commit the clarification, then run Step 1 (label-blind). Report as specified and STOP.
+
+### 2026-09-27 — PROSPECTIVE PRE-REGISTRATION (2f62f88, bb8a137): STEP 1 RESULTS — dev 2010–2019, label-blind (recorded by: me)
+Recorded from `prospective_step1.log`. true_alarm and delayed were never read: `data/stage3/cohort_dev.csv` was read with usecols harpnum, t, noaa_ars, score and n_C. No downloads; only the aiapy pointing-table keyword query was made (allowed, bb8a137).
+
+- **Implementation:** `prospective_measures.py`. The frame loop is copied from `euv_spatial.spatial_episode` / `euv_masks.mask_episode`. BF uses the per-pixel stack on the alarm-time HMI grid. CV6 uses valid_primary frames with T_REC in (t−6h, t] and 30 slots from t−5h48m to t (±6 min).
+- **Checks (all passed):**
+  - BF self-test: constant cube → BF 0; the cube with added bursts → BF 0.2216; both undefined rules trigger.
+  - All 546 episodes with stored series: the per-frame box means of the per-pixel stack reproduce the stored series (max |diff| 0.0e+00).
+  - `euv_dctrl.cv` on the full 24-h valid_primary frames reproduces the stored CV_box (max |diff| 2.2e-16).
+- **Episodes:** 547. One has no stored series (8_20100504T2059) and counts as undefined.
+  - **BF:** defined 541; undefined 6 (fill < 80%: 5; no series: 1; kept pixels < 80%: 0). Median 0.5902, IQR [0.5413, 0.6724]. Kept-pixel fraction among episodes with fill ≥ 80%: median 1.0000, minimum 0.9547.
+  - **CV6:** defined 522; undefined 25 (6-h fill < 80%: 24; no series: 1). Median 0.0647, IQR [0.0252, 0.1518].
+- **Spearman rho (label-free; pairwise complete):**
+
+  | pair | rho | p | n |
+  |---|---|---|---|
+  | BF vs CV_box | +0.3769 | 1.05e-19 | 541 |
+  | BF vs n_C | +0.0616 | 1.53e-01 | 541 |
+  | BF vs gate score | −0.0660 | 1.25e-01 | 541 |
+  | CV6 vs CV_box | +0.7617 | 4.46e-100 | 522 |
+  | CV6 vs n_C | +0.5021 | 1.08e-34 | 522 |
+  | CV6 vs gate score | +0.2956 | 5.49e-12 | 522 |
+  | BF vs CV6 | +0.2815 | 6.87e-11 | 518 |
+
+- **Saved:** `data/prospective/dev_values.csv`, SHA-256 `15113e5ca707b6d2398e75052ca4ac4fbf2de859f9cbeb7a1aaa5b07c44532a6`.
+- **Wall time:** 1.54 h with 9 workers for 545 episodes. One further episode (71_20100630T0359) was computed first, in-process, as a timing and check run (11.3 s); its output was checked and not re-run.
