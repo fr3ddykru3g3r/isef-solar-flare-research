@@ -4870,3 +4870,40 @@ D_false and D_true are in percentage points: paired HARP bootstrap, 2,000 resamp
 **PRE-STATED READING (mechanical; PRIMARY C vs C_CV):** D_false CI lower +14.63 > 0, but D_true point −13.98 < −10 → **"REMOVES FALSE ALARMS BUT LOSES TOO MANY TRUE ALARMS (point estimate)"**.
 
 STOP.
+
+## 2026-09-27 — DESCRIPTIVE AIA 94 Å FOLLOW-UPS: alert tiers, noise/exposure/saturation check, calm-flarer profile (decided by: user; wording drafted by Claude AI, reviewed and adopted by Lokesh)
+**Verbatim (user):**
+
+EXPLORATORY / DESCRIPTIVE ONLY. Nothing here is a test or a confirmation, and no result can be reported as "confirmed". Frozen files unchanged; never overwrite existing models, thresholds, series or results. Do not run stage5_test.py. No downloads of any kind; if a step seems to need one, STOP and ask.
+
+STEP 0 — Record this whole entry verbatim in decisions.md BEFORE anything else, headed "2026-09-27 — DESCRIPTIVE AIA 94 Å FOLLOW-UPS: alert tiers, noise/exposure/saturation check, calm-flarer profile (decided by: user; wording drafted by Claude AI, reviewed and adopted by Lokesh)". Commit.
+Disclosure (record verbatim): Defined AFTER the 2025–26 filter re-test (4b65f23) and after seeing that the true alarm episodes dropped by C_CV had low CV_box. All definitions below are fixed now, before computing, and every result is reported whatever it shows. Post-hoc, descriptive, not pre-registered.
+
+SETS (each reported separately, never pooled):
+ S1 = 2025–26 confirmation <= 2-region evaluable set (378 episodes; e4eb16e/4b65f23).
+ S2 = EUV-unseen PRIMARY 2021/23/24 evaluable set (155; 5abc40a).
+ S3 = 2022 sensitivity evaluable set (152; 5abc40a).
+Weights 1/n per HARP within each set. Delayed episodes count as false (as in the tests), but "delayed" is also reported where stated.
+
+MODELS: frozen data/euv_extra models and thresholds only (hash-verify all 22 files + thresholds.json). Prediction = mean of 5 fold models. No refitting.
+
+PART 1 — ALERT TIERS (fixed definitions):
+ NO ALERT = p_C < τ_C.
+ WATCH    = p_C >= τ_C AND p_C_CV < τ_C_CV.
+ WARNING  = p_C >= τ_C AND p_C_CV >= τ_C_CV.
+ Also count "CV-only" = p_C < τ_C AND p_C_CV >= τ_C_CV (reported, not a tier).
+ Per set and tier: episodes, true, false, weighted flare rate (true share) with HARP bootstrap 95% CI (2,000, seed 0); share of all true alarm episodes in each tier; rate ratio WARNING/WATCH with CI from the same resamples. Among false episodes: fraction delayed in WARNING vs WATCH (counts + weighted).
+
+PART 2 — IS CV_box AN ARTIFACT? (noise, exposure, saturation)
+ First reproduce the stored CV_box for every episode in S1–S3 from its series file with the EXACT existing code path (same valid_primary frames, same detrending, same function). Required: |diff| < 1e-9 for all. If not, STOP and report.
+ Then, per episode, recompute CV_box with ONLY the frame set changed:
+  2a Exposure: keep only valid frames whose exptime is within ±5% of the episode's median exptime. Report per set the fraction of valid frames removed, medians for true vs false.
+  2b Saturation: keep only valid frames with sat_px == 0. Report the fraction of frames removed, true vs false.
+ 2c Photon + read noise: expected noise CV per episode = relative SD of the box-mean series from Poisson photon noise + read noise, using box mean DN/s × exptime, the number of box pixels (take it from the existing masks/code; state how), and the AIA 94 Å DN-per-photon and read noise. Get these constants from aiapy (quote the function and the values) or from Boerner et al. 2012 (quote table and page). If neither can be done without a download, STOP and report. Corrected CV_corr = sqrt(max(CV_box² − CV_noise², 0)). Report median CV_noise / CV_box, true vs false.
+ For each of 2a, 2b, 2c: the twins ratio (median true / median false) using the SAME stored twin pairs and the SAME CI procedure as the original twins result of that set (S1: TEST 1 pairs, ae1b174; S2/S3: 5abc40a). Print it next to the original ratio. Episodes that become undefined: count them and drop the pair (reported).
+
+PART 3 — CALM-FLARER PROFILE (true alarm episodes only, per set):
+ Compare true episodes in WATCH vs WARNING (and NO ALERT, if any). For each: peak class of the largest M1+ flare in (t, t+24h]; hours from t to the first M1+ flare start; flare-history group (JUST-FLARED / C-only / QUIET-NOW, F4 definitions); regions at t (1 or 2); gate score; CV_box; fill; |longitude| at t if already in local files (else "not available"); number of saturated frames.
+ Flare details must come from the SAME label code/event list that produced true_alarm; first check that it reproduces the stored true_alarm for every episode (report mismatches and STOP if any). Report group medians and counts; for S1 also list every true episode individually. No p-values.
+
+OUTPUTS: descriptive_aia94.py, descriptive_aia94.log, a results entry in decisions.md (verbatim numbers), figures/alert_tiers.png (flare rate per tier per set with CIs; clearly titled "descriptive, post-hoc"). Commit. Report the numbers verbatim with the commit hash. No interpretation, and never use the words "confirmed", "validated" or "significant". STOP.
