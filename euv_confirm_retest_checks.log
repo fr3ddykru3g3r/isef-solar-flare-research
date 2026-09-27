@@ -1,0 +1,6 @@
+STEP 1 — LABEL-BLIND CHECKS (true_alarm and delayed not read; no outcome printed)
+a) evaluable set: 378 episodes, 101 HARPs; TEST 1 evaluable set: 378 episodes, 101 HARPs; mismatch: 0 []
+b) model input columns ['log10_CV_box', 'logR', 'n_C', 'n_M', 'n_X', 'score']: missing values {'log10_CV_box': 0, 'logR': 0, 'n_C': 0, 'n_M': 0, 'n_X': 0, 'score': 0}; R: euv_confirm_tests.log_r, the function TEST 2 used, on all 387 le2 episodes with TEST 2's event window 2024-12-29 -> 2026-08-18 23:59 (C1+ = K2 flux >= 1e-6, start in (t-48h, t), cap 48); repeat identical True; (R < 48) <=> (n_C+n_M+n_X >= 1) for all 387: True
+c) hash checks: 22 files in model_hashes.json match; thresholds.json matches 7a34507c...; frozen tau A 0.067970, A_CV 0.074657, C 0.062570, C_CV 0.068936
+d) BASELINE GUARD — weighted % of ALL evaluable episodes with p >= tau (label-blind): A 100.00% (378/378); A_CV 43.18% (148/378); C 72.55% (289/378); C_CV 50.02% (168/378)
+   C keeps > 95% of all episodes: False -> guard passed

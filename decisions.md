@@ -4819,3 +4819,19 @@ STEP 1 — LABEL-BLIND checks only (do not read true_alarm or delayed; do not pr
  Commit the check results. STOP.
 
 Do not evaluate until I say "run the 2025–26 filter re-test once". Then: run it exactly once, write the results table and the mechanical reading to euv_confirm_filter_retest.log and decisions.md, commit, and report the numbers verbatim with no interpretation beyond the pre-stated reading.
+
+### 2025–26 RE-TEST — Step 1 LABEL-BLIND CHECKS: RESULT (true_alarm and delayed not read; no outcome printed)
+`euv_confirm_retest.py checks` → `euv_confirm_retest_checks.log`. Only label-free cohort columns were read: harpnum, t, score, n_C, n_M, n_X, noaa_ars.
+- **a)** Evaluable set: 378 episodes, 101 HARPs. TEST 1's evaluable set (rebuilt with its rule: fill ≥ 80%, CV_box not NaN) is also 378 / 101. Mismatch: 0 episodes.
+- **b) Model inputs** (score, n_C, n_M, n_X, logR, log10_CV_box): 0 missing values in every column.
+  - R was computed with `euv_confirm_tests.log_r`, the function TEST 2 used, on all 387 ≤ 2 episodes with TEST 2's event window (2024-12-29 → 2026-08-18 23:59; C1+ = K2 flux ≥ 1e-6; start in (t − 48 h, t); cap 48).
+  - A repeated computation is identical; (R < 48) ⇔ (n_C + n_M + n_X ≥ 1) holds for all 387.
+- **c)** All 22 files in `model_hashes.json` match; `thresholds.json` matches `7a34507c…`. Frozen τ: A 0.067970, A_CV 0.074657, C 0.062570, C_CV 0.068936.
+- **d) BASELINE GUARD** — weighted % of ALL evaluable episodes with p ≥ τ:
+  - A 100.00% (378/378)
+  - A_CV 43.18% (148/378)
+  - **C 72.55% (289/378)**
+  - C_CV 50.02% (168/378)
+  - C keeps 72.55% ≤ 95% → **guard passed** (the test may be run on the user's command).
+
+STOP. The re-test is not evaluated until the user says "run the 2025–26 filter re-test once".
