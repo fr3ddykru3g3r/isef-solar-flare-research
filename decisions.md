@@ -5542,3 +5542,83 @@ Create docs/AI_USE_LOG.md containing:
 Commit. STOP.
 
 PART 5 — FINAL CHECK: re-verify all hashes of frozen models/thresholds (euv_extra, combo_t, nb_r4a, stage 4/5); confirm no existing decisions.md line changed (diff against the commit before Part 0, additions only); report the commit hashes of Parts 0–4. STOP.
+
+## 2026-09-28 — CLARIFICATION: C+ rule thresholds = exact frozen values; PART 1 definitions and chat reference numbers (decided by: user; recorded verbatim before any Look 1 / Look 2 data exist and before Part 1 is computed)
+**Verbatim (user):**
+
+THRESHOLDS (record as a clarification in decisions.md BEFORE any Look 1/Look 2 data exist): the C+ rule uses the EXACT frozen values read from the frozen threshold files (τ_C_CV = 0.06893616544608924 from data/euv_extra/thresholds.json; τ_C = 0.06256983158392139). The 6-decimal numbers in 8aa1797 were shorthand. Same for COMBO-T (τ from data/combo_t/thresholds.json).
+
+GENERAL NOTES ON MY CHAT NUMBERS: computed with my own SWPC parser (edited-events XRA lines; GOES-13/14/15 flux ÷0.7; 4-digit region +10000; flare START time; duplicates dropped). Use the repo's label code instead and report any difference. "Simple counts" = unweighted n/N. Where I said weighted, weights = 1/n per HARP within each set. Dev predictions = out-of-fold with dev_rows.csv folds (reproduced 0.8803 / 0.8807 weighted true kept for C_CV / C). My scripts were in /tmp on the VM, not the repo.
+
+1a (matched retention; weighted false removed at the highest threshold keeping >= target weighted true; paired HARP bootstrap 2,000, seed 0, my own implementation):
+ 2025–26: target 0.80 C 0.553 / C_CV 0.485, diff −0.068 [−0.291, +0.398]; 0.85 0.452/0.393; 0.88 0.452/0.355, diff −0.097 [−0.293, +0.323]; 0.90 0.440/0.355; 0.95 0.200/0.330, diff +0.131 [−0.229, +0.223].
+ 2021/23/24 extra: 0.80 0.55/0.66 (+11 pts [−9, +45]); 0.88 0.27/0.35 (+7 [−11, +49]); 0.95 0.11/0.18 (+8 [−12, +43]).
+ 2022: 0.80 0.48/0.81 (+33 [−12, +57]); 0.88 0.31/0.53 (+22 [−20, +56]); 0.95 0.24/0.23 (−2 [−24, +43]).
+ (2021/23/24 single-region test set: not computed in chat.)
+
+1b: log(1+R) standardized coefficient, C folds 0–4: −0.198, −0.326, −0.185, −0.261, −0.321. C_CV folds 0–4: +0.146, −0.144, +0.178, −0.006, +0.027.
+
+1c: C_CV-rejected true alarms (simple counts) and how many had >= 1 C-CLASS flare (1e-6 <= flux < 1e-5) in (t−24 h, t): dev 12 (7), 2021/23/24 test 6 (3), extra 5 (2), 2022 6 (2), 2025–26 15 (10); total 44 (24) from 32 HARPs. Median hours to first M1+: rejected with C 10.7 (n=24), rejected without C 15.5 (n=20), true kept 9.3. Groups with >= 1 C-class flare: false removed 201/662, false kept 449/614, true kept 183/212. Any M/X in prior 24 h: true rejected 5%, true kept 47%, false kept 21%, false removed 0%.
+ COMBO-T-rejected true alarms at frozen τ: 44 (dev 12, test 4, extra 6, 2022 6, 2025–26 16) from 30 HARPs; 22 had >= 1 flare >= C1.0 (incl. M/X) in prior 24 h; median predicted chance 6.0%; median hours to M1+ 13.1.
+
+1d: Spearman ρ(C-class count in (t−24 h, t), CV_box): dev +0.658 (n 541), test +0.587 (306), extra +0.439 (155), 2022 +0.535 (152), 2025–26 +0.530 (378), pooled +0.567 (1,532); within true +0.309 (256), within false +0.560 (1,276). Median CV_box by C-count bin 0 / 1 / 2 / 3–4 / 5+: false 0.056 / 0.110 / 0.152 / 0.189 / 0.286; true 0.111 / 0.237 / 0.251 / 0.243 / 0.337.
+
+1e DEFINITIONS:
+ - "C-flare rule alone": keep iff >= 1 C-CLASS flare (1e-6 <= flux < 1e-5; M/X NOT counted) from the region with start in (t−24 h, t). No model.
+ - "C-protected (C-class only)": keep iff C_CV keeps OR >= 1 C-CLASS flare (M/X not counted) in (t−24 h, t).
+ - "C+ rule": as in 8aa1797 (C1.0+ incl. M/X).
+ - "C-level sweep": keep iff C_CV keeps OR the largest C-CLASS flare (C-class only) in (t−24 h, t) >= level; levels C1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 7.0. Dev-only choice rule: max false removed subject to true kept >= Model C's dev true kept (88/96) → chose C2.0.
+ - "Table rule": bins by C-class count in (t−24 h, t): 0, 1, 2, 3–4, 5+. Per-bin cutoff = sorted dev TRUE CV_box values r (unweighted), cutoff = r[floor(0.12·n)]. Keep iff CV_box >= that bin's cutoff (no Model C). Dev cutoffs: 0.065, 0.081, 0.196, 0.085, 0.194.
+ 1e CHAT NUMBERS (true kept / false removed, simple counts):
+ - 2021–26 combined: Model C 150/160, 199/831; C_CV 128/160, 444/831; A_CV 125/160, 492/831; C-flare rule alone 130/160, 386/831; C-protected 145/160, 282/831; C+ 146/160, 282/831; table rule 109/160, 404/831.
+ - Dev: C-flare rule 77/96, 240/445; C-protected 91/96, 179/445; C+ 91/96, 179/445; table rule 87/96, 188/445; Model A 87/96, 70/445.
+ - C-level sweep, all sets pooled (256 true / 1,276 false): C1.0 236, 461; C1.5 231, 513; C2.0 227, 549; C2.5 226, 592; C3.0 221, 617; C4.0 220, 635; C5.0 217, 646; C7.0 215, 658; none 212, 662.
+
+1f GRID (dev only): features = Model C columns (score, n_C, n_M, n_X, log(1+R)) + log10 CV_box + prot [+ prot × log10 CV_box if interaction]. prot = 1 if the region's max flare flux (any class) with start in (t − W, t) >= L.
+ - Grid: W ∈ {12, 24, 48} h; L ∈ {C1.0, C2.0, C5.0}; interaction ∈ {yes, no}; LogisticRegression L2 C ∈ {0.03, 0.1, 0.3, 1, 3}, lbfgs, max_iter 10000. 90 configs.
+ - Setup: StandardScaler fit per training fold; sample_weight 1/n per HARP; τ = highest dev OOF threshold keeping >= 88% weighted true.
+ - Objective: max weighted false removed at τ; tie → lower weighted OOF log-loss.
+ - Top: W12 / C2 / no interaction / C=0.3 (τ 0.0792, fr_w 0.5735, tk_w 0.8840, LL 0.3139). Next: W12 C2 inter C0.3 (0.5718); W24 C5 inter C0.3 (0.5533).
+ - Default COMBO = W24, L=C1.0, interaction, C=1 (dev τ 0.0642).
+ 2021–26 pooled (my log-loss weighted 1/n per (set, HARP); AUC unweighted):
+ - COMBO-T: 128/160, 477/831, AUC 0.768, LL 0.3657.
+ - Default: 142/160, 324/831, AUC 0.755, LL 0.3756.
+ - Model C: 150/160, 199/831, AUC 0.750, LL 0.3768.
+ COMBO-T by set: test 40/44, 138/262; extra 26/32, 63/123; 2022 22/28, 66/124; 2025–26 40/56, 210/322.
+ COMBO-T tiers (2021–26): <5% 183 alarms / 5 true; 5–15% 639/83; 15–30% 99/38; >30% 70/34. Default COMBO tiers: <5% 274/12; 5–15% 538/74; 15–30% 104/37; >30% 75/37.
+ COMBO-T + C+ override: dev 90/96, 198/445; 2021–26 144/160, 318/831; 2025–26 51/56, 141/322.
+
+1g WALK-FORWARD (τ re-set on the three 2021–24 sets pooled, weighted, targets 88/90/95%; applied to 2025–26, simple counts true kept/56, false removed/322):
+ - Model C: τ 0.074 → 48, 153; τ 0.067 → 52, 122; τ 0.060 → 54, 63.
+ - Default COMBO: 0.072 → 48, 152; 0.057 → 52, 130; 0.046 → 53, 115.
+ - COMBO-T: 0.073 → 43, 190; 0.061 → 48, 142; 0.056 → 50, 130.
+
+1h (2025–26):
+ - Twins: unclustered pair-bootstrap CI [1.63, 8.04]; Wilcoxon p 1.5e-6; sign test two-sided p 9.0e-5 (39/50).
+ - Max-TSS with threshold tuned on the set itself (unweighted):
+   - A: AUC 0.756, TSS 0.424 (68% kept, 75% removed).
+   - C: AUC 0.777, TSS 0.437 (80%, 63%).
+   - C_CV: AUC 0.781, TSS 0.491 (64%, 85%).
+   - CV_box alone: AUC 0.753, TSS 0.396.
+ - Frozen C_CV precision 0.244 vs gate 0.148.
+
+1i PAIRS (true vs false):
+ - twin_pair_24h / magnetic_vs_aia94_twin_pair: 13299_20250529T1459 vs 13891_20251018T2059.
+ - twin_gif_1_p10: 14117_20251206T1159 vs 13726_20250905T0959.
+ - _2_p30: 13574_20250806T2159 vs 14825_20260627T0659.
+ - _3_p50: 13708_20250830T1359 vs 12889_20250313T0659.
+ - _4_p70: 13574_20250803T0959 vs 14284_20260123T0959.
+ - _5_p90: 14117_20251208T2259 vs 14765_20260616T0259.
+ Later GIFs (inventory only):
+ - pair_good_1: 12713_20250213T0459 vs 14003_20251107T1359.
+ - pair_good_2: 12597_20250116T2059 vs 12752_20250214T0159.
+ - pair_calm_flarer_missed: 14924_20260725T1859 vs 14191_20251227T0959.
+ Definitions: excess area = trapezoid ∫ max(box/mean − 1, 0) dt (hours) over valid_primary frames in (t−24 h, t); raw area = ∫ box dt. Chat ρ over 387 episodes with CV_box > 0 (I did not apply the 80% fill rule): ρ(excess area, CV_box) 0.934; ρ(|box/mean − 1| area, CV_box) 0.936. Chat excess areas (true / false):
+ - first pair 1.059 / 0.114
+ - p10 0.991 / 1.396
+ - p30 1.865 / 0.815
+ - p50 0.612 / 0.607
+ - p70 0.953 / 0.307
+ - p90 4.256 / 0.398
+
+Where your reproduction differs from these, report both and do not adjust anything.
