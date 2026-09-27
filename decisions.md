@@ -4706,3 +4706,12 @@ STOP (filter test not run). It is evaluated only when the user says "run the pre
 - **F_new ratio** (true ÷ false medians, F2 code, 2,000 resamples, seed 0): all episodes 0.886 [0.802, 0.942]; 81 gate-score twins 0.934 [0.844, 0.989] (medians 0.4995 / 0.5346).
 
 **Pre-stated reading (mechanical):** Δ +0.0075 > 0 and the AUC rises, but the 95% CI lower bound (−0.0062) is not > 0 → **"NOT ELIGIBLE"**. Step 3 (the conditional follow-up) is therefore NOT run.
+
+### EUV-unseen follow-up — re-export check on HARP 8923: RESULT (label-blind)
+AIA re-exported once for the PRIMARY set's range of HARP 8923 (`euv_extra.py reexport primary 8923`; one pending export, the user's account) into `data/euv_extra/primary/reexport/8923/`.
+- 753/753 frames, 0 new, 0 missing → **archive gap.** Nothing was copied, overwritten or recomputed.
+- Note (label-blind fact): HARP 8923 has INCLUDED episodes in both sets — 5 in PRIMARY (2023-01) and 1 in 2022 (2022-12-31). The sets are evaluated separately and never pooled, as pre-registered; its 2022 copy is complete (120/120).
+
+### Status of the dots test (#23) at the user's request
+- Step 2 was run once (d89a1a0). Pre-stated reading: **"NOT ELIGIBLE"** (Δ −0.0056 [−0.0218, +0.0083]).
+- Its Step 3 follow-up feature was therefore NOT computed on the PRIMARY set, and no dots follow-up is run with the filter test.

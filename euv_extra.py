@@ -248,3 +248,24 @@ if __name__ == "__main__" and sys.argv[1:] == ["counts"]:
               f"frames {int(d.frames.sum())}, QUALITY!=0 {int(d.excl_quality.sum())}, exposure {int(d.excl_exposure.sum())}, flare (sens only) {int(d.excl_flare.sum())}; "
               f"primary fill >= 80%: {int(P.sum())}; of these CV_box undefined / <= 0: {int((P & ~ok).sum())}; evaluable (fill ok, CV_box > 0): {int(ok.sum())} "
               f"({d.loc[ok, 'harpnum'].nunique()} HARPs); flare-excluded fill >= 80%: {int((d.sens_fill >= 0.8).sum())}")
+
+if __name__ == "__main__" and sys.argv[1:2] == ["reexport"]:
+    # re-export check (user 2026-09-27; same procedure as f3d6489 / 9655e1c): AIA once into <root>/reexport/<H>/;
+    # files not already in aia/<H> are copied there (kept); nothing deleted or overwritten
+    import shutil, euv_full
+    from euv_full import aia_spec, submit, wait, download, expected_frames, valid_fits
+    euv_full.R = ROOT
+    s, rows = sys.argv[2], []
+    R_ = f"{ROOT}/{s}"; eps = set_episodes(s)
+    for h in [int(x) for x in sys.argv[3:]]:
+        g = eps[eps.harpnum == h]; dest = f"{R_}/reexport/{h}"
+        ds, proc = aia_spec(h, g, f"{R_}/hmi/{h}")
+        r = submit(ds, proc); prep = wait(r); nb, dl = download(r, dest)
+        old = {os.path.basename(p) for p in glob.glob(f"{R_}/aia/{h}/*.fits") if valid_fits(p)}
+        new = {os.path.basename(p) for p in glob.glob(f"{dest}/*.fits") if valid_fits(p)}
+        for f in sorted(new - old):
+            shutil.copy2(f"{dest}/{f}", f"{R_}/aia/{h}/{f}")
+        rows.append(dict(set=s, harpnum=h, request_id=r.id, prep_s=round(prep, 1), expected=expected_frames(g), before=len(old),
+                         reexport=len(new), new_frames_added=len(new - old), missing_in_reexport=len(old - new)))
+        euv_full.log(f"re-export {s} HARP {h}: {rows[-1]}")
+    pd.DataFrame(rows).to_csv(f"{R_}/reexport.csv", index=False); print(pd.DataFrame(rows).to_string(index=False))
