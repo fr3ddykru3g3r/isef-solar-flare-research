@@ -5156,3 +5156,34 @@ OUTPUTS: nb_r4a_reanalysis.py, nb_r4a_reanalysis.log, a results entry in decisio
   - STOP if any test year (2021–2026) differs from EITHER by more than 20 percentage points. Applying both is the stricter reading.
   - 2026 covers only the cached days, up to 2026-08-18; days cached are printed for each year.
 - **1d:** p_A = the mean of the 5 frozen A fold models, and the result is weighted % of all episodes with p_A ≥ τ_A.
+
+### 2026-09-27 — n_B + R4a RE-ANALYSIS (68e57b1): STEP 1 LABEL-BLIND CHECKS — RESULT: n_B NOT COMPARABLE ACROSS YEARS — TEST NOT RUN
+**n_B NOT COMPARABLE ACROSS YEARS — TEST NOT RUN**
+
+Per the 1c rule this is a permanent stop. No evaluation will be run, true_alarm and delayed were never read, and no outcome was computed. The checks section of `nb_r4a_reanalysis.log` holds the output. The checks were run twice because the first run printed small pp differences with 4 decimals (e.g. "0.1899" for +0.19 pp). The second run changed only the display; its numbers are identical and it is the one appended to the log.
+
+- **Integrity:** 17 frozen files hash-verified. τ_A 0.0679701247, τ_A+R4a 0.0612215400, τ_COMBO 0.0646075144.
+- **1b — episode counts:**
+  - PRIMARY 2021/23/24 single-region: 306 episodes, 98 HARPs. R4a undefined 0; n_B undefined 0. n_B median 0.0, IQR [0.0, 0.0], max 16, zero in 283.
+  - SECONDARY 2025–26 ≤2-region: 378 episodes, 101 HARPs. R4a undefined 0; n_B undefined 0. n_B median 0.0, IQR [0.0, 0.0], max 12, zero in 326.
+  - In both sets the n_B join reproduces the cohort's n_C, n_M and n_X for every episode.
+- **1c — share of B-class events with a NOAA region number:**
+  - Dev: 2010 0.7315; 2011 0.7337; 2012 0.6359; 2013 0.7951; 2014 0.8056; 2015 0.8582; 2016 0.7874; 2017 0.7884; 2018 0.8796; 2019 0.8750. These reproduce `F3_B_coverage.csv`.
+  - Dev average: mean of the per-year fractions 0.7890; pooled 0.7727.
+  - Test years (fraction; difference vs mean / vs pooled, pp):
+
+    | year | fraction | vs mean | vs pooled |
+    |---|---|---|---|
+    | 2021 | 0.7551 | −3.39 | −1.76 |
+    | 2022 | 0.6352 | −15.39 | −13.76 |
+    | **2023** | **0.5714** | **−21.76** | **−20.13** |
+    | 2024 | 0.7143 | −7.47 | −5.85 |
+    | 2025 | 0.7746 | −1.44 | +0.19 |
+    | 2026 (230 cached days, to 2026-08-18) | 0.7887 | −0.03 | +1.59 |
+
+  - B events per year: 2021 1,609; 2022 825; 2023 49; 2024 35; 2025 142; 2026 336.
+  - 2023 exceeds 20 pp under both definitions → **n_B NOT COMPARABLE ACROSS YEARS — TEST NOT RUN.**
+- **1d — baseline guard (label-blind; computed before the stop was applied):**
+  - PRIMARY: A keeps 1.0000 weighted (306/306 episodes).
+  - SECONDARY: A keeps 1.0000 weighted (378/378).
+  - Both are > 95%, so the PRIMARY comparison would have been "not interpretable (baseline does not filter)" in both sets.

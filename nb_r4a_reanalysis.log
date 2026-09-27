@@ -55,3 +55,45 @@ FROZEN (dev OOF):
   sha256 9abca2e63683eb44a04330001ef42e747ace08f7ce162914fa75b961362cdb00  data/nb_r4a/dev_rows.csv
   sha256 7f658c2ddeb80409be49eed9e16a04bd106f04c224fc90c8da24ed3996ddede5  data/nb_r4a/thresholds.json
 wall 1.1 s
+
+==============================================================================================================
+STEP 1 — LABEL-BLIND CHECKS (true_alarm and delayed not read; no outcome printed)
+integrity: 17 frozen files hash-verified (models, thresholds.json, dev_rows.csv); tau_A 0.0679701247, tau_A_R4a 0.0612215400, tau_COMBO 0.0646075144
+
+1b. EPISODE COUNTS (weights 1/n per HARP within each set); n_B join reproduces the cohort n_C, n_M, n_X for every episode
+  PRIMARY 2021/23/24 single-region: 306 episodes, HARPs 98; R4a undefined among fill-eligible episodes: 0 []; n_B undefined: 0; n_B median 0.0, IQR [0.0, 0.0], max 16, zero 283
+  SECONDARY 2025-26 <=2-region: 378 episodes, HARPs 101; R4a undefined among fill-eligible episodes: 0 []; n_B undefined: 0; n_B median 0.0, IQR [0.0, 0.0], max 12, zero 326
+
+1c. B-CLASS ATTRIBUTION (phase_f.item_F3 code: swpc.load per calendar year, cls == 'B', fraction with a NOAA region number)
+ year  days_cached  B_events  with_region  frac_with_region
+ 2010          248       674          493            0.7315
+ 2011          365       582          427            0.7337
+ 2012          366       390          248            0.6359
+ 2013          365       327          260            0.7951
+ 2014          365       108           87            0.8056
+ 2015          365       268          230            0.8582
+ 2016          366       748          589            0.7874
+ 2017          365       709          559            0.7884
+ 2018          365       274          241            0.8796
+ 2019          365       184          161            0.8750
+ 2021          365      1609         1215            0.7551
+ 2022          365       825          524            0.6352
+ 2023          365        49           28            0.5714
+ 2024          366        35           25            0.7143
+ 2025          363       142          110            0.7746
+ 2026          230       336          265            0.7887
+  dev rows reproduce data/phase_f/F3_B_coverage.csv; dev average: mean of per-year fractions 0.7890, pooled 0.7727
+ year frac_with_region diff_vs_mean_pp diff_vs_pooled_pp
+ 2021           0.7551           -3.39             -1.76
+ 2022           0.6352          -15.39            -13.76
+ 2023           0.5714          -21.76            -20.13
+ 2024           0.7143           -7.47             -5.85
+ 2025           0.7746           -1.44             +0.19
+ 2026           0.7887           -0.03             +1.59
+  rule (> 20 pp vs either dev average in any test year): n_B NOT COMPARABLE ACROSS YEARS — TEST NOT RUN [2023]
+
+1d. BASELINE GUARD: weighted % of ALL episodes with p_A >= tau_A (frozen A; mean of 5 dev fold models)
+  PRIMARY 2021/23/24 single-region: A keeps 1.0000 weighted (306/306 episodes) -> PRIMARY comparison not interpretable (baseline does not filter); only matched retention reported
+  SECONDARY 2025-26 <=2-region: A keeps 1.0000 weighted (378/378 episodes) -> PRIMARY comparison not interpretable (baseline does not filter); only matched retention reported
+
+wall 1.2 s. STOP — evaluation only on 'run the n_B + R4a re-analysis once'.

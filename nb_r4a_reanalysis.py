@@ -150,7 +150,8 @@ if __name__ == "__main__" and sys.argv[1:] == ["checks"]:
     t_ = cov[cov.year > 2020].copy(); t_["diff_vs_mean_pp"] = 100 * (t_.frac_with_region - m_year); t_["diff_vs_pooled_pp"] = 100 * (t_.frac_with_region - m_pool)
     print(cov.to_string(index=False, float_format=fmt))
     print(f"  dev rows reproduce data/phase_f/F3_B_coverage.csv; dev average: mean of per-year fractions {m_year:.4f}, pooled {m_pool:.4f}")
-    print(t_[["year", "frac_with_region", "diff_vs_mean_pp", "diff_vs_pooled_pp"]].to_string(index=False, float_format=lambda v: f"{v:+.2f}" if abs(v) > 1 else f"{v:.4f}"))
+    print(t_[["year", "frac_with_region", "diff_vs_mean_pp", "diff_vs_pooled_pp"]].to_string(index=False, formatters={
+        "frac_with_region": fmt, "diff_vs_mean_pp": lambda v: f"{v:+.2f}", "diff_vs_pooled_pp": lambda v: f"{v:+.2f}"}))
     bad = t_[(t_.diff_vs_mean_pp.abs() > 20) | (t_.diff_vs_pooled_pp.abs() > 20)]
     print(f"  rule (> 20 pp vs either dev average in any test year): {'n_B NOT COMPARABLE ACROSS YEARS — TEST NOT RUN ' + str(bad.year.tolist()) if len(bad) else 'no test year exceeds 20 pp'}")
     print("\n1d. BASELINE GUARD: weighted % of ALL episodes with p_A >= tau_A (frozen A; mean of 5 dev fold models)")
