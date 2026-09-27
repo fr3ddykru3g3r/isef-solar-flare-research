@@ -5127,3 +5127,32 @@ EVALUATION (once, on command):
   - Δ log-loss (A − COMBO; HARP bootstrap 10,000, seed 20260921); AUC for all three models.
 
 OUTPUTS: nb_r4a_reanalysis.py, nb_r4a_reanalysis.log, a results entry in decisions.md (verbatim numbers), commit. Report the numbers verbatim with the commit hash. Never use "confirmed", "validated" or "significant". STOP.
+
+### 2026-09-27 — n_B + R4a RE-ANALYSIS (68e57b1): FROZEN before any test set was read, plus implementation note (decided by: me)
+- **Freeze (dev only):** `nb_r4a_reanalysis.py freeze` read no test set; its log section is in `nb_r4a_reanalysis.log`.
+  - **Definitions:** n_B and R4a are quoted verbatim from `phase_f.item_F3` and `euv_spatial` in the log. There is no transform. B = K2 true flux in [1e-7, 1e-6); only joinable events count, with start in [t−48h, t) for the regions in noaa_ars.
+  - **Checks:** the n_B join reproduces the cohort's n_C, n_M and n_X for all 547 dev episodes, and n_B equals `data/phase_f/F3_n_B.csv` for all 547.
+- **Dev set:** 541 episodes (true 96, false 445, 179 HARPs). Fitting uses `euv_heldout.fit_folds` (= `cv_fit`, Step 6 settings).
+- **1a — dev F3 reproduced exactly** (|diff| < 1e-12; counts and τ identical):
+  - A+R4a: delta 0.012353, AUC 0.800327, false removed 209/445 (0.487080 w), true kept 84/96.
+  - COMBO: delta 0.009197, AUC 0.794578, false removed 233/445 (0.529998 w), true kept 81/96.
+- **Frozen τ (dev OOF, ≥ 88% weighted true kept):**
+  - τ_A = 0.0679701247 (87/96; false removed 70/445)
+  - τ_A+R4a = 0.0612215400 (84/96; 209/445)
+  - τ_COMBO = 0.0646075144 (81/96; 233/445)
+- **SHA-256 of the frozen files** (`data/nb_r4a/`):
+  - A_fold0–4: 547b5d2c…, bdc8f859…, 4044fa9b…, 11109aa5…, 4ab93e1e…
+  - A_R4a_fold0–4: 0a004dd3…, 78abaa09…, fdac7294…, 597e68cf…, 05091044…
+  - COMBO_fold0–4: 93da5cf3…, 18c60f77…, 65ea9adb…, ff66fcba…, e5b3b52d…
+  - dev_rows.csv: 9abca2e6…
+  - thresholds.json: 7f658c2d…
+  - Full hashes are in the log and in `data/nb_r4a/model_hashes.json`, which is verified before every later use.
+- **Test sets, read label-blind** (usecols exclude true_alarm and delayed):
+  - PRIMARY = `cohort_test_primary.csv` (313) with primary_fill ≥ 0.80 and R4a defined (= the euv_heldout R4a primary set).
+  - SECONDARY = `cohort_le2.csv` (387) with primary_fill ≥ 0.80, CV_box defined and R4a defined (= the TEST 1 s3 set).
+  - Weights are 1/n per HARP within each set. n_B is computed with the same join (events fetched 2020-12-29 to 2025-01-01 23:59 and 2024-12-29 to 2026-08-18 23:59), which must reproduce n_C, n_M and n_X for every episode.
+- **1c rule, fixed before computing:**
+  - "Dev average" is evaluated two ways: (i) the mean of the 10 per-year dev fractions for 2010–2019, and (ii) the pooled dev fraction.
+  - STOP if any test year (2021–2026) differs from EITHER by more than 20 percentage points. Applying both is the stricter reading.
+  - 2026 covers only the cached days, up to 2026-08-18; days cached are printed for each year.
+- **1d:** p_A = the mean of the 5 frozen A fold models, and the result is weighted % of all episodes with p_A ≥ τ_A.
