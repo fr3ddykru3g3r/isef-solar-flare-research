@@ -5308,3 +5308,31 @@ For each of the 541 dev episodes with BF defined:
 3. MECHANICAL RULE (fixed now): if median BF_noise / BF > 0.5, write "BF IS NOISE-DOMINATED" in decisions.md, commit and STOP. Then list options for a noise-robust BF, e.g. (a) BF on spatially binned macropixels (e.g. 4×4 AIA pixels), (b) floor corrected by the expected noise: floor_i + 1.645·σ_noise,i, (c) restrict to pixels above a brightness cut. For each option, give its expected BF_noise on these same episodes (label-blind). Do NOT choose.
    Otherwise write "BF NOISE CONTRIBUTION ACCEPTABLE", commit and STOP.
 Do not run Step 2.
+
+### 2026-09-27 — BF NOISE DIAGNOSTIC (21e9e89): implementation, recorded before computing (decided by: me)
+**Set:** the 541 dev episodes with BF defined. The per-pixel stack is rebuilt with the Step 1 frame loop, and checks are required: the per-frame box means reproduce the stored series (< 1e-9), and the recomputed BF equals the stored BF in `dev_values.csv` (|diff| < 1e-12).
+
+**Noise model:**
+- g = 1.975 DN/photon; read noise 1.14 DN (aiapy V3 table, as in 5af931b).
+- e_f is the EXPTIME of each valid frame, taken from the series.
+- μ_p is the nanmean over frames of pixel p (DN/s).
+- A simulated value is (g·Poisson(max(μ_p, 0)·e_f/g) + 1.14·N(0,1)) / e_f.
+- The NaN pattern is the same as in the data, and each simulation uses `np.random.RandomState(0)`, fresh per episode.
+
+**1. BF_noise:** the noise is drawn independently per stack pixel (per HMI-grid pixel, as specified). BF is then computed exactly as defined with the same fill, so the same pixels are kept.
+
+**2. Box-mean brightness:** the mean of the stored box series over the valid_primary frames (DN/s).
+
+**Options, computed in the same label-blind pass** (reported only if the rule triggers; not a choice):
+- **(a) Macropixels.** Blocks of k×k HMI-grid pixels, with k = round(2.4″ / CDELT1_HMI), i.e. about 4×4 AIA pixels at 0.6″ (k = 5 for 0.504″).
+  - Partial blocks at the edges are kept.
+  - Each block's value per frame is the nanmean of its pixels (the CV_box weighting). BF rules c)–f) are then applied to the blocks.
+  - The noise simulation here draws one value per AIA pixel per frame. Every stack pixel that maps to that AIA pixel shares it (through the stored `hmi_to_frame` index), with λ from the mean μ_p of those stack pixels. The block mean therefore averages the correct number of independent AIA pixels.
+- **(b) Noise-corrected floor.** BF_b = 1 − Σ(floor_i + 1.645·σ_i) / Σ mean_i over the kept pixels.
+  - σ_i = sqrt(mean over the pixel's finite frames of (g·max(mean_i, 0)·e_f + 1.14²) / e_f²).
+  - There is no cap. Its noise-only value comes from the BF_noise simulation.
+- **(c) Brightness cut.** Keep only pixels with mean_i × median(e_f) ≥ C DN per exposure, for C = 100 and C = 300. The cut is selected on the real means, and the same pixels are used for the noise-only value.
+  - BF is computed over those pixels; the 80%-of-box rule is not applied.
+  - Reported: the fraction of kept pixels that pass, and the number of episodes with ≥ 1 passing pixel.
+
+**Code change:** the Step 1 frame loop is moved into a function without changing its behaviour; the BF-reproduction check verifies this.
