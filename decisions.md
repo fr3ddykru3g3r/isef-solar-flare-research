@@ -5434,3 +5434,10 @@ Recorded from `prospective_step2.log`. BF = option (a) (eb3e7d5); implementation
 | CV_box | C vs C + log10 CV_box | 541 (96 / 445; 179) | 0.3223 → 0.3160 | +0.0062 [−0.0058, +0.0184] | 0.7720 → 0.7888 |
 
 Wall time 1.8 s with 9 workers.
+
+### 2026-09-27 — CV6 LABEL-DEPENDENT EXCLUSION (decided by: user; recorded verbatim; no computation)
+**Verbatim (user):** CV6 dev exclusion is label-dependent — undefined for 12/96 true (12.5%) vs 7/445 false (1.6%) episodes (208202b). CV6 results are therefore on a selected subset and are not comparable with CV_box/BF(a). For the prospective test, CV6 stays secondary and unchanged; the report must include CV6 undefined counts by true/false.
+
+**Note (me), no computation:** these counts are the differences between the Step 2 CV_box/BF(a) set (541: 96 true / 445 false) and the CV6 set (522: 84 / 438).
+
+The CV6 set only needs the 6-h fill rule, not the 24-h primary_fill ≥ 80%, so it is not required to be a subset of the 541. The exact CV6-undefined counts by label among all 547 dev episodes were therefore not computed here and may differ slightly.
