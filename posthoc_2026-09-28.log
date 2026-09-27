@@ -1,0 +1,3 @@
+checks: frozen euv_extra (22 files) and COMBO-T hashes verified; dev set = euv_extra dev_rows (541, same folds); dev OOF from the frozen fold models reproduces the frozen dev log-loss for A, A_CV, C, C_CV, COMBO-T and the COMBO-T tau; prot12 reproduces the COMBO-T dev rows; grid top = frozen COMBO-T: True; label-code M1+ in (t, t+24h] vs stored true_alarm mismatches: {'dev': 0, 'test': 0, 'extra': 0, '2022': 0, '2025-26': 0}
+mismatch summary: Part 0 15/15; 1a 49/49; 1b 10/10; 1c 34/34; 1d 18/18; 1e 48/48; 1f 51/51; 1g 27/27; 1h 21/21; 1i 15/15
+wrote docs/posthoc_2026-09-28.md; wall 22.7 s

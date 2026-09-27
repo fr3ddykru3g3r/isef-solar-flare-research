@@ -5622,3 +5622,51 @@ GENERAL NOTES ON MY CHAT NUMBERS: computed with my own SWPC parser (edited-event
  - p90 4.256 / 0.398
 
 Where your reproduction differs from these, report both and do not adjust anything.
+
+### 2026-09-28 — PART 1 RESULTS: Claude-chat post-hoc analyses reproduced (POST-HOC, exploratory, originally computed by Claude AI in chat on 2026-09-27/28; reproduced here)
+**Outputs:** `posthoc_2026_09_28.py`, `posthoc_2026-09-28.log`, and every table in `docs/posthoc_2026-09-28.md`.
+
+**Data and method:** already-seen data only; no new data, no JSOC, no prospective data.
+- Frozen models only (euv_extra A, A_CV, C, C_CV; COMBO-T), at their exact frozen τ.
+- Dev predictions are out-of-fold from the frozen fold models; later sets use the mean of the 5 fold models.
+- Flares come from the repo's label code (`swpc.fetch` joinable events, K2 true scale, noaa_ars join), not the chat's parser.
+
+**Checks:**
+- Hashes verified.
+- The dev set equals the euv_extra dev rows (541, same folds).
+- Dev OOF from the frozen fold models reproduces the frozen dev log-loss for A, A_CV, C, C_CV and COMBO-T exactly, and the COMBO-T τ.
+- prot12 reproduces the COMBO-T dev rows.
+- The top of the 90-configuration grid is the frozen COMBO-T (τ and log-loss identical).
+- The label code reproduces stored true_alarm with 0 mismatches in all 5 sets.
+
+**Match with the chat numbers:** all 288 compared values match at the chat's precision. Part 0 15/15; 1a 49/49; 1b 10/10; 1c 34/34; 1d 18/18; 1e 48/48; 1f 51/51; 1g 27/27; 1h 21/21; 1i 15/15. No differences arose from using the repo's label code instead of the chat's parser.
+
+**Selected numbers** (simple counts; the weighted values are in the doc):
+
+C+ rule vs Model C, true kept / false removed:
+
+| set | C+ | Model C |
+|---|---|---|
+| dev | 91/96, 179/445 | 88/96, 154/445 |
+| test | 41/44, 94/262 | 42/44, 72/262 |
+| extra | 29/32, 36/123 | 28/32, 22/123 |
+| 2022 | 24/28, 27/124 | 26/28, 18/124 |
+| 2025–26 | 52/56, 125/322 | 54/56, 87/322 |
+| 2021–26 combined | 146/160, 282/831 | 150/160, 199/831 |
+
+C+ minus Model C (weighted points; paired HARP bootstrap 2,000, seed 0; post-hoc — these sets cannot confirm the rule):
+
+| set | D_true | D_false |
+|---|---|---|
+| dev | +4.9 [−1.9, +14.6] | +4.4 [−1.4, +10.2] |
+| test | −1.0 [−4.0, +0.0] | +5.0 [−3.6, +13.3] |
+| extra | +1.2 [+0.0, +4.5] | +9.8 [−3.5, +22.1] |
+| 2022 | −5.6 [−20.6, +3.2] | +2.9 [−7.1, +12.6] |
+| 2025–26 | −1.3 [−3.7, +0.0] | +7.9 [+0.7, +15.5] |
+
+- **C_CV-rejected true alarms:** 44 across the 5 sets, from 32 HARPs; 24 had ≥ 1 C-class flare in (t − 24 h, t).
+  - Median hours to the first M1+: 10.66 with a prior C-class flare (n 24), 15.49 without (n 20); true alarms kept, 9.28 (n 212).
+  - Any M/X in (t − 24 h, t): true rejected 4.5%, true kept 47.2%, false kept 21.2%, false removed 0.3%.
+- **C-level sweep:** the dev choice is C2.0.
+- **Table-rule dev cutoffs:** 0.065, 0.081, 0.196, 0.085, 0.194.
+- **COMBO default:** dev τ 0.0642.
