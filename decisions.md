@@ -5441,3 +5441,13 @@ Wall time 1.8 s with 9 workers.
 **Note (me), no computation:** these counts are the differences between the Step 2 CV_box/BF(a) set (541: 96 true / 445 false) and the CV6 set (522: 84 / 438).
 
 The CV6 set only needs the 6-h fill rule, not the 24-h primary_fill ≥ 80%, so it is not required to be a subset of the 541. The exact CV6-undefined counts by label among all 547 dev episodes were therefore not computed here and may differ slightly.
+
+## 2026-09-27 — PRE-REGISTRATION AMENDMENT: secondary model COMBO-T (decided by: user; recorded verbatim before implementation; no 2021–2026 evaluation)
+**Verbatim (user):**
+
+PRE-REGISTRATION AMENDMENT (before any prospective data exist; record verbatim, then implement; no 2021–2026 evaluation):
+Add secondary model "COMBO-T" (tuned on dev only by Claude AI, exploratory): Model C columns (score, n_C, n_M, n_X, log(1+R)) + log10 CV_box + prot12, where prot12 = 1 if the region had >= 1 flare of class C2.0 or larger (SWPC originals, true-flux scale, same NOAA-region join as labels) starting in (t − 12 h, t). No interaction term. LogisticRegression L2, C = 0.3, lbfgs; Step 6 settings otherwise (Stage 4 folds, 1/n per HARP weights, training-fold StandardScaler). Selected from a 90-configuration grid on dev OOF by: max weighted false removed at >= 88% weighted true kept (tie: lower log-loss).
+Fit on dev 2010–2019 only; save and hash the 5 fold models; τ at 88% dev OOF (≈ 0.079) recorded but secondary.
+PROSPECTIVE outputs for COMBO-T: (1) Δ log-loss = LL(Model C) − LL(COMBO-T), HARP bootstrap 10,000, seed 20260921, 95% CI (descriptive reading: "BETTER PROBABILITIES" if CI lower > 0, else "NOT SHOWN"); (2) reliability table for tiers <5%, 5–15%, 15–30%, >30% (n, true, mean predicted, observed rate); (3) at τ: D_true and D_false vs Model C (paired HARP bootstrap 2,000, seed 0).
+Disclosure (verbatim): a Claude AI exploratory check on 2021–2026 (not committed) gave LL 0.3657 vs Model C 0.3768, AUC 0.768 vs 0.750, and at τ 128/160 true kept, 477/831 false removed; the dev-88% cutoff kept only 80% of true alarms on 2021–2026 (cutoff drift).
+Commit. STOP.
