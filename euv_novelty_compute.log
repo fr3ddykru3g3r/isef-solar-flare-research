@@ -1,0 +1,5 @@
+LABEL-BLIND REPORT (no labels read): primary 80% set 541; computed 541; box-mean check max |diff| 0.0e+00; n_bright_px reproduced for spatial and spatial_nf in every episode (asserted)
+F_new: median 0.5431, IQR [0.4835, 0.6268]; undefined (no bright pixel-frames) 0; F_new_nf undefined 0
+  Spearman rho(F_new, R4c) = -0.8614 (p 1.10e-160, n 541)
+  Spearman rho(F_new, log10 CV_box) = -0.8206 (p 4.57e-133, n 541)
+wall 4389.3 s (1.22 h), workers 4

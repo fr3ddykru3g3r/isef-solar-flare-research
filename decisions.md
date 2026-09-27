@@ -4685,3 +4685,10 @@ Report tables after Step 2, commit, STOP.
 | 2022 | 152 | 152 | 18,203 | 364 | 165 | 771 | 152 | 0 | 152 (44) | 149 |
 
 STOP (filter test not run). It is evaluated only when the user says "run the pre-registered filter test once".
+
+### NEW vs REPEAT — Step 1 RESULT (label-blind; no labels read)
+`euv_novelty.py compute` (started automatically after the euv_extra download and computation finished) → `euv_novelty_compute.log`, `data/novelty/dev_novelty.csv`. 4 workers; wall 1.22 h (06:30–07:43).
+- **Coverage:** 541/541 episodes of the dev primary 80% set.
+- **Checks passed:** box frame means reproduced (max |diff| 0.0); per-frame n_bright_px reproduced exactly for both the stored spatial and spatial_nf runs, in every episode.
+- **F_new:** median 0.5431, IQR [0.4835, 0.6268]. Undefined (no bright pixel-frames): 0 for F_new, 0 for F_new_nf.
+- **Spearman ρ:** F_new with R4c −0.861 (p 1.1e-160); with log10 CV_box −0.821 (p 4.6e-133).
