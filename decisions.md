@@ -5025,3 +5025,69 @@ OUTPUTS: sensitivity_combined.py, sensitivity_combined.log, a results entry in d
   - What changed: the V2 definition is unchanged. A cell with 0 pairs gets no bootstrap; its ratio and CI are reported as undefined and its reading as "undefined (0 pairs)". The fixed readings need a ratio, so no reading is applied to such cells.
   - Added descriptive counts only: episodes with s = 0 in some round; episodes still flagging in round 5 (the cap); and the per-episode fraction of round-1 residuals that are exactly 0. The figure labels 0-pair cells as such.
   - The script is then run once to completion.
+
+### 2026-09-27 — SENSITIVITY (92027fa): RESULTS (post-hoc; not a test; sets never pooled)
+Recorded from `sensitivity_combined.log`. The script was run twice: the second time only to fix the figure's y-limits, which were clipping the bottom row. The logs are identical apart from the wall time.
+
+**CHECKS (all passed):**
+- **V0/V1 reproduction:** stored V0 and V1 were reproduced from the series files with the frame-subset code path (|diff| < 1e-9):
+  - S1: 378/378 (max 2.2e-16 V0 / 9.7e-17 V1)
+  - S2: 155/155 (9.7e-17 / 9.7e-17)
+  - S3: 152/152 (1.1e-16 / 1.1e-16)
+  - Stored V1 undefined (< 3 frames): 0.
+- **S1 T_a:** the regenerated pairs are identical to the stored TEST 1 pairs.
+- **T_a × V0:** reproduces the committed ratios for S1–S3.
+- **S1 T_b × V0:** reproduces TEST 1 s1 (47 pairs, 2.817 [1.017, 6.823]).
+
+**Defined episodes and V2 diagnostics** (V2 fill = remaining frames / 120 slots):
+
+| set | episodes | V0 | V1 | V2 3 s | V2 2.5 s | V2 4 s | round-1 residuals exactly 0, per-episode median [IQR] |
+|---|---:|---:|---:|---:|---:|---:|---|
+| S1 | 378 | 378 | 373 | 19 | 6 | 79 | 0.3697 [0.3277, 0.4200] |
+| S2 | 155 | 155 | 146 | 7 | 1 | 33 | 0.3613 [0.3273, 0.4009] |
+| S3 | 152 | 152 | 149 | 4 | 1 | 22 | 0.3697 [0.3305, 0.4118] |
+
+| set | V2 | removed per episode: true median / mean | false median / mean | flagged frames | flagged inside V1 flare windows | V1 flare frames flagged | median fill | s = 0 in some round | still flagging in round 5 |
+|---|---|---|---|---:|---|---|---:|---:|---:|
+| S1 | 3 s | 61.0 / 58.14 | 54.5 / 53.67 | 20,537 | 1,047 (0.0510) | 1,047/1,441 (0.7266) | 0.5167 | 138 | 335 |
+| S1 | 2.5 s | 65.5 / 63.61 | 64.0 / 60.29 | 22,974 | 1,087 (0.0473) | 1,087/1,441 (0.7543) | 0.4375 | 155 | 362 |
+| S1 | 4 s | 45.5 / 49.21 | 39.0 / 43.36 | 16,719 | 984 (0.0589) | 984/1,441 (0.6829) | 0.6250 | 99 | 288 |
+| S2 | 3 s | 52.0 / 52.09 | 52.0 / 50.35 | 7,860 | 629 (0.0800) | 629/1,050 (0.5990) | 0.5333 | 30 | 133 |
+| S2 | 2.5 s | 63.0 / 59.28 | 62.0 / 58.45 | 9,086 | 669 (0.0736) | 669/1,050 (0.6371) | 0.4583 | 44 | 152 |
+| S2 | 4 s | 38.0 / 43.38 | 34.0 / 39.27 | 6,218 | 538 (0.0865) | 538/1,050 (0.5124) | 0.6750 | 27 | 111 |
+| S3 | 3 s | 63.5 / 61.50 | 59.5 / 55.90 | 8,653 | 520 (0.0601) | 520/750 (0.6933) | 0.4750 | 57 | 136 |
+| S3 | 2.5 s | 70.0 / 67.64 | 67.0 / 62.01 | 9,583 | 548 (0.0572) | 548/750 (0.7307) | 0.4167 | 67 | 144 |
+| S3 | 4 s | 48.5 / 52.46 | 40.0 / 46.81 | 7,273 | 489 (0.0672) | 489/750 (0.6520) | 0.6125 | 47 | 121 |
+
+**TWINS RATIOS** (median true ÷ median false; 95% CI with pairs resampled by true HARP, 2,000, seed 0; sign test two-sided, 0 ties in every cell; 0 undefined resamples):
+
+| set | twins | version | pairs (dropped) | medians true / false | ratio [95% CI] | true higher | sign p | reading |
+|---|---|---|---|---|---|---|---|---|
+| S1 | T_a | V0 | 50 (0) | 0.2218 / 0.0680 | 3.2624 [1.2956, 9.4887] | 39/50 | 0.0001 | direction holds, CI above 1 |
+| S1 | T_a | V1 | 49 (1) | 0.1765 / 0.0604 | 2.9247 [1.1771, 8.2515] | 37/49 | 0.0005 | direction holds, CI above 1 |
+| S1 | T_a | V2 3 s | 0 (50) | — | undefined | — | — | undefined (0 pairs) |
+| S1 | T_a | V2 2.5 s | 0 (50) | — | undefined | — | — | undefined (0 pairs) |
+| S1 | T_a | V2 4 s | 4 (46) | 0.0453 / 0.0228 | 1.9851 [0.8061, 6.8436] | 2/4 | 1.0000 | direction holds, CI includes 1 |
+| S1 | T_b | V0 | 47 (0) | 0.2245 / 0.0797 | 2.8174 [1.0169, 6.8227] | 35/47 | 0.0011 | direction holds, CI above 1 |
+| S1 | T_b | V1 | 47 (0) | 0.1801 / 0.0659 | 2.7309 [1.1042, 6.1989] | 34/47 | 0.0031 | direction holds, CI above 1 |
+| S1 | T_b | V2 3 s | 0 (47) | — | undefined | — | — | undefined (0 pairs) |
+| S1 | T_b | V2 2.5 s | 0 (47) | — | undefined | — | — | undefined (0 pairs) |
+| S1 | T_b | V2 4 s | 2 (45) | 0.1097 / 0.0401 | 2.7323 [0.6978, 6.8436] | 1/2 | 1.0000 | direction holds, CI includes 1 |
+| S2 | T_a | V0 | 23 (0) | 0.1563 / 0.0959 | 1.6295 [0.7907, 3.8386] | 13/23 | 0.6776 | direction holds, CI includes 1 |
+| S2 | T_a | V1 | 21 (2) | 0.1594 / 0.0786 | 2.0280 [0.8206, 4.2110] | 13/21 | 0.3833 | direction holds, CI includes 1 |
+| S2 | T_a | V2 3 s / 2.5 s / 4 s | 0 (23) each | — | undefined | — | — | undefined (0 pairs) |
+| S2 | T_b | V0 | 22 (0) | 0.1399 / 0.1047 | 1.3356 [0.6674, 2.1473] | 15/22 | 0.1338 | direction holds, CI includes 1 |
+| S2 | T_b | V1 | 19 (3) | 0.1594 / 0.1188 | 1.3423 [0.6685, 2.5072] | 13/19 | 0.1671 | direction holds, CI includes 1 |
+| S2 | T_b | V2 3 s / 2.5 s / 4 s | 0 (22) each | — | undefined | — | — | undefined (0 pairs) |
+| S3 | T_a | V0 | 25 (0) | 0.2641 / 0.0816 | 3.2350 [1.2554, 4.5452] | 18/25 | 0.0433 | direction holds, CI above 1 |
+| S3 | T_a | V1 | 23 (2) | 0.2149 / 0.0816 | 2.6323 [0.9065, 3.8331] | 15/23 | 0.2100 | direction holds, CI includes 1 |
+| S3 | T_a | V2 3 s / 2.5 s / 4 s | 0 (25) each | — | undefined | — | — | undefined (0 pairs) |
+| S3 | T_b | V0 | 24 (0) | 0.2695 / 0.1033 | 2.6106 [1.0820, 3.8852] | 15/24 | 0.3075 | direction holds, CI above 1 |
+| S3 | T_b | V1 | 22 (2) | 0.2132 / 0.0766 | 2.7844 [0.8929, 5.4379] | 15/22 | 0.1338 | direction holds, CI includes 1 |
+| S3 | T_b | V2 3 s / 2.5 s / 4 s | 0 (24) each | — | undefined | — | — | undefined (0 pairs) |
+
+**Outputs:**
+- `sensitivity_combined.py`
+- `sensitivity_combined.log`
+- `figures/sensitivity_combined.png`
+- `data/sensitivity_combined_{S1,S2,S3}.csv` and `data/sensitivity_combined_cells.csv` (data/ is not tracked)
