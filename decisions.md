@@ -5294,3 +5294,17 @@ Recorded from `prospective_step1.log`. true_alarm and delayed were never read: `
 
 - **Saved:** `data/prospective/dev_values.csv`, SHA-256 `15113e5ca707b6d2398e75052ca4ac4fbf2de859f9cbeb7a1aaa5b07c44532a6`.
 - **Wall time:** 1.54 h with 9 workers for 545 episodes. One further episode (71_20100630T0359) was computed first, in-process, as a timing and check run (11.3 s); its output was checked and not re-run.
+
+## 2026-09-27 — BF LABEL-BLIND NOISE DIAGNOSTIC, before Step 2 (decided by: user; recorded verbatim before anything else)
+**Verbatim (user):**
+
+Before Step 2: LABEL-BLIND NOISE DIAGNOSTIC for BF (do not read true_alarm or delayed). Record this entry verbatim in decisions.md first, then commit.
+
+Reason (record verbatim): median BF 0.5902 is close to the value expected from photon noise alone for a faint pixel (~15 DN per 12-min exposure → σ/mean ≈ 0.36 → 5th percentile ≈ mean − 1.645σ → BF ≈ 0.59), and BF barely correlates with CV_box (ρ 0.38), n_C or gate score. BF may be dominated by per-pixel photon noise. This check uses no labels, so a definition change decided from it is allowed before Step 2.
+
+For each of the 541 dev episodes with BF defined:
+1. BF_noise = the BF that the SAME pixels would have with NO real variability: for every kept pixel, simulate its frame series as its own mean (DN/s) plus photon + read noise at each frame's exposure time (AIA 94 Å gain 1.975 DN/photon and read noise 1.14 DN from the aiapy V3 table already used in 5af931b; Poisson photons, Gaussian read noise), with the same frames/NaN pattern; seed 0. Compute BF exactly as defined.
+2. Report: median and IQR of BF_noise; median of BF_noise / BF; Spearman ρ(BF, BF_noise); Spearman ρ(BF, box-mean brightness).
+3. MECHANICAL RULE (fixed now): if median BF_noise / BF > 0.5, write "BF IS NOISE-DOMINATED" in decisions.md, commit and STOP. Then list options for a noise-robust BF, e.g. (a) BF on spatially binned macropixels (e.g. 4×4 AIA pixels), (b) floor corrected by the expected noise: floor_i + 1.645·σ_noise,i, (c) restrict to pixels above a brightness cut. For each option, give its expected BF_noise on these same episodes (label-blind). Do NOT choose.
+   Otherwise write "BF NOISE CONTRIBUTION ACCEPTABLE", commit and STOP.
+Do not run Step 2.
