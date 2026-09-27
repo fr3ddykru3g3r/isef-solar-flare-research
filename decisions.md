@@ -5366,3 +5366,19 @@ Recorded from `prospective_noise.log`. Dev 2010–2019, 541 episodes with BF def
   - Pool from 18:47 to 21:52 local (3.09 h) with 5 workers (7 were planned; 5 were used for memory). The sum of per-episode times was 15.37 h.
   - One episode (71_20100702T2059) failed in the pool on a transient JSOC pointing-table query timeout (OSError, Errno 60) and was recomputed in a separate process with the same code. Because the exception was raised inside the pool, the pool wrote no progress lines and no "done" line; the report's wall-time line was patched to use the start time and the last result's file time.
   - The report was run twice: the first run printed the wall-time line wrongly, and the second changed only that line.
+
+## 2026-09-27 — BF DEFINITION (option a) AND AMENDED PROSPECTIVE TEST, label-blind, before Step 2 (decided by: user; recorded verbatim before Step 2)
+**Verbatim (user):**
+
+Decisions (label-blind; record verbatim in decisions.md BEFORE Step 2, then commit):
+
+1. BF definition: use option (a) — BF computed on 5×5 HMI-pixel blocks (≈4×4 AIA pixels), otherwise identical to the pre-registered BF (same frames, same Option 1 grid, 5th-percentile floor, luminosity-weighted, same 80% rules). Rationale: the per-pixel BF is noise-dominated (a215701: median BF_noise/BF 1.1464). (a) passes the 0.5 noise rule (0.4505) and keeps all 541 episodes.
+   Rejected: (b) gives BF < 0 in 422/541 episodes (over-correction, not physical); (c) leaves most episodes with no qualifying pixels (median share 0), so exclusion would depend on brightness and could depend on outcome.
+   Note (record): BF(a) correlates ρ 0.84 with CV_box, so it is largely redundant with CV_box.
+
+2. Amend the PROSPECTIVE TEST before any prospective data exist:
+   PRIMARY = CV_box, magnetic twins (gate score, caliper 0.0747, TEST 1 code): a prospective replication of the confirmed 2025–26 twins result (ae1b174). Same statistic, CI, size rule and mechanical reading as already recorded.
+   SECONDARY (cannot change the reading) = CV6 and BF(a), with the same statistic; magnetic + flare-history twins for all three.
+   Rationale (record): BF is noise-dominated at 12-min single-exposure pixel scale; BF(a) is largely redundant with CV_box; the confirmed measure is the most valuable to replicate prospectively.
+
+3. Then run Step 2 (dev exploration, EXPLORATORY) exactly as specified, for BF(a), CV6 and CV_box. Report and STOP.
