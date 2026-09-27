@@ -4784,3 +4784,38 @@ AIA re-exported once for the PRIMARY set's range of HARP 8923 (`euv_extra.py ree
 - CV_box twins ratio: 25 pairs; 3.235 [1.255, 4.545]. All-episodes ratio 2.766 [1.019, 6.291].
 
 STOP.
+
+## 2026-09-27 — 2025–26 RE-TEST: CV_box AS A FILTER ON TOP OF MODEL C (decided by: user; wording drafted by Claude AI, reviewed and adopted by Lokesh)
+**Verbatim (user):**
+
+Frozen files unchanged; never overwrite existing models, thresholds or results. Do not run stage5_test.py. No JSOC downloads are needed; if any step seems to need one, STOP and ask.
+
+STEP 0 — Record this whole entry verbatim in decisions.md BEFORE anything else, headed "2026-09-27 — 2025–26 RE-TEST: CV_box AS A FILTER ON TOP OF MODEL C (decided by: user; wording drafted by Claude AI, reviewed and adopted by Lokesh)". Commit.
+Disclosure (record verbatim): This comparison (C vs C_CV) was chosen AFTER seeing it as a secondary result in the EUV-unseen follow-up (5abc40a: +35.3 [+17.1, +51.9] false removed, −2.6 [−13.3, +3.5] true kept), where the pre-registered primary (A vs A_CV) was not confirmed because A's frozen threshold kept every episode. 2025–26 flare labels and CV_box values were already seen together in TEST 1 (twins) and TEST 2 (Step B) (ae1b174). This is a "pre-registered re-test on an already-analysed set", NOT an untouched test. Models were trained on single-region dev episodes and are applied to <= 2-region episodes (population change; reported).
+
+HYPOTHESIS: Adding log10 CV_box to Model C removes more false alarms at the dev-frozen thresholds while keeping true alarm episodes, on the 2025–26 confirmation cohort.
+
+SET: data/euv_confirm/cohort_le2.csv, the same evaluable rows as TEST 1 (fill >= 80%, CV_box finite and > 0), with R (hours since last C1+ flare, capped 48; Step B definition) exactly as used in TEST 2. Weights 1/n per HARP. Delayed episodes count as false.
+
+MODELS AND THRESHOLDS: use ONLY the frozen artifacts in data/euv_extra/models/ and data/euv_extra/thresholds.json (C τ 0.062570, C_CV τ 0.068936, A τ 0.067970, A_CV τ 0.074657). Verify every SHA-256 against data/euv_extra/model_hashes.json before use. No refitting. Prediction = mean of the 5 fold models.
+
+PRIMARY comparison: C vs C_CV at their frozen thresholds. From the SAME paired HARP resamples (2,000, seed 0):
+ D_false = weighted % false alarms removed (C_CV minus C), with 95% CI;
+ D_true  = weighted % true alarm episodes kept (C_CV minus C), with 95% CI.
+READING (mechanical, decided now):
+ "CONFIRMED SAFE FILTER" if D_false CI lower > 0 AND D_true CI lower >= −10 points.
+ "MEETS OPERATING CRITERION" if D_false CI lower > 0 AND D_true point estimate >= −10 points (but its CI lower < −10).
+ "REMOVES FALSE ALARMS BUT LOSES TOO MANY TRUE ALARMS (point estimate)" if D_false CI lower > 0 AND D_true point estimate < −10 points.
+ "INCONCLUSIVE" if the CIs cannot be computed.
+ "NOT CONFIRMED" otherwise.
+SECONDARY (cannot change the reading): counts kept/removed per model; AUC; Δ log-loss (C minus C_CV; HARP bootstrap 10,000, seed 20260921); A vs A_CV with the same outputs; composition (single- vs two-region, by year). Never pool with any other set.
+Wording in all outputs: "true alarm episodes kept", not "real flares".
+
+STEP 1 — LABEL-BLIND checks only (do not read true_alarm or delayed; do not print outcomes):
+ a) Row count and HARP count of the evaluable set; confirm they match TEST 1's evaluable set; list any mismatch with reasons.
+ b) Confirm every model input column exists with no missing values; confirm R matches the TEST 2 definition (report how you checked).
+ c) All hash checks pass.
+ d) BASELINE GUARD (decided now): report the weighted % of ALL episodes with p >= τ for C and for C_CV. If C keeps > 95% of all episodes, write "BASELINE THRESHOLD DOES NOT FILTER — TEST NOT RUN" in decisions.md, commit, and STOP permanently.
+ Commit the check results. STOP.
+
+Do not evaluate until I say "run the 2025–26 filter re-test once". Then: run it exactly once, write the results table and the mechanical reading to euv_confirm_filter_retest.log and decisions.md, commit, and report the numbers verbatim with no interpretation beyond the pre-stated reading.
