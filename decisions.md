@@ -5187,3 +5187,49 @@ Per the 1c rule this is a permanent stop. No evaluation will be run, true_alarm 
   - PRIMARY: A keeps 1.0000 weighted (306/306 episodes).
   - SECONDARY: A keeps 1.0000 weighted (378/378).
   - Both are > 95%, so the PRIMARY comparison would have been "not interpretable (baseline does not filter)" in both sets.
+
+## 2026-09-27 — PROSPECTIVE PRE-REGISTRATION: bursty fraction (BF) and late-window restlessness (CV6) (decided by: user; wording drafted by Claude AI, reviewed and adopted by Lokesh)
+**Verbatim (user):**
+
+PRE-REGISTRATION + DEV-ONLY EXPLORATION. No held-out or confirmation set is touched. Frozen files unchanged; never overwrite existing series, results, models or pairs. Do not run stage5_test.py. JSOC: my account only, ONE pending export at a time; NO downloads in Steps 0–2.
+
+STEP 0 — Record this whole entry verbatim in decisions.md BEFORE anything else, headed "2026-09-27 — PROSPECTIVE PRE-REGISTRATION: bursty fraction (BF) and late-window restlessness (CV6) (decided by: user; wording drafted by Claude AI, reviewed and adopted by Lokesh)". Commit.
+
+Disclosure (record verbatim): Proposed after all existing results (latest commits 1465063 and b7e7749). Motivated by Tiwari et al. 2023 (ApJ; per-pixel minimum/average brightness maps separate steady from bursty 4–8 MK heating), Kniezewski et al. 2024 (ApJL 977:L29; EUV variability peaks 1–2 h before flare onset), Krista 2024 (ApJ 978:121; precursors elevated in the last 2 h), and the descriptive finding that calm true alarms flare later (5af931b). Dev 2010–2019 is used for exploration only. The ONLY confirmatory test is the prospective set defined below, whose data do not exist in the repo today. The 2021–2024, 2022 and 2025–26 sets are never used for these measures.
+
+MEASURES (definitions fixed now; never changed after seeing any value):
+ CV6 = CV_box computed with the EXISTING CV_box function (same detrending, same valid_primary frames), restricted to frames in (t − 6 h, t]. Requires >= 80% of the 30 expected 12-min slots valid; otherwise undefined (label-blind exclusion, counted).
+ BF (bursty fraction) = share of the HARP-box 94 Å luminosity that is not steady, from frames in (t − 24 h, t]:
+  a) use the SAME frame rules as the primary version (QUALITY == 0, exposure rule, saturated pixels set to NaN, flare frames kept, exposure-normalised DN/s);
+  b) co-register valid frames to the last valid frame using the EXISTING registration code, and use the HARP box mask exactly as the existing CV_box code does;
+  c) keep box pixels that are finite in >= 80% of valid frames;
+  d) per kept pixel i: floor_i = 5th percentile over frames; mean_i = mean over frames (the 5th percentile, not the strict minimum, for robustness to noise);
+  e) BF = 1 − (Σ floor_i) / (Σ mean_i) over kept pixels;
+  f) BF is undefined if frame fill < 80% or < 80% of box pixels are kept (label-blind exclusion, counted).
+ If a), b) or the box mask cannot be implemented from existing code without a new decision, STOP and list the options with their consequences. Do not choose one yourself.
+
+STEP 1 — DEV ONLY, LABEL-BLIND COMPUTE (do not read true_alarm or delayed):
+ Compute CV6 and BF for the 547 dev episodes (data/stage3/cohort_dev.csv) from AIA/HMI files already on disk (data/euv_full/). No downloads.
+ Checks first: the CV_box function reproduces the stored dev CV_box for every episode (|diff| < 1e-9) when given the full 24-h frame set; BF code self-test on a synthetic cube (constant cube → BF = 0; cube with added bursts → BF > 0).
+ Report ONLY: counts defined/undefined per rule; median and IQR of CV6 and BF; Spearman rho of CV6 and BF with CV_box, n_C and gate score (label-free); wall time.
+ Save data/prospective/dev_values.csv and record its SHA-256. Commit. STOP.
+
+STEP 2 — DEV EXPLORATION (run only when I say "run dev exploration"; EXPLORATORY; nothing here changes the prospective plan):
+ For BF, CV6 and CV_box, each separately:
+  - twins ratio on the step 6 gate-score pairs (data/euv_full/step6/twins_PRIMARY.csv; both values defined): median true / median false; CI with pairs resampled by true HARP, 2,000, seed 0;
+  - Δ log-loss for A vs A + log10(x) and for C vs C + log10(x) (Step 6 settings: Stage 4 folds, 1/n per HARP weights, training-fold scaling, same estimator; C = A + log(1+R) as in Step B; HARP bootstrap 10,000, seed 20260921); AUC for each model.
+ Commit. STOP.
+
+PROSPECTIVE TEST (recorded now; executed ONLY when I say "run the prospective test once", and not before 2026-11-10):
+ COVERAGE CHECK (first, recorded before any download): E = min(2026-10-31 23:00 TAI, the latest T_REC with complete SHARP + SWPC + GOES coverage, allowing 24 h of label follow-up after each t).
+ SET: alarm episodes with t in [2026-08-17 00:00 TAI, E], built with EXACTLY the same gate, cohort rules and fallbacks as the 2025–26 confirmation set (749208e: T1–T4, <= 2 regions); labels from SWPC originals on the true-flux scale; delayed episodes count as false. Exclude every HARP and every NOAA region present in any earlier EUV data directory (data/euv_full, euv_test, euv_confirm, euv_extra, euv_pilot, euv_cad).
+ DOWNLOAD: exactly as the 2025–26 confirmation download (AIA 94 Å, 12-min, (t − 24 h, t], tracked im_patch cutouts; HMI magnetogram + bitmap at t). Dry run first (report episodes, exports, GB, hours). One pending export at a time, my account only.
+ SIZE RULE (label-blind, before reading labels): if fewer than 60 episodes have BF defined, report "TOO SMALL — DESCRIPTIVE ONLY", give the numbers, and give no reading.
+ PRIMARY: BF, magnetic twins (gate score, frozen caliper 0.0747, the same twins code as TEST 1 in ae1b174). Statistic: median true / median false; 95% CI with pairs resampled by true HARP, 2,000, seed 0.
+ READING (mechanical):
+  "REPLICATED" if ratio > 1 AND CI lower > 1;
+  "DIRECTION CONSISTENT, NOT CONFIRMED" if ratio > 1 AND CI lower <= 1;
+  "NOT REPLICATED" otherwise.
+ SECONDARY (cannot change the reading): the same statistic for CV6 and CV_box; magnetic + flare-history twins (the TEST 1 s1 code, by_group=True) for all three; counts of pairs with true > false; sign-test p. Never pooled with any earlier set.
+
+OUTPUTS: prospective_measures.py, prospective_step1.log, prospective_step2.log, and decisions.md entries with the numbers verbatim. Never use "confirmed", "validated" or "significant" for dev results. STOP after each step and report the commit hash.
