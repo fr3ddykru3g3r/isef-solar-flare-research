@@ -4974,3 +4974,39 @@ OUTPUTS: descriptive_aia94.py, descriptive_aia94.log, a results entry in decisio
 | S3 | WARNING | 21 | 6.66 | −0.8591 | 0.2983 | 0.9917 | 19.98 | 1 | 9 | M 20, X 1 | JUST-FLARED 13, C-only 7, QUIET-NOW 1 |
 
 The S1 per-episode list of all 56 true alarm episodes is in `descriptive_aia94.log`.
+
+## 2026-09-27 — SENSITIVITY: CV_box twins with magnetic + flare-history matching AND flare frames removed; image-only spike removal (decided by: user; wording drafted by Claude AI, reviewed and adopted by Lokesh)
+**Verbatim (user):**
+
+SENSITIVITY CHECK ONLY (post-hoc, on already-analysed data). Nothing here is a test or a confirmation, and no result can be called "confirmed". Frozen files unchanged; never overwrite existing series, results, models or pairs. Do not run stage5_test.py. No downloads; if a step seems to need one, STOP and ask.
+
+STEP 0 — Record this whole entry verbatim in decisions.md BEFORE anything else, headed "2026-09-27 — SENSITIVITY: CV_box twins with magnetic + flare-history matching AND flare frames removed; image-only spike removal (decided by: user; wording drafted by Claude AI, reviewed and adopted by Lokesh)". Commit.
+Disclosure (record verbatim): Defined after all 2025–26 results (ae1b174, 4b65f23, 5af931b) and after an ad-hoc check by Claude AI (not committed) that found, on 2025–26, a twins ratio of 2.92 [1.18, 8.45] with flare frames removed (49 pairs). Purpose: check whether real alarms are more restless than magnetic twins after holding magnetic score AND flare history constant AND removing flare-time frames, including a version built from 94 Å images only. All definitions below are fixed now, before computing, and every cell is reported whatever it shows.
+
+SETS: PRIMARY = S1, the 2025–26 <= 2-region evaluable set (378 episodes; TEST 1, ae1b174). SECONDARY (reported separately, never pooled): S2 = EUV-unseen PRIMARY 2021/23/24 (155) and S3 = 2022 (152), as in 5abc40a.
+
+CV_box VERSIONS (same CV_box function and detrending as the stored values; only the frame set changes):
+ V0 = stored primary CV_box (flare frames kept). Reference.
+ V1 = stored flare-excluded CV_box (sens_CV_box; frames inside a C1+ SWPC event of the HARP's NOAA region(s), or any M1+ event, removed; sens_fill >= 0.80).
+ V2 = IMAGE-ONLY spike removal. No flare list, no magnetic data. Using the stored per-frame box values of valid_primary frames in time order:
+   a) running median m_i over the 5 valid frames centred on frame i (shrink at the ends);
+   b) residual r_i = box_i − m_i; robust scale s = 1.4826 × median(|r_i|) over the episode;
+   c) flag frame i if r_i > 3 s (upward jumps only);
+   d) remove the flagged frames and repeat a)–c) on the remaining frames until nothing new is flagged (max 5 rounds);
+   e) fill = remaining frames / expected slots; require >= 0.80; then CV_box on the remaining frames.
+ V2 robustness (reported, not primary): the same with 2.5 s and 4 s.
+
+CHECKS FIRST (STOP if any fails):
+ - Reproduce stored V0 and V1 from the series files with the frame-subset code path: |diff| < 1e-9 for every episode.
+ - Report V2 frames removed per episode (median, mean) for true vs false, and agreement with the flare list: of V2-flagged frames, the fraction inside V1 flare windows; of V1 flare frames, the fraction flagged by V2.
+
+TWINS (the magnetic/flare-history control):
+ T_a = magnetic twins: the stored TEST 1 pairs (S1) / the 5abc40a pairs (S2, S3).
+ T_b = magnetic + flare-history twins: the SAME code as the TEST 1 secondary "s1" (by_group=True; F4 groups JUST-FLARED / C-only / QUIET-NOW; caliper 0.0747; same seed and order), built on the V0 evaluable set.
+ For each version, keep a pair only if both members are defined under that version; report pairs dropped.
+
+STATISTICS (same as TEST 1): twins ratio = median(true) / median(false); 95% CI with pairs resampled clustered by true HARP, 2,000, seed 0; the count of pairs where the true member is higher; a two-sided sign-test p. Report all 2 × 3 cells (T_a/T_b × V0/V1/V2) plus the V2 robustness rows, for S1, then S2 and S3.
+
+DESCRIPTIVE READING (per cell, fixed now): "direction holds, CI above 1" if ratio > 1 and CI lower > 1; "direction holds, CI includes 1" if ratio > 1 and CI lower <= 1; "direction reversed" if ratio <= 1. Never the words "confirmed", "validated" or "significant".
+
+OUTPUTS: sensitivity_combined.py, sensitivity_combined.log, a results entry in decisions.md (verbatim numbers), and figures/sensitivity_combined.png (twins ratio with CI for each cell, S1 on top, S2/S3 below; titled "post-hoc sensitivity"). Commit. Report the numbers verbatim with the commit hash. STOP.
