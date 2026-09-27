@@ -4715,3 +4715,32 @@ AIA re-exported once for the PRIMARY set's range of HARP 8923 (`euv_extra.py ree
 ### Status of the dots test (#23) at the user's request
 - Step 2 was run once (d89a1a0). Pre-stated reading: **"NOT ELIGIBLE"** (Δ −0.0056 [−0.0218, +0.0083]).
 - Its Step 3 follow-up feature was therefore NOT computed on the PRIMARY set, and no dots follow-up is run with the filter test.
+
+### EUV-unseen follow-up — filter test: implementation (decided by: me, BEFORE the test is run; the pre-registered design 338c0aa is unchanged)
+- **Code:** `euv_extra.py filter` (run once) → `euv_extra_filter_test.log`, `data/euv_extra/filter_test/`.
+- **Integrity:** every file in `model_hashes.json` (20 fold models, `thresholds.json`, `dev_rows.csv`) must match its recorded SHA-256 before any label is read.
+- **New-set features:**
+  - `score`, `n_C`, `n_M`, `n_X` at t from `cohort_{set}_all_eligible.csv`. The score is the mean of the 5 frozen gate folds, as Stage 5.
+  - log10 CV_box = log10(`primary_CV_box`) from `<set>/results`.
+  - log(1+R) with the Step B code (`euv_confirm_tests.log_r`, `swpc.fetch` 2020-12-29 → 2025-01-01). Check: (R < 48) ⇔ (n_C + n_M + n_X ≥ 1).
+- **Evaluable set:** INCLUDED ∩ `primary_fill` ≥ 0.80 ∩ CV_box finite and > 0 (PRIMARY 155, 2022 152). Weights 1/n per HARP over that set; delayed episodes are false. Prediction = mean of the 5 fold models; kept = p ≥ frozen τ.
+- **D_false and D_true:**
+  - D_false = FR(A_CV) − FR(A), with FR = Σ w(1 − y)[p < τ] / Σ w(1 − y) (weighted fraction of false alarms removed).
+  - D_true = TK(A_CV) − TK(A), with TK = Σ w·y·[p ≥ τ] / Σ w·y (weighted fraction of true alarm episodes kept).
+  - Both are reported in percentage points.
+- **CIs:** paired HARP bootstrap, 2,000 resamples, `np.random.RandomState(0)`; the same resamples serve both statistics and both model pairs. The 2.5/97.5 percentiles are taken over resamples in which both statistics are defined; the number dropped is reported.
+- **INCONCLUSIVE** if the set has no true or no false episode, or no resample is valid.
+- **Reading** (mechanical, as pre-registered; −10 points = −0.10):
+  - "CONFIRMED SAFE FILTER": D_false CI lower > 0 and D_true CI lower ≥ −10.
+  - "MEETS OPERATING CRITERION": D_false CI lower > 0 and D_true point ≥ −10 (CI lower < −10).
+  - "REMOVES FALSE ALARMS BUT LOSES TOO MANY TRUE ALARMS (point estimate)": D_false CI lower > 0 and D_true point < −10.
+  - "INCONCLUSIVE" as above; otherwise "NOT CONFIRMED".
+  - The reading uses the PRIMARY set's A vs A_CV only.
+- **Secondary** (cannot change the reading), for both sets:
+  - counts per model (true alarm episodes kept, false alarms kept, false alarms removed);
+  - Δ log-loss A − A_CV and C − C_CV (HARP bootstrap 10,000, seed 20260921);
+  - AUC of all four models;
+  - C vs C_CV D_false / D_true (same resamples);
+  - CV_box twins ratio (`euv_f2_replication.twins` = the step 6 code; `phase_f.ratio_jobs`; pairs resampled by true HARP, 2,000, seed 0);
+  - composition by year × single/two-region.
+- **Wording:** "true alarm episodes kept".
