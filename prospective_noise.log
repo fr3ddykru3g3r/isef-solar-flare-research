@@ -1,0 +1,24 @@
+BF LABEL-BLIND NOISE DIAGNOSTIC (21e9e89; implementation 721ffa9). Dev 2010-2019, 541 episodes with BF defined; no labels read.
+checks: per-frame box means of the rebuilt stack reproduce the stored series (max |diff| 0.0e+00); recomputed BF equals dev_values.csv (max |diff| 0.0e+00) for all 541
+noise model: g 1.975 DN/photon, read noise 1.14 DN, per-frame EXPTIME, Poisson photons + Gaussian read noise, same NaN pattern, RandomState(0) per episode
+
+BF (data):   median 0.5902, IQR [0.5413, 0.6724]
+BF_noise:    median 0.6583, IQR [0.5570, 0.7636]
+BF_noise / BF: median 1.1464, IQR [0.9375, 1.3242]
+Spearman BF vs BF_noise: rho +0.1676 (p 8.97e-05, n 541)
+Spearman BF vs box-mean brightness (mean of the stored box series, DN/s): rho -0.2646 (p 4.08e-10, n 541)
+
+MECHANICAL RULE (median BF_noise / BF > 0.5): median 1.1464 -> "BF IS NOISE-DOMINATED"
+
+OPTIONS for a noise-robust BF (label-blind; NOT chosen). Each: value on the data, value with no real variability (noise only), median per-episode ratio noise / data, episodes defined, Spearman with CV_box on the data
+  (a) macropixels k x k HMI pixels (k [5], ~4x4 AIA px): defined 541 (undefined {})
+      data median 0.3891, IQR [0.3281, 0.4774]; noise median 0.1765, IQR [0.1482, 0.2034]; ratio median 0.4505; vs CV_box rho +0.8359 (p 1.55e-142, n 541)
+  (b) floor_i + 1.645 sigma_noise,i (no cap): defined 541
+      data median -0.1537, IQR [-0.2769, -0.0259]; noise median -0.0759, IQR [-0.0942, -0.0586]; ratio median 0.3440; data < 0 in 422; vs CV_box rho +0.8762 (p 5.42e-173, n 541)
+  (c) pixels with mean x median EXPTIME >= 100 DN: kept-pixel fraction passing median 0.0000, IQR [0.0000, 0.0048]; episodes with >= 1 pixel 262
+      data median 0.7456, IQR [0.6532, 0.8235]; noise median 0.1972, IQR [0.1855, 0.2095]; ratio median 0.2655; vs CV_box rho +0.3587 (p 2.25e-09, n 262)
+  (c) pixels with mean x median EXPTIME >= 300 DN: kept-pixel fraction passing median 0.0000, IQR [0.0000, 0.0000]; episodes with >= 1 pixel 55
+      data median 0.8586, IQR [0.7976, 0.8893]; noise median 0.1218, IQR [0.1157, 0.1243]; ratio median 0.1406; vs CV_box rho +0.4536 (p 5.05e-04, n 55)
+
+saved data/prospective/noise_values.csv sha256 0d0b28022c5253c2561837fd6e9d1a416937d8c465f2178ff53dca23cfb5bab4
+wall (compute, pool): 18:47 to 21:52 local = 3.09 h, 5 workers; sum of per-episode times 15.37 h. 1 episode (71_20100702T2059) failed in the pool on a transient JSOC pointing-table query timeout (OSError, Errno 60) and was recomputed in a separate process with the same code

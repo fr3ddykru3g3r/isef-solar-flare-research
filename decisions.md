@@ -5336,3 +5336,33 @@ Do not run Step 2.
   - Reported: the fraction of kept pixels that pass, and the number of episodes with ≥ 1 passing pixel.
 
 **Code change:** the Step 1 frame loop is moved into a function without changing its behaviour; the BF-reproduction check verifies this.
+
+### 2026-09-27 — BF NOISE DIAGNOSTIC (21e9e89; implementation 721ffa9): RESULT — BF IS NOISE-DOMINATED
+**BF IS NOISE-DOMINATED**
+
+Recorded from `prospective_noise.log`. Dev 2010–2019, 541 episodes with BF defined. No labels were read, Step 2 was not run, and no option has been chosen (the user's decision).
+
+- **Checks (all passed):** the per-frame box means of the rebuilt stack reproduce the stored series (max |diff| 0.0e+00), and the recomputed BF equals `dev_values.csv` (max |diff| 0.0e+00) for all 541.
+- **Results:**
+  - BF (data): median 0.5902, IQR [0.5413, 0.6724].
+  - BF_noise: median 0.6583, IQR [0.5570, 0.7636].
+  - BF_noise / BF: median 1.1464, IQR [0.9375, 1.3242].
+  - Spearman BF vs BF_noise: ρ +0.1676 (p 8.97e-05, n 541).
+  - Spearman BF vs box-mean brightness: ρ −0.2646 (p 4.08e-10, n 541).
+- **Mechanical rule:** median BF_noise / BF = 1.1464 > 0.5 → **"BF IS NOISE-DOMINATED"**.
+- **Options for a noise-robust BF** (label-blind; NOT chosen). Each gives the value on the data, the noise-only value, the median per-episode ratio noise / data, and Spearman with CV_box on the data:
+
+  | option | defined | data median [IQR] | noise-only median [IQR] | ratio median | ρ vs CV_box |
+  |---|---|---|---|---|---|
+  | (a) macropixels, 5×5 HMI pixels (≈ 4×4 AIA px) | 541 (0 undefined) | 0.3891 [0.3281, 0.4774] | 0.1765 [0.1482, 0.2034] | 0.4505 | +0.8359 (p 1.55e-142, n 541) |
+  | (b) floor_i + 1.645·σ_noise,i (no cap) | 541 | −0.1537 [−0.2769, −0.0259] | −0.0759 [−0.0942, −0.0586] | 0.3440 | +0.8762 (p 5.42e-173, n 541) |
+  | (c) C = 100 DN per exposure | 262 episodes with ≥ 1 pixel | 0.7456 [0.6532, 0.8235] | 0.1972 [0.1855, 0.2095] | 0.2655 | +0.3587 (p 2.25e-09, n 262) |
+  | (c) C = 300 DN per exposure | 55 episodes with ≥ 1 pixel | 0.8586 [0.7976, 0.8893] | 0.1218 [0.1157, 0.1243] | 0.1406 | +0.4536 (p 5.05e-04, n 55) |
+
+  - For (b), the data value is < 0 in 422 of 541 episodes.
+  - For (c), the fraction of kept pixels passing is median 0.0000, IQR [0.0000, 0.0048] at C = 100 and median 0.0000, IQR [0.0000, 0.0000] at C = 300.
+- **Saved:** `data/prospective/noise_values.csv`, SHA-256 `0d0b28022c5253c2561837fd6e9d1a416937d8c465f2178ff53dca23cfb5bab4`.
+- **Wall time and one failure:**
+  - Pool from 18:47 to 21:52 local (3.09 h) with 5 workers (7 were planned; 5 were used for memory). The sum of per-episode times was 15.37 h.
+  - One episode (71_20100702T2059) failed in the pool on a transient JSOC pointing-table query timeout (OSError, Errno 60) and was recomputed in a separate process with the same code. Because the exception was raised inside the pool, the pool wrote no progress lines and no "done" line; the report's wall-time line was patched to use the start time and the last result's file time.
+  - The report was run twice: the first run printed the wall-time line wrongly, and the second changed only that line.

@@ -34,19 +34,20 @@ def cv6(s, t):
     return (cv(tv, v.box.to_numpy()) if fill >= 0.80 else np.nan), fill
 
 
-def episode(ep):
-    """Per-pixel stack (frame loop copied from euv_spatial.spatial_episode), box-mean check, BF, CV6, full-window CV_box check."""
+def stack(ep):
+    """Per-pixel stack (frame loop copied from euv_spatial.spatial_episode) on the alarm-time HMI grid.
+    -> (series, V frames x pixels [DN/s], IDX flat AIA index per frame/pixel, exptime per frame, max box-mean |diff|, CDELT1_HMI, (ny, nx))."""
     import sunpy.map
     from astropy.io import fits
     from astropy.time import Time
     from aiapy.calibrate import update_pointing
     from aiapy.calibrate.utils import get_pointing_table
     from euv_run import register_cutout
-    from euv_dctrl import samples, hmi_to_frame, frame_means, cv
+    from euv_dctrl import samples, hmi_to_frame, frame_means
     from euv_pilot import SAT_DN
     from euv_full import hmi_files, trec_of
     warnings.filterwarnings("ignore")
-    t0 = time.time(); h, t = ep["harpnum"], pd.Timestamp(ep["t"])
+    h, t = ep["harpnum"], pd.Timestamp(ep["t"])
     mp, bp = hmi_files(f"{R}/hmi/{h}", ep["t_rec_tai"])
     mag = sunpy.map.Map(mp); bitmap = fits.open(bp)[-1].data
     S, _, _ = samples(mag.data, bitmap)
@@ -55,7 +56,7 @@ def episode(ep):
     rows = s[s.valid_primary].to_dict("records")
     files = {trec_of(p): p for p in glob.glob(f"{R}/aia/{h}/*.fits")}
     ptab = get_pointing_table("JSOC", time_range=(Time(t - pd.Timedelta("26h")), Time(t + pd.Timedelta("2h"))))
-    V = np.full((len(rows), ny * nx), np.nan); box_diff = 0.0
+    V = np.full((len(rows), ny * nx), np.nan); IDX = np.full((len(rows), ny * nx), -1, np.int32); box_diff = 0.0
     for i, row in enumerate(rows):
         m = sunpy.map.Map(files[row["t_rec"]])
         exp = m.exposure_time.to_value("s"); raw = m.data.astype(float)
@@ -70,11 +71,20 @@ def episode(ep):
         idx = hmi_to_frame(mag, r)
         a, b = frame_means(r.data, idx, {"box": S["box"]})["box"], row["box"]
         box_diff = max(box_diff, 0.0 if (np.isnan(a) and np.isnan(b)) else abs(a - b) if np.isfinite(a - b) else np.inf)
-        ok = idx >= 0; V[i, ok] = r.data.ravel()[idx[ok]]
+        ok = idx >= 0; V[i, ok] = r.data.ravel()[idx[ok]]; IDX[i] = idx
+    e = np.array([row["exptime"] for row in rows], float)
+    return s, V, IDX, e, box_diff, float(mag.meta["cdelt1"]), (ny, nx)
+
+
+def episode(ep):
+    """Step 1: per-pixel stack, box-mean check, BF, CV6, full-window CV_box check."""
+    from euv_dctrl import cv
+    t0 = time.time(); t = pd.Timestamp(ep["t"])
+    s, V, _, _, box_diff, _, (ny, nx) = stack(ep)
     v = s[s.valid_primary]
     cvb = cv(v.t_obs.to_numpy(), v.box.to_numpy())
     B, kf, why = bf(V, ep["primary_fill"]); c6, f6 = cv6(s, t)
-    res = dict(eid=ep["eid"], frames=len(rows), npix_box=ny * nx, box_diff=box_diff, cv_box_repro=cvb,
+    res = dict(eid=ep["eid"], frames=len(V), npix_box=ny * nx, box_diff=box_diff, cv_box_repro=cvb,
                cv_box_diff=abs(cvb - ep["primary_CV_box"]), BF=B, BF_kept_px_frac=kf, BF_undefined=why, CV6=c6, fill6=f6,
                CV6_undefined="" if np.isfinite(c6) else "fill6", elapsed_s=round(time.time() - t0, 1))
     json.dump(res, open(f"{OUT}/dev/{ep['eid']}.json", "w"))
@@ -107,6 +117,66 @@ def selftest():
     holes = burst.copy(); holes[:, :15] = np.nan                   # 70% of pixels kept -> undefined; fill 0.79 -> undefined
     assert bf(holes, 1.0)[2] == "pixels" and bf(burst, 0.79)[2] == "fill"
     return b0, b1
+
+
+# ================================================================ BF label-blind noise diagnostic (21e9e89; implementation 721ffa9)
+G_DN, READ_DN = 1.975, 1.14                                        # AIA 94 A, aiapy V3 table (as 5af931b)
+
+
+def sim_pixel(V, e, rng):
+    """No real variability: each stack pixel = its own mean (DN/s) + Poisson photons + Gaussian read noise per frame; same NaN pattern."""
+    mu = np.clip(np.nan_to_num(np.nanmean(V, 0)), 0, None); X = np.full(V.shape, np.nan)
+    for f in range(len(V)):
+        lam = mu * e[f] / G_DN; x = (G_DN * rng.poisson(lam) + READ_DN * rng.standard_normal(lam.size)) / e[f]
+        fin = np.isfinite(V[f]); X[f, fin] = x[fin]
+    return X
+
+
+def sim_aia(V, IDX, e, rng):
+    """Option (a) noise: one draw per AIA pixel per frame, shared by the stack pixels mapping to it (lambda from their mean mu_p)."""
+    mu = np.nan_to_num(np.nanmean(V, 0)); X = np.full(V.shape, np.nan)
+    for f in range(len(V)):
+        fin = np.isfinite(V[f]); _, inv = np.unique(IDX[f, fin], return_inverse=True)
+        lam = np.clip(np.bincount(inv, weights=mu[fin]) / np.bincount(inv), 0, None) * e[f] / G_DN
+        X[f, fin] = ((G_DN * rng.poisson(lam) + READ_DN * rng.standard_normal(lam.size)) / e[f])[inv]
+    return X
+
+
+def blocks(V, shape, k):
+    """Option (a): k x k blocks of the HMI grid (partial edge blocks kept); block value = nanmean of its pixels."""
+    (ny, nx), F = shape, len(V)
+    A = np.pad(V.reshape(F, ny, nx), ((0, 0), (0, -ny % k), (0, -nx % k)), constant_values=np.nan)
+    return np.nanmean(A.reshape(F, A.shape[1] // k, k, A.shape[2] // k, k), axis=(2, 4)).reshape(F, -1)
+
+
+def bf_family(X, keep, e, sel_mean):
+    """BF, option (b) and option (c, C = 100 / 300 DN per exposure, pixels selected on sel_mean) over the kept pixels of X."""
+    Y = X[:, keep]; floor, mean = np.nanpercentile(Y, 5, axis=0), np.nanmean(Y, axis=0)
+    fin = np.isfinite(Y).astype(float); n = fin.sum(0)
+    sig = np.sqrt((G_DN * np.clip(mean, 0, None) * (fin.T @ (1 / e)) + READ_DN ** 2 * (fin.T @ (1 / e ** 2))) / n)
+    out = {"BF": float(1 - floor.sum() / mean.sum()), "BF_b": float(1 - (floor + 1.645 * sig).sum() / mean.sum())}
+    for C in (100, 300):
+        m = sel_mean * np.median(e) >= C
+        out[f"BF_c{C}"] = float(1 - floor[m].sum() / mean[m].sum()) if m.any() else np.nan
+        out[f"frac_c{C}"] = float(m.mean())
+    return out
+
+
+def noise_episode(ep):
+    t0 = time.time()
+    s, V, IDX, e, box_diff, cdelt, shape = stack(ep)
+    B, kf, why = bf(V, ep["primary_fill"])
+    keep = np.isfinite(V).sum(0) >= 0.80 * len(V); sel = np.nanmean(V[:, keep], axis=0)
+    real = bf_family(V, keep, e, sel)
+    Xn = sim_pixel(V, e, np.random.RandomState(0)); Bn = bf(Xn, ep["primary_fill"])[0]; noise = bf_family(Xn, keep, e, sel); del Xn
+    k = int(round(2.4 / cdelt)); Ba, kfa, whya = bf(blocks(V, shape, k), ep["primary_fill"])
+    Xa = sim_aia(V, IDX, e, np.random.RandomState(0)); Ban = bf(blocks(Xa, shape, k), ep["primary_fill"])[0]; del Xa
+    res = dict(eid=ep["eid"], box_diff=box_diff, BF_repro=B, BF_family_equal=real["BF"] == B, box_mean=float(s[s.valid_primary].box.mean()),
+               BF_noise=Bn, k=k, BF_a=Ba, BF_a_kept_frac=kfa, BF_a_undefined=whya, BF_a_noise=Ban,
+               **{f"{kk}_real": v for kk, v in real.items() if kk != "BF"}, **{f"{kk}_noise": v for kk, v in noise.items() if kk.startswith("BF_")},
+               elapsed_s=round(time.time() - t0, 1))
+    json.dump(res, open(f"{OUT}/noise/{ep['eid']}.json", "w"))
+    return res
 
 
 if __name__ == "__main__" and sys.argv[1:] == ["selftest"]:
@@ -165,3 +235,68 @@ if __name__ == "__main__" and sys.argv[1:] == ["step1_report"]:
        "CV6", "fill6", "CV6_undefined", "box_diff", "cv_box_diff"]].to_csv(f"{OUT}/dev_values.csv", index=False)
     print(f"\nsaved {OUT}/dev_values.csv sha256 {H(f'{OUT}/dev_values.csv')}")
     print(f"wall (compute) {wall:.2f} h, workers {os.cpu_count() - 1}")
+
+if __name__ == "__main__" and sys.argv[1:] == ["noise_run"]:
+    from concurrent.futures import ProcessPoolExecutor, as_completed
+    os.makedirs(f"{OUT}/noise", exist_ok=True)
+    d = pd.read_csv(f"{OUT}/dev_values.csv"); c = dev_eps().merge(d[["eid", "BF"]], on="eid", how="left")
+    c = c[c.BF.notna()]; assert len(c) == 541
+    w = 5; log = f"{OUT}/logs/noise_run.log"; t0 = time.time()                   # 5 workers: ~2.9 GB per median episode, largest ~3x
+    eps = [dict(eid=e.eid, harpnum=int(e.harpnum), t=str(e.t), t_rec_tai=e.t_rec_tai, primary_fill=float(e.primary_fill))
+           for e in c.itertuples() if not os.path.exists(f"{OUT}/noise/{e.eid}.json")]
+    open(log, "a").write(f"{pd.Timestamp.now():%Y-%m-%d %H:%M} start: {len(eps)} episodes to compute, workers {w}\n")
+    with ProcessPoolExecutor(w) as pool:
+        futs = [pool.submit(noise_episode, e) for e in eps]
+        for i, f in enumerate(as_completed(futs), 1):
+            f.result()
+            if i % 25 == 0 or i == len(futs):
+                open(log, "a").write(f"{pd.Timestamp.now():%H:%M} {i}/{len(futs)}, elapsed {(time.time() - t0) / 3600:.2f} h\n")
+    open(log, "a").write(f"done: {len(eps)} episodes in {(time.time() - t0) / 3600:.2f} h, workers {w}\n")
+
+if __name__ == "__main__" and sys.argv[1:] == ["noise_report"]:
+    from scipy.stats import spearmanr
+    d = pd.read_csv(f"{OUT}/dev_values.csv", float_precision="round_trip")
+    J = pd.DataFrame([json.load(open(p)) for p in glob.glob(f"{OUT}/noise/*.json")]).merge(d[["eid", "BF", "primary_CV_box"]], on="eid")
+    assert len(J) == 541
+    bad = J[~(J.box_diff < 1e-9) | ~((J.BF_repro - J.BF).abs() < 1e-12) | ~J.BF_family_equal]
+    if len(bad):
+        print(f"STOP: stack or BF not reproduced in {len(bad)} episodes {bad.eid.tolist()}"); sys.exit(1)
+    q = lambda x: f"median {x.median():.4f}, IQR [{x.quantile(.25):.4f}, {x.quantile(.75):.4f}]"
+    rho = lambda a, b: "rho %+.4f (p %.2e, n %d)" % (*spearmanr(J[a], J[b], nan_policy="omit"), int((J[a].notna() & J[b].notna()).sum()))
+    J["ratio"] = J.BF_noise / J.BF
+    print("BF LABEL-BLIND NOISE DIAGNOSTIC (21e9e89; implementation 721ffa9). Dev 2010-2019, 541 episodes with BF defined; no labels read.")
+    print(f"checks: per-frame box means of the rebuilt stack reproduce the stored series (max |diff| {J.box_diff.max():.1e}); recomputed BF equals "
+          f"dev_values.csv (max |diff| {(J.BF_repro - J.BF).abs().max():.1e}) for all 541")
+    print(f"noise model: g {G_DN} DN/photon, read noise {READ_DN} DN, per-frame EXPTIME, Poisson photons + Gaussian read noise, same NaN pattern, "
+          f"RandomState(0) per episode\n")
+    print(f"BF (data):   {q(J.BF)}")
+    print(f"BF_noise:    {q(J.BF_noise)}")
+    print(f"BF_noise / BF: median {J.ratio.median():.4f}, IQR [{J.ratio.quantile(.25):.4f}, {J.ratio.quantile(.75):.4f}]")
+    print(f"Spearman BF vs BF_noise: {rho('BF', 'BF_noise')}")
+    print(f"Spearman BF vs box-mean brightness (mean of the stored box series, DN/s): {rho('BF', 'box_mean')}")
+    rule = "BF IS NOISE-DOMINATED" if J.ratio.median() > 0.5 else "BF NOISE CONTRIBUTION ACCEPTABLE"
+    print(f"\nMECHANICAL RULE (median BF_noise / BF > 0.5): median {J.ratio.median():.4f} -> \"{rule}\"")
+    if rule == "BF IS NOISE-DOMINATED":
+        print("\nOPTIONS for a noise-robust BF (label-blind; NOT chosen). Each: value on the data, value with no real variability (noise only), "
+              "median per-episode ratio noise / data, episodes defined, Spearman with CV_box on the data")
+        J["BF_a_ratio"] = J.BF_a_noise / J.BF_a
+        print(f"  (a) macropixels k x k HMI pixels (k {sorted(J.k.unique().tolist())}, ~4x4 AIA px): defined {int(J.BF_a.notna().sum())} "
+              f"(undefined {J.BF_a_undefined[J.BF_a_undefined != ''].value_counts().to_dict()})")
+        print(f"      data {q(J.BF_a)}; noise {q(J.BF_a_noise)}; ratio median {J.BF_a_ratio.median():.4f}; vs CV_box {rho('BF_a', 'primary_CV_box')}")
+        J["BF_b_ratio"] = J.BF_b_noise / J.BF_b_real
+        print(f"  (b) floor_i + 1.645 sigma_noise,i (no cap): defined {int(J.BF_b_real.notna().sum())}")
+        print(f"      data {q(J.BF_b_real)}; noise {q(J.BF_b_noise)}; ratio median {J.BF_b_ratio.median():.4f}; data < 0 in {int((J.BF_b_real < 0).sum())}; "
+              f"vs CV_box {rho('BF_b_real', 'primary_CV_box')}")
+        for C in (100, 300):
+            J[f"c{C}_ratio"] = J[f"BF_c{C}_noise"] / J[f"BF_c{C}_real"]
+            print(f"  (c) pixels with mean x median EXPTIME >= {C} DN: kept-pixel fraction passing {q(J[f'frac_c{C}_real'])}; episodes with >= 1 pixel "
+                  f"{int(J[f'BF_c{C}_real'].notna().sum())}")
+            print(f"      data {q(J[f'BF_c{C}_real'])}; noise {q(J[f'BF_c{C}_noise'])}; ratio median {J[f'c{C}_ratio'].median():.4f}; "
+                  f"vs CV_box {rho(f'BF_c{C}_real', 'primary_CV_box')}")
+    J.to_csv(f"{OUT}/noise_values.csv", index=False)
+    print(f"\nsaved {OUT}/noise_values.csv sha256 {H(f'{OUT}/noise_values.csv')}")
+    t_start = pd.Timestamp(open(f"{OUT}/logs/noise_run.log").read().split(" start:")[0])
+    t_end = pd.Timestamp.fromtimestamp(max(os.path.getmtime(p) for p in glob.glob(f"{OUT}/noise/*.json")))       # local time, as the log
+    print(f"wall (compute, pool): {t_start:%H:%M} to {t_end:%H:%M} local = {(t_end - t_start).total_seconds() / 3600:.2f} h, 5 workers; sum of per-episode "
+          f"times {J.elapsed_s.sum() / 3600:.2f} h. 1 episode (71_20100702T2059) failed in the pool on a transient JSOC pointing-table query timeout "
+          f"(OSError, Errno 60) and was recomputed in a separate process with the same code")
