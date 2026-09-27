@@ -5233,3 +5233,22 @@ PROSPECTIVE TEST (recorded now; executed ONLY when I say "run the prospective te
  SECONDARY (cannot change the reading): the same statistic for CV6 and CV_box; magnetic + flare-history twins (the TEST 1 s1 code, by_group=True) for all three; counts of pairs with true > false; sign-test p. Never pooled with any earlier set.
 
 OUTPUTS: prospective_measures.py, prospective_step1.log, prospective_step2.log, and decisions.md entries with the numbers verbatim. Never use "confirmed", "validated" or "significant" for dev results. STOP after each step and report the commit hash.
+
+### 2026-09-27 — PROSPECTIVE PRE-REGISTRATION (2f62f88): STEP 1 STOPPED BEFORE COMPUTING — BF item b) needs a decision (recorded by: me)
+Nothing has been computed or read beyond code and file counts. Per the entry, I am not choosing an option.
+
+**Can be built from existing code without a new decision:**
+- **a) frame rules** (`euv_full.compute_episode` / the stored `valid_primary`): QUALITY == 0; exposure rule EXPTIME ≥ 0.5 × median; raw > 12,000 DN → NaN; divide by EXPTIME; flare frames kept.
+- **Box mask:** every HMI pixel of the HARP patch (`samples()["box"]`), mapped into each AIA frame by `euv_dctrl.hmi_to_frame` (nearest AIA pixel, differentially rotated to the frame time). The CV_box series is the mean over these HMI pixels.
+- **CV6:** `euv_dctrl.cv` on the `valid_primary` frames in (t−6h, t], with no new decision.
+
+**b) — why it needs a decision:** the existing registration (`update_pointing` → `register_cutout` → `hmi_to_frame`) never aligns frames to an AIA reference frame. Every frame is sampled onto the alarm-time HMI grid instead.
+
+**Options (the user's decision):**
+1. **Existing code as it is:** the `euv_spatial.spatial_episode` per-pixel cube on the HMI grid at t.
+2. **The last valid AIA frame as reference, nearest-pixel:** a new variant of `hmi_to_frame`, with the box being the unique AIA pixels of the HARP footprint on that frame.
+3. **The last valid AIA frame as reference, interpolated:** `reproject_interp`, as the existing `euv_run.to_frame` does for masks, onto that frame's WCS.
+
+Consequences are listed in the report to the user.
+
+**Also flagged (with precedent; not treated as blocking):** reproducing the frame pipeline needs aiapy's pointing table, which is a JSOC keyword query (`aia.master_pointing3h`). Earlier entries recorded it as "not a data export or download" (Phase X; `euv_masks`; novelty #24).
