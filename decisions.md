@@ -5489,3 +5489,56 @@ Recorded from `combo_t_freeze.log` (`combo_t.py freeze`).
 - COMBO_T_fold0–4: 1ea33fa1…, a2b5d7f0…, 932a64ef…, faacdc41…, 76ac7ba6…
 - thresholds.json: 3b598cc7…
 - dev_rows.csv: 2717b304…
+
+## 2026-09-28 — PRE-REGISTRATION: C+ protection rule = the ONLY confirmatory false-alarm system (decided by: user; wording drafted by Claude AI, reviewed and adopted by Lokesh)
+**Verbatim (user), PART 0:**
+
+Definition (fixed now): keep an alarm episode if EITHER (a) p_C_CV >= 0.068936 using the FROZEN euv_extra C_CV fold models (mean of 5; hash-verify), OR (b) the region had >= 1 flare of class C1.0 or larger (C, M or X; SWPC originals; true-flux scale; flux >= 1e-6 W/m²) whose START is in (t − 24 h, t), joined by the same NOAA-region join as the labels. Otherwise removed. Baseline = Model C (frozen euv_extra C, τ 0.062570).
+Rationale (verbatim): 24 h matches the forecast window; C1.0 is the standard class boundary and the definition Model C already uses for "time since last flare"; no parameter was tuned on 2021–2026. COMBO-T (e17a8a3) remains a secondary exploratory model only; its 12-h window and C2.0 threshold came from a 90-configuration dev grid and are not used in the confirmatory system.
+Disclosure (verbatim): Designed after post-hoc inspection by Claude AI (in chat, not committed) of all 2010–2026 alarms: of 44 true alarms rejected by C_CV, 24 had >= 1 C-class flare in the prior 24 h; including M/X changed 1 of 1,532 alarms. Claude's post-hoc simple counts: 2010–19 91/96 true kept, 179/445 false removed; 2021–2026 combined 146/160, 282/831 (Model C 150/160, 199/831); 2025–26 52/56, 125/322 (Model C 54/56, 87/322). The same pattern is visible in 2010–19 alone (7 of 12 C_CV-rejected true alarms had a prior C flare). All data up to 2026-08-16 are invalid for confirming this rule.
+LOOK 1 (descriptive only, no reading): the already-registered prospective set (t in [2026-08-17, E], E = min(2026-10-31, coverage end)); runs with "run the prospective test once", not before 2026-11-10.
+LOOK 2 (CONFIRMATORY): t in [2026-08-17 00:00 TAI, E2], E2 = min(2027-02-28 23:00 TAI, latest complete SHARP+SWPC+GOES coverage with 24 h follow-up). Same gate, cohort rules and fallbacks as 749208e (T1–T4, <= 2 regions), same labels (SWPC originals, true-flux scale, delayed = false), same EUV download and frame rules (94 Å, 12-min, (t−24 h, t]; one pending JSOC export at a time, my account only; dry run first). Exclude every HARP and NOAA region present in any EUV data directory created before 2026-09-28. Run only on "run the C+ confirmation once", not before 2027-03-15; E2 and coverage check recorded before any download. SIZE RULE (label-blind): < 150 evaluable episodes → "TOO SMALL — DESCRIPTIVE ONLY".
+PRIMARY (Look 2): from the same paired HARP resamples (2,000, seed 0): D_false = weighted % false removed (C+ minus Model C), D_true = weighted % true kept (C+ minus Model C), 95% CIs.
+READING (mechanical): "CONFIRMED BETTER TRADE-OFF" if D_false CI lower > 0 AND D_true CI lower >= −10 pts; "MEETS OPERATING CRITERION" if D_false CI lower > 0 AND D_true point >= −10 (CI lower < −10); "REMOVES MORE FALSE ALARMS BUT LOSES TOO MANY TRUE ALARMS" if D_false CI lower > 0 AND D_true point < −10; "NOT CONFIRMED" otherwise; "INCONCLUSIVE" if CIs cannot be computed.
+Commit. STOP.
+
+**Note (me), from a file read only, no computation:** the frozen `data/euv_extra/thresholds.json` values are τ_C_CV = 0.06893616544608924 and τ_C = 0.06256983158392139. The entry's 0.068936 and 0.062570 are these rounded to 6 decimals. An episode whose p falls between the rounded and the exact value would be classified differently, so the user should confirm which applies before Look 1 / Look 2.
+
+## 2026-09-28 — DOCUMENTATION UPDATE, Parts 1–5: instructions recorded verbatim (decided by: user)
+**Verbatim (user):**
+
+DOCUMENTATION UPDATE — APPEND-ONLY. Never edit, reorder or delete any existing decisions.md entry, frozen file, model, threshold, result or figure. No JSOC downloads. No prospective data. Do not run stage5_test.py. Do NOT draft the research plan, abstract, synopsis, paper or poster text (ISEF rule: student-written). Commit after each part and STOP at the end of each part.
+
+PART 1 — REPRODUCE AND LOG CLAUDE-CHAT POST-HOC ANALYSES (already-seen data; every number labelled "POST-HOC, exploratory, originally computed by Claude AI in chat on 2026-09-27/28; reproduced here"). Use only frozen models (euv_extra A, A_CV, C, C_CV; data/combo_t COMBO-T) with dev predictions out-of-fold (dev_rows.csv folds) and new-set predictions = mean of 5 fold models. Sets, reported separately: dev 2010–19; 2021/23/24 test (euv_test, 306); 2021/23/24 extra (155); 2022 (152); 2025–26 (378). Report simple counts AND weighted (1/n per HARP) values; add HARP-bootstrap 95% CIs (2,000, seed 0) where a difference is reported. For each item, write a one-line statement of whether the reproduction matches the chat numbers (list any mismatch; do not adjust to match).
+ 1a. Matched-retention comparison C vs C_CV at 80/88/95% true kept (per set).
+ 1b. Sign of the log(1+R) coefficient in all 5 frozen C fold models and in C_CV.
+ 1c. For true alarms rejected by C_CV (and separately by COMBO-T): count and list of flares (class, start time) from the same region in (t−24 h, t); median hours to the M1+ flare, split by any-C+ vs none. Also the same summary for false alarms removed/kept and true alarms kept.
+ 1d. Spearman ρ between number of C-class flares in (t−24 h, t) and CV_box, per set and pooled; median CV_box by C-count bin (0,1,2,3–4,5+) split true/false.
+ 1e. Rule comparisons per set (true kept, false removed, precision): gate only; Model A; Model C; A+CV; C+CV; C-flare rule alone; C-protected (C-class only); C+ rule (C1.0+ incl. M/X); C-level sweep C1.0–C7.0 with the dev-only choice rule "max false removed with true kept >= Model C on dev" (record the chosen level); per-C-count restlessness cutoff "table rule" (cutoffs at 88% on dev).
+ 1f. COMBO (default: C + log10 CV_box + anyC24 + interaction, C=1) fitted on dev; the 90-configuration dev grid that selected COMBO-T (record the full grid table); COMBO-T and COMBO default on each later set: true kept, false removed, AUC, log-loss; reliability tiers (<5%, 5–15%, 15–30%, >30%); COMBO-T + C+ override.
+ 1g. Walk-forward recalibration: τ re-set on the three 2021–24 sets combined (targets 88/90/95%), applied once to 2025–26, for Model C, COMBO default and COMBO-T.
+ 1h. Literature-style metrics on 2025–26: unclustered twins CI and Wilcoxon p; max-TSS thresholds tuned on the set itself (labelled "threshold tuned on test set — optimistic").
+ 1i. Excess-area check (area of brightness above the 24-h mean) for the 6 GIF twin pairs and ρ with CV_box over all 2025–26 episodes.
+Write all tables to docs/posthoc_2026-09-28.md and a results entry in decisions.md. Commit. STOP.
+
+PART 2 — FIGURE AND FILE INVENTORY:
+List every file created in figures/ and data/ since 2026-09-26 (name, size, what it shows, generating script if known, whether it is a figure for use or a scratch/check file such as figures/_chk_*.png, figures/_gif_frame_check.png). Do not delete anything; mark scratch files "scratch — can be deleted by the user". Write docs/file_inventory.md. Commit. STOP.
+
+PART 3 — RESULTS HIERARCHY (factual summary; not presentation text):
+Create/overwrite docs/RESULTS_SUMMARY.md (a new file; do not edit old summaries) with sections, each item giving the number, CI, data set, and commit hash:
+ A. CONFIRMED (pre-registered, run once): TEST 1 twins 3.26 [1.30, 9.49] 39/50; TEST 2 Step B Δ +0.0173 [0.0016, 0.0350]; gate region TSS 0.728 [0.630, 0.820]; the pre-registered filter tests and their readings (5abc40a, 4b65f23); the Stage 5 magnetic-trend null; R4a held-out results.
+ B. POST-HOC ROBUSTNESS (defined before computing, after the main result): 1465063 cells incl. T_b×V1 2.73 [1.10, 6.20]; noise/exposure/saturation checks; alert tiers.
+ C. POST-HOC EXPLORATORY (not results): everything from Part 1, C+ rule, COMBO-T.
+ D. FAILED / STOPPED: every dev candidate and its reading (list all ~30 with commit hashes), V2 image-only failure, BF noise-dominated, n_B + R4a stop (B-flare attribution), CV6 label-dependent exclusion.
+ E. PENDING (pre-registered, not yet run): prospective test (CV_box primary; CV6, BF(a), COMBO-T secondary), Look 1, Look 2 (C+ rule confirmatory).
+ F. DATA-QUALITY FINDINGS: HEK AR=0 phantom false alarms (FAR 0.724 vs 0.543), Bobra & Couvidat partial reproduction, B-flare disappearance near solar maximum, cutoff drift across the cycle.
+Commit. STOP.
+
+PART 4 — AI-USE AND PROVENANCE RECORD (for the student's disclosure; factual):
+Create docs/AI_USE_LOG.md containing:
+ - From git: commit count by author trailer (Co-Authored-By: Claude …), date range, and the list of scripts/files written by AI.
+ - From decisions.md: every entry marked "wording drafted by Claude AI" (date, heading, commit).
+ - Idea provenance table. Record as "stated by the user" these user-originated ideas: research topic/question; PIL flicker hypothesis; extending data to 2026 (the 2025–26 set); strong-gradient PIL / brightest core / sunspot masks; magnetic dots count; overlay/new-pixel brightenings; background brightness; area under the brightness curve; removing flare frames; an AIA measure independent of flare counts and magnetics (the combined control); "are we testing too harshly"; checking prior small flares in missed true alarms; the C-flare protection rule and its C1.0+ (incl. M/X) version; turning signals into a flare-probability ("chance") model; removing the 12-h/C2 settings. For every other measure or test, record the proposer as shown in decisions.md; if decisions.md does not say, write "not recorded" (do not guess).
+Commit. STOP.
+
+PART 5 — FINAL CHECK: re-verify all hashes of frozen models/thresholds (euv_extra, combo_t, nb_r4a, stage 4/5); confirm no existing decisions.md line changed (diff against the commit before Part 0, additions only); report the commit hashes of Parts 0–4. STOP.
