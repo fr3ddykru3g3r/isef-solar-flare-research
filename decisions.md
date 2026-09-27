@@ -5405,3 +5405,32 @@ Decisions (label-blind; record verbatim in decisions.md BEFORE Step 2, then comm
 - On the full dev 547, LL(C) = 0.3356 (Step B).
 - The CV_box twins ratio and CI reproduce `data/phase_f/F2_ratios.csv`.
 - On the CV_box set, the out-of-fold LL of A, A + log10 CV_box, C and C + log10 CV_box equals the frozen `data/euv_extra/thresholds.json` dev values exactly.
+
+### 2026-09-27 — PROSPECTIVE STEP 2 RESULTS: dev exploration (EXPLORATORY; dev 2010–2019, internal 5-fold CV)
+Recorded from `prospective_step2.log`. BF = option (a) (eb3e7d5); implementation d2ed360. Nothing here changes the prospective plan.
+
+- **Checks (all passed):**
+  - LL(C) on dev 547 = 0.3356 (Step B).
+  - The CV_box twins ratio and CI reproduce `data/phase_f/F2_ratios.csv`.
+  - On the CV_box set, A, A + log10 CV_box, C and C + log10 CV_box reproduce the `data/euv_extra/thresholds.json` dev log-loss exactly.
+
+**Twins ratio** on the step 6 gate-score pairs (81; both values defined). The statistic is median true / median false, with 95% CI from pairs resampled by true HARP (2,000, seed 0).
+
+| measure | pairs | medians true / false | ratio [95% CI] |
+|---|---|---|---|
+| BF(a) | 81 | 0.4729 / 0.3900 | 1.2125 [1.1048, 1.3194] |
+| CV6 | 69 | 0.1254 / 0.0590 | 2.1261 [1.2479, 3.3090] |
+| CV_box | 81 | 0.2594 / 0.1319 | 1.9661 [1.4737, 3.1731] |
+
+**Δ log-loss** = LL(base) − LL(base + log10 x), where + means x helps. HARP bootstrap 10,000, seed 20260921; weighted AUC.
+
+| measure | comparison | n (true / false; HARPs) | LL base → + x | Δ [95% CI] | AUC base → + x |
+|---|---|---|---|---|---|
+| BF(a) | A vs A + log10 BF(a) | 541 (96 / 445; 179) | 0.3206 → 0.3166 | +0.0040 [−0.0072, +0.0158] | 0.7422 → 0.7925 |
+| BF(a) | C vs C + log10 BF(a) | 541 (96 / 445; 179) | 0.3223 → 0.3195 | +0.0027 [−0.0082, +0.0141] | 0.7720 → 0.7863 |
+| CV6 | A vs A + log10 CV6 | 522 (84 / 438; 178) | 0.3184 → 0.3146 | +0.0038 [−0.0071, +0.0151] | 0.7184 → 0.7682 |
+| CV6 | C vs C + log10 CV6 | 522 (84 / 438; 178) | 0.3204 → 0.3132 | +0.0072 [−0.0054, +0.0219] | 0.7333 → 0.7591 |
+| CV_box | A vs A + log10 CV_box | 541 (96 / 445; 179) | 0.3206 → 0.3132 | +0.0074 [−0.0060, +0.0212] | 0.7422 → 0.7972 |
+| CV_box | C vs C + log10 CV_box | 541 (96 / 445; 179) | 0.3223 → 0.3160 | +0.0062 [−0.0058, +0.0184] | 0.7720 → 0.7888 |
+
+Wall time 1.8 s with 9 workers.

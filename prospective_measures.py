@@ -300,3 +300,59 @@ if __name__ == "__main__" and sys.argv[1:] == ["noise_report"]:
     print(f"wall (compute, pool): {t_start:%H:%M} to {t_end:%H:%M} local = {(t_end - t_start).total_seconds() / 3600:.2f} h, 5 workers; sum of per-episode "
           f"times {J.elapsed_s.sum() / 3600:.2f} h. 1 episode (71_20100702T2059) failed in the pool on a transient JSOC pointing-table query timeout "
           f"(OSError, Errno 60) and was recomputed in a separate process with the same code")
+
+if __name__ == "__main__" and sys.argv[1:] == ["step2"]:
+    # DEV EXPLORATION (EXPLORATORY; 2f62f88 Step 2; BF = option (a), eb3e7d5; implementation d2ed360)
+    from concurrent.futures import ProcessPoolExecutor
+    from sklearn.metrics import roc_auc_score
+    from phase_f import load_base, prep, boot_many, ratio_jobs, pct, wlogloss, A_COLS, W
+    from euv_heldout import fit_folds
+    from euv_confirm_tests import log_r
+    t00 = time.time(); pd.set_option("display.width", 250); pd.set_option("display.max_columns", 40)
+    dv = load_base()
+    dv["logR"] = log_r(dv, pd.Timestamp("2010-04-28"), pd.Timestamp("2019-12-31 23:59"))
+    nv = pd.read_csv(f"{OUT}/noise_values.csv", float_precision="round_trip")[["eid", "BF_a"]]
+    pv = pd.read_csv(f"{OUT}/dev_values.csv", float_precision="round_trip")[["eid", "CV6"]]
+    dv = dv.merge(nv, on="eid", how="left").merge(pv, on="eid", how="left")
+    dv["CV_box"] = np.where(dv.P & (dv.primary_CV_box > 0), dv.primary_CV_box, np.nan)
+    # ---- checks (STOP on failure)
+    llC = wlogloss(dv.true_alarm.to_numpy(), fit_folds(dv, A_COLS + ["logR"])[1], dv.weight.to_numpy())
+    assert round(llC, 4) == 0.3356, f"LL(C) {llC} does not reproduce Step B dev 0.3356"
+    TX = json.load(open("data/euv_extra/thresholds.json"))
+    MEAS = [("BF(a)", "BF_a"), ("CV6", "CV6"), ("CV_box", "CV_box")]
+    tw = pd.read_csv("data/euv_full/step6/twins_PRIMARY.csv"); assert len(tw) == 81
+    rows, jobs, twr = [], {}, []
+    for name, col in MEAS:
+        c = prep(dv, dv[col].notna() & (dv[col] > 0)); c["lx"] = np.log10(c[col])
+        y, w, h = c.true_alarm.to_numpy(), c.weight.to_numpy(), c.harpnum.to_numpy(); groups = [np.where(h == v)[0] for v in np.unique(h)]
+        P = {m: fit_folds(c, cols)[1] for m, cols in [("A", A_COLS), ("A+x", A_COLS + ["lx"]), ("C", A_COLS + ["logR"]), ("C+x", A_COLS + ["logR", "lx"])]}
+        if name == "CV_box":
+            for m, k in [("A", "A"), ("A+x", "A_CV"), ("C", "C"), ("C+x", "C_CV")]:
+                assert wlogloss(y, P[m], w) == TX[k]["dev_oof_logloss"], f"{m} does not reproduce euv_extra {k}"
+        for base in ["A", "C"]:
+            key = f"{name} {base}"
+            jobs[key] = ("dll", dict(y=y, w=w, pA=P[base], pE=P[base + "+x"], groups=groups), 10000, 20260921)
+            rows.append(dict(measure=name, comparison=f"{base} vs {base} + log10({name})", n=len(c), true=int(y.sum()), false=int((y == 0).sum()),
+                             HARPs=len(groups), LL_base=wlogloss(y, P[base], w), LL_plus=wlogloss(y, P[base + "+x"], w),
+                             AUC_base=roc_auc_score(y, P[base], sample_weight=w), AUC_plus=roc_auc_score(y, P[base + "+x"], sample_weight=w)))
+        e, j = ratio_jobs(name, dv.assign(**{col: dv[col].where(dv[col] > 0)}), col, "ratio", tw); jobs[(name, "tw")] = j[(name, "tw")]; twr.append(e)
+    with ProcessPoolExecutor(W) as pool:
+        B = boot_many(jobs, pool)
+    T = pd.DataFrame(rows); T["delta"] = T.LL_base - T.LL_plus
+    T["CI_lo"], T["CI_hi"] = zip(*[pct(B[f"{r.measure} {r.comparison.split()[0]}"]) for r in T.itertuples()])
+    R = pd.DataFrame(twr); R["tw_CI_lo"], R["tw_CI_hi"] = zip(*[pct(B[(m, "tw")]) for m in R.measure])
+    f2 = pd.read_csv("data/phase_f/F2_ratios.csv", float_precision="round_trip").set_index("measure").loc["CV_box"]
+    cb = R.set_index("measure").loc["CV_box"]
+    assert cb.pairs == f2.pairs and cb.ratio_twins == f2.ratio_twins and "[%.4f, %.4f]" % (cb.tw_CI_lo, cb.tw_CI_hi) == f2.twins_CI, "CV_box twins not reproduced"
+    print("PROSPECTIVE PRE-REGISTRATION — STEP 2: DEV EXPLORATION (EXPLORATORY; dev 2010-2019; internal 5-fold CV). 2f62f88; BF = option (a) eb3e7d5; "
+          "implementation d2ed360")
+    print(f"checks: LL(C) on dev 547 = {llC:.4f} (Step B 0.3356); CV_box twins ratio and CI reproduce data/phase_f/F2_ratios.csv; on the CV_box set, "
+          f"A / A + log10 CV_box / C / C + log10 CV_box reproduce data/euv_extra/thresholds.json dev log-loss exactly")
+    print("\nTWINS RATIO on the step 6 gate-score pairs (data/euv_full/step6/twins_PRIMARY.csv, 81 pairs; both values defined): median true / median "
+          "false; CI pairs resampled by true HARP, 2,000, seed 0")
+    print(R[["measure", "pairs", "twin_med_true", "twin_med_false", "ratio_twins", "tw_CI_lo", "tw_CI_hi"]].to_string(index=False, float_format=lambda v: f"{v:.4f}"))
+    print("\nDELTA LOG-LOSS = LL(base) - LL(base + log10 x), + = x helps; Step 6 settings (Stage 4 folds, 1/n per HARP within the set, training-fold "
+          "StandardScaler, L2 logistic C = 1); C = A + log(1+R) (Step B); HARP bootstrap 10,000, seed 20260921; weighted AUC")
+    print(T[["measure", "comparison", "n", "true", "false", "HARPs", "LL_base", "LL_plus", "delta", "CI_lo", "CI_hi", "AUC_base", "AUC_plus"]]
+          .to_string(index=False, float_format=lambda v: f"{v:.4f}"))
+    print(f"\nwall {time.time() - t00:.1f} s, workers {W}")
