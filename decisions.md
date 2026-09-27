@@ -4835,3 +4835,14 @@ Do not evaluate until I say "run the 2025–26 filter re-test once". Then: run i
   - C keeps 72.55% ≤ 95% → **guard passed** (the test may be run on the user's command).
 
 STOP. The re-test is not evaluated until the user says "run the 2025–26 filter re-test once".
+
+### 2025–26 RE-TEST — implementation details (recorded BEFORE the run; the pre-registered reading, 25fcd66, is unchanged)
+- **Trigger:** the user said "run the 2025–26 filter re-test once" (2026-09-27). The run is `euv_confirm_retest.py run` on the 378 evaluable episodes checked in e4eb16e. All hashes are re-verified first (`load_models`).
+- **Statistics:** the SAME functions as the EUV-unseen filter test (5abc40a, `euv_extra.py filter`) are reused:
+  - `phase_f.boot_many` with statistic `"op"` (`phase_f._op` → `phase_f.op_stats`: weighted true alarm episodes kept, weighted false alarms removed, precision). It is run once with kept = [A, A_CV, C, C_CV] at the frozen τ: 2,000 paired HARP resamples, `RandomState(0)`, drawn in the parent (the same resamples for every model and both comparisons).
+  - `phase_f.boot_many` with `"dll"` (`phase_f._dll` → `phase_f.wlogloss`): Δ log-loss, 10,000 resamples, seed 20260921.
+  - `phase_f.pct` for the Δ log-loss CI; `sklearn.metrics.roc_auc_score(sample_weight=w)` for AUC; `phase_f.wlogloss` for log-loss.
+  - Prediction = mean of the 5 frozen fold models' probabilities; kept = p ≥ τ; weights 1/n per HARP over the 378.
+- **No new statistics code.** The few lines that turn the `op` resamples into D_false / D_true and their percentiles were inline in `euv_extra.py filter` (not a function). They are copied verbatim into `euv_confirm_retest.py`: D = (CV model − base) per resample; ok = both D_false and D_true finite; 2.5/97.5 percentiles over the ok resamples; ×100 → points.
+- **Resamples with no true or no false episodes:** as in 5abc40a, `op_stats` returns NaN for the undefined fraction. Those resamples are dropped from both CIs, and `resamples_used` is reported. The reading is "INCONCLUSIVE" if the set has no true or no false episode, or 0 resamples are usable.
+- **Output order:** everything is computed first and printed only at the end. A crash therefore happens before any outcome is printed.
