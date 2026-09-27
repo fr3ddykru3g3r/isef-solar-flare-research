@@ -5091,3 +5091,39 @@ Recorded from `sensitivity_combined.log`. The script was run twice: the second t
 - `sensitivity_combined.log`
 - `figures/sensitivity_combined.png`
 - `data/sensitivity_combined_{S1,S2,S3}.csv` and `data/sensitivity_combined_cells.csv` (data/ is not tracked)
+
+## 2026-09-27 — POST-HOC RE-ANALYSIS: B-class flare count + R4a (dev candidate 'n_B + R4a', Phase F F3) on already-analysed test sets (decided by: user; wording drafted by Claude AI, reviewed and adopted by Lokesh)
+**Verbatim (user):**
+
+POST-HOC RE-ANALYSIS (not an untouched test). Frozen files unchanged; never overwrite existing models, thresholds or results. Do not run stage5_test.py. No downloads; if a step seems to need one, STOP and ask.
+
+STEP 0 — Record this whole entry verbatim in decisions.md BEFORE anything else, headed "2026-09-27 — POST-HOC RE-ANALYSIS: B-class flare count + R4a (dev candidate 'n_B + R4a', Phase F F3) on already-analysed test sets (decided by: user; wording drafted by Claude AI, reviewed and adopted by Lokesh)". Commit.
+Disclosure (record verbatim): Chosen after all results. On dev (F3/F7), n_B alone did not help (delta −0.0049; 60/445 false removed vs A 70/445) and the combination (delta +0.0092) was below R4a alone (+0.0124). R4a already failed its held-out tests on 2021/23/24 (euv_heldout_test.log: condition not met) and 2025–26 (euv_confirm_tests.log s3: not confirmed). Both sets below were used for those tests, so this is a re-analysis, not a confirmation. Candidate count: about the 25th idea tried.
+
+DEFINITIONS: n_B, R4a and every transform EXACTLY as in Phase F F3 (quote the code and the definitions in the log; no changes). Models: A (A_COLS), A+R4a, A+n_B+R4a ("COMBO"), each fitted on the dev 541 set with the Step 6 settings (same folds, 1/n per HARP weights, training-fold scaling, estimator); new-set prediction = mean of the 5 fold models. Thresholds: τ per model = highest dev OOF threshold keeping >= 88% of weighted true episodes (as 04b6f4f). Fit, freeze, hash and record the τ values BEFORE touching any test set.
+
+SETS (reported separately, never pooled):
+ PRIMARY = the 2021/2023/2024 single-region R4a primary set (306 episodes; euv_heldout_test.log).
+ SECONDARY = the 2025–26 <= 2-region evaluable set (378; the s3 R4a set in euv_confirm_tests.log).
+ Weights 1/n per HARP; delayed episodes count as false.
+
+STEP 1 — LABEL-BLIND CHECKS ONLY (do not read true_alarm or delayed; print no outcome):
+ a) Reproduce the dev F3 COMBO and A+R4a results exactly (delta, AUC, false removed counts).
+ b) Episode counts per set; n_B and R4a defined for every episode (list any undefined).
+ c) B-flare attribution quality: per year (dev years and 2021–2026), the fraction of B-class events that carry a NOAA region number. If any test year's fraction differs from the dev average by more than 20 percentage points, write "n_B NOT COMPARABLE ACROSS YEARS — TEST NOT RUN" in decisions.md, commit and STOP permanently.
+ d) BASELINE GUARD per set: weighted % of ALL episodes with p_A >= τ_A. If A keeps > 95% in a set, the PRIMARY comparison for that set is declared "not interpretable (baseline does not filter)" now, before labels are read, and only the matched-retention comparison (below) is reported for it.
+ Commit. STOP. Do not evaluate until I say "run the n_B + R4a re-analysis once".
+
+EVALUATION (once, on command):
+ PRIMARY comparison: A vs COMBO at frozen τ. From the SAME paired HARP resamples (2,000, seed 0): D_false = weighted % false alarms removed (COMBO minus A), D_true = weighted % true alarm episodes kept (COMBO minus A), each with 95% CI.
+ READING (mechanical, fixed now):
+  "SAFE FILTER ON THIS SET" if D_false CI lower > 0 AND D_true CI lower >= −10 points.
+  "MEETS OPERATING CRITERION" if D_false CI lower > 0 AND D_true point >= −10 (but CI lower < −10).
+  "REMOVES FALSE ALARMS BUT LOSES TOO MANY TRUE ALARMS (point estimate)" if D_false CI lower > 0 AND D_true point < −10.
+  "INCONCLUSIVE" if CIs cannot be computed. "NOT CONFIRMED" otherwise.
+ SECONDARY (cannot change the reading):
+  - COMBO vs A+R4a: same D_false/D_true (does n_B add anything beyond R4a?).
+  - Matched retention (the fair comparison): for A, A+R4a and COMBO, weighted % false alarms removed at the threshold keeping >= 80%, 88% and 95% weighted true episodes in that set; paired differences vs A with HARP bootstrap CIs (2,000, seed 0). Label: "threshold chosen on the test set — descriptive".
+  - Δ log-loss (A − COMBO; HARP bootstrap 10,000, seed 20260921); AUC for all three models.
+
+OUTPUTS: nb_r4a_reanalysis.py, nb_r4a_reanalysis.log, a results entry in decisions.md (verbatim numbers), commit. Report the numbers verbatim with the commit hash. Never use "confirmed", "validated" or "significant". STOP.
