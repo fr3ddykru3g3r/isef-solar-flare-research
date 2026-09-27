@@ -4692,3 +4692,17 @@ STOP (filter test not run). It is evaluated only when the user says "run the pre
 - **Checks passed:** box frame means reproduced (max |diff| 0.0); per-frame n_bright_px reproduced exactly for both the stored spatial and spatial_nf runs, in every episode.
 - **F_new:** median 0.5431, IQR [0.4835, 0.6268]. Undefined (no bright pixel-frames): 0 for F_new, 0 for F_new_nf.
 - **Spearman ρ:** F_new with R4c −0.861 (p 1.1e-160); with log10 CV_box −0.821 (p 4.6e-133).
+
+### NEW vs REPEAT — Step 2 RESULT (evaluated once; EXPLORATORY; dev 2010–2019 only; numbers only)
+`euv_novelty.py eval` → `euv_novelty_eval.log`, `data/novelty/eval.csv`. 4 workers. Δ = LL(base) − LL(base + x); HARP bootstrap 10,000, seed 20260921.
+
+| test | n (true/false) | HARPs | LL base | LL base + x | Δ [95% CI] | AUC base → base + x |
+|---|---|---:|---:|---:|---|---|
+| **PRIMARY A vs A + F_new** | 541 (96/445) | 179 | 0.3206 | 0.3131 | **+0.0075 [−0.0062, +0.0208]** | 0.7422 → 0.7924 |
+| secondary: A vs A + F_new_nf (sens 80%) | 528 (89/439) | 179 | 0.3359 | 0.3278 | +0.0081 [−0.0123, +0.0266] | 0.7480 → 0.7858 |
+| secondary: A + log10 CV_box vs + F_new | 541 (96/445) | 179 | 0.3132 | 0.3151 | −0.0018 [−0.0082, +0.0040] | 0.7972 → 0.7888 |
+
+- **F_new coefficient** (per 1 SD): −0.622, −0.517, −0.812, −0.715, −0.625. Negative, the predicted direction, in 5/5 folds → it matches the predicted direction in ≥ 4 of 5.
+- **F_new ratio** (true ÷ false medians, F2 code, 2,000 resamples, seed 0): all episodes 0.886 [0.802, 0.942]; 81 gate-score twins 0.934 [0.844, 0.989] (medians 0.4995 / 0.5346).
+
+**Pre-stated reading (mechanical):** Δ +0.0075 > 0 and the AUC rises, but the 95% CI lower bound (−0.0062) is not > 0 → **"NOT ELIGIBLE"**. Step 3 (the conditional follow-up) is therefore NOT run.
