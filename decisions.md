@@ -5010,3 +5010,18 @@ STATISTICS (same as TEST 1): twins ratio = median(true) / median(false); 95% CI 
 DESCRIPTIVE READING (per cell, fixed now): "direction holds, CI above 1" if ratio > 1 and CI lower > 1; "direction holds, CI includes 1" if ratio > 1 and CI lower <= 1; "direction reversed" if ratio <= 1. Never the words "confirmed", "validated" or "significant".
 
 OUTPUTS: sensitivity_combined.py, sensitivity_combined.log, a results entry in decisions.md (verbatim numbers), and figures/sensitivity_combined.png (twins ratio with CI for each cell, S1 on top, S2/S3 below; titled "post-hoc sensitivity"). Commit. Report the numbers verbatim with the commit hash. STOP.
+
+### 2026-09-27 — SENSITIVITY (92027fa): implementation note, recorded before the complete run (decided by: me)
+- **Scripts reused:** `sensitivity_combined.py` reuses `descriptive_aia94.load_set` (the same sets as 5af931b), `euv_dctrl.cv` and `euv_f2_replication.twins` (T_a = `twins(c)`; T_b = `twins(c, by_group=True)`, the TEST 1 s1 code). It also uses `phase_f.ratio_jobs` / `boot_many` (twins CI, pairs resampled by true HARP, 2,000, seed 0) and `scipy.stats.binomtest` for the two-sided sign test (ties excluded).
+- **V1 definedness:** V1 is defined when the stored sens_fill is ≥ 0.80.
+- **V2 fill:** V2 fill = remaining frames / 120 expected 12-min slots in (t−24h, t].
+- **Extra reproduction checks (a failure also STOPs):**
+  - The regenerated S1 T_a pairs must equal the stored `twins_le2.csv`.
+  - T_a × V0 must reproduce the committed ratios for S1–S3.
+  - S1 T_b × V0 must reproduce TEST 1 s1 (47 pairs, 2.817 [1.017, 6.823]).
+- **First run crashed before any output:**
+  - What happened: the V0/V1 reproduction checks passed, then `boot_many` failed on a cell with 0 pairs (`np.concatenate` of an empty list).
+  - Cause: at 3 s, V2 as defined removes about 60 of about 119 valid frames per episode (40-episode S1 look). Between 32% and 50% of round-1 residuals are exactly 0 (the median of 5 equals the centre frame), so s = 1.4826 × median|r| is 0 or tiny and V2 fill falls below 0.80.
+  - What changed: the V2 definition is unchanged. A cell with 0 pairs gets no bootstrap; its ratio and CI are reported as undefined and its reading as "undefined (0 pairs)". The fixed readings need a ratio, so no reading is applied to such cells.
+  - Added descriptive counts only: episodes with s = 0 in some round; episodes still flagging in round 5 (the cap); and the per-episode fraction of round-1 residuals that are exactly 0. The figure labels 0-pair cells as such.
+  - The script is then run once to completion.
