@@ -63,3 +63,66 @@ if __name__ == "__main__" and sys.argv[1:] == ["checks"]:
     print(f"   C keeps > 95% of all episodes: {guard} -> " + ("BASELINE THRESHOLD DOES NOT FILTER — TEST NOT RUN" if guard else "guard passed"))
     json.dump(dict(n=len(e), harps=int(e.harpnum.nunique()), keep={m: keep[m][0] for m in NAMES}, guard_fail=guard),
               open(f"{T}/retest_checks.json", "w"), indent=1)
+
+if __name__ == "__main__" and sys.argv[1:] == ["run"]:
+    # RUN ONCE (user: "run the 2025-26 filter re-test once"; implementation 6aecccf). Everything is computed before printing.
+    from concurrent.futures import ProcessPoolExecutor
+    from sklearn.metrics import roc_auc_score
+    from phase_f import boot_many, pct, wlogloss, W
+    t00 = time.time()
+    hs, TH, M = load_models()                                   # re-verifies all hashes
+    _, _, e = evaluable(LABEL_FREE + ["true_alarm"])             # delayed episodes already have true_alarm = 0
+    assert len(e) == 378 and e.harpnum.nunique() == 101
+    y, w, h = e.true_alarm.to_numpy(), e.weight.to_numpy(), e.harpnum.to_numpy(); groups = [np.where(h == v)[0] for v in np.unique(h)]
+    P = {m: pred(M[m], e) for m in NAMES}; K = {m: P[m] >= TH[m]["tau"] for m in NAMES}
+    rows = []
+    for m in NAMES:
+        k = K[m]
+        rows.append(dict(model=m, tau=TH[m]["tau"], true_kept=f"{int((k & (y == 1)).sum())}/{int(y.sum())}",
+                         true_kept_w=(w * y * k).sum() / (w * y).sum() if y.sum() else np.nan,
+                         false_kept=int((k & (y == 0)).sum()), false_removed=f"{int((~k & (y == 0)).sum())}/{int((y == 0).sum())}",
+                         false_removed_w=(w * (1 - y) * ~k).sum() / (w * (1 - y)).sum() if (y == 0).any() else np.nan,
+                         AUC=roc_auc_score(y, P[m], sample_weight=w) if 0 < y.sum() < len(y) else np.nan, logloss=wlogloss(y, P[m], w)))
+    CT = pd.DataFrame(rows)
+    jobs = {"op": ("op", dict(y=y, w=w, kept=[K[m] for m in NAMES], groups=groups), 2000, 0),
+            "dA": ("dll", dict(y=y, w=w, pA=P["A"], pE=P["A_CV"], groups=groups), 10000, 20260921),
+            "dC": ("dll", dict(y=y, w=w, pA=P["C"], pE=P["C_CV"], groups=groups), 10000, 20260921)}
+    with ProcessPoolExecutor(W) as pool:
+        B = boot_many(jobs, pool)
+    op = np.array(B["op"], float)                                # resamples x 4 models x (true kept, false removed, precision)
+    cmp_rows = []
+    for a, b, ia, ib in [("C", "C_CV", 2, 3), ("A", "A_CV", 0, 1)]:   # lines copied verbatim from euv_extra.py filter (5abc40a)
+        df_pt = CT.false_removed_w[ib] - CT.false_removed_w[ia]; dt_pt = CT.true_kept_w[ib] - CT.true_kept_w[ia]
+        dfb, dtb = op[:, ib, 1] - op[:, ia, 1], op[:, ib, 0] - op[:, ia, 0]; ok = np.isfinite(dfb) & np.isfinite(dtb)
+        (fl, fh), (tl, th) = (np.percentile(dfb[ok], [2.5, 97.5]), np.percentile(dtb[ok], [2.5, 97.5])) if ok.any() else ((np.nan,) * 2, (np.nan,) * 2)
+        ll = B["dA"] if a == "A" else B["dC"]; dl = CT.logloss[ia] - CT.logloss[ib]; lo, hi = pct(ll)
+        cmp_rows.append(dict(comparison=f"{a} vs {b}", D_false_pts=100 * df_pt, D_false_lo=100 * fl, D_false_hi=100 * fh,
+                             D_true_pts=100 * dt_pt, D_true_lo=100 * tl, D_true_hi=100 * th, resamples_used=int(ok.sum()),
+                             dlogloss=dl, dlogloss_lo=lo, dlogloss_hi=hi, AUC_base=CT.AUC[ia], AUC_cv=CT.AUC[ib]))
+    CM = pd.DataFrame(cmp_rows)
+    comp = e.assign(year=e.t.dt.year, regions=e.noaa_ars.astype(str).str.count(",") + 1).groupby(["year", "regions"]).size()
+    p = CM.iloc[0]
+    if y.sum() == 0 or (y == 0).sum() == 0 or p.resamples_used == 0:
+        reading = "INCONCLUSIVE"
+    elif p.D_false_lo > 0 and p.D_true_lo >= -10:
+        reading = "CONFIRMED SAFE FILTER"
+    elif p.D_false_lo > 0 and p.D_true_pts >= -10:
+        reading = "MEETS OPERATING CRITERION"
+    elif p.D_false_lo > 0:
+        reading = "REMOVES FALSE ALARMS BUT LOSES TOO MANY TRUE ALARMS (point estimate)"
+    else:
+        reading = "NOT CONFIRMED"
+    CT.to_csv(f"{T}/retest_models.csv", index=False); CM.to_csv(f"{T}/retest_comparisons.csv", index=False)
+    pd.set_option("display.width", 250); pd.set_option("display.max_columns", 40)
+    print("2025-26 RE-TEST: CV_box AS A FILTER ON TOP OF MODEL C — pre-registered re-test on an already-analysed set, NOT an untouched test. RUN ONCE.")
+    print(f"hashes re-verified: {len(hs)} files + thresholds.json. Set: {len(e)} evaluable <= 2-region episodes (true {int(y.sum())}, false {int((y == 0).sum())}, "
+          f"HARPs {len(groups)}); weights 1/n per HARP; delayed = false; frozen models, no refitting")
+    print("composition (year / regions at t: episodes): " + ", ".join(f"{yy}/{rr}: {v}" for (yy, rr), v in comp.items()))
+    print("\nper model at its frozen tau (weighted fractions; 'true alarm episodes kept'):")
+    print(CT.to_string(index=False, float_format=lambda v: f"{v:.4f}"))
+    print("\nPRIMARY = C vs C_CV; SECONDARY = A vs A_CV. D_false = weighted % false alarms removed (CV model minus base); D_true = weighted % true alarm "
+          "episodes kept (CV model minus base); percentage points; paired HARP bootstrap 2,000, seed 0. Delta log-loss = base - CV model; HARP bootstrap 10,000, seed 20260921.")
+    print(CM.to_string(index=False, float_format=lambda v: f"{v:.4f}"))
+    print(f"\nPRE-STATED READING (mechanical; PRIMARY C vs C_CV): D_false {p.D_false_pts:+.2f} pts [{p.D_false_lo:+.2f}, {p.D_false_hi:+.2f}], "
+          f"D_true {p.D_true_pts:+.2f} pts [{p.D_true_lo:+.2f}, {p.D_true_hi:+.2f}], resamples_used {p.resamples_used} -> \"{reading}\"")
+    print(f"wall {time.time() - t00:.1f} s, workers {W}")

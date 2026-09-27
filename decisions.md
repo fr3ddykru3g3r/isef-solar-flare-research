@@ -4846,3 +4846,27 @@ STOP. The re-test is not evaluated until the user says "run the 2025–26 filter
 - **No new statistics code.** The few lines that turn the `op` resamples into D_false / D_true and their percentiles were inline in `euv_extra.py filter` (not a function). They are copied verbatim into `euv_confirm_retest.py`: D = (CV model − base) per resample; ok = both D_false and D_true finite; 2.5/97.5 percentiles over the ok resamples; ×100 → points.
 - **Resamples with no true or no false episodes:** as in 5abc40a, `op_stats` returns NaN for the undefined fraction. Those resamples are dropped from both CIs, and `resamples_used` is reported. The reading is "INCONCLUSIVE" if the set has no true or no false episode, or 0 resamples are usable.
 - **Output order:** everything is computed first and printed only at the end. A crash therefore happens before any outcome is printed.
+
+### 2025–26 RE-TEST — RESULTS (run once; numbers only; "pre-registered re-test on an already-analysed set", NOT an untouched test)
+`euv_confirm_retest.py run` → `euv_confirm_filter_retest.log`, `data/euv_confirm/retest_models.csv`, `retest_comparisons.csv`. The run completed without error.
+- **Integrity:** 22 files and `thresholds.json` re-verified; frozen models only; no refitting.
+- **Set:** 378 evaluable ≤ 2-region episodes (56 true / 322 false, 101 HARPs); weights 1/n per HARP; delayed = false.
+- **Composition** (year / regions at t): 2025/1: 101, 2025/2: 161, 2026/1: 62, 2026/2: 54.
+
+| model | τ (frozen) | true alarm episodes kept (n/N; weighted) | false kept | false removed (n/N; weighted) | AUC | log-loss |
+|---|---:|---|---:|---|---:|---:|
+| A | 0.0680 | 56/56; 1.0000 | 322 | 0/322; 0.0000 | 0.7631 | 0.3933 |
+| A_CV | 0.0747 | 41/56; 0.7863 | 107 | 215/322; 0.6312 | 0.7993 | 0.3662 |
+| C | 0.0626 | 54/56; 0.9262 | 235 | 87/322; 0.3102 | 0.7693 | 0.3774 |
+| C_CV | 0.0689 | 41/56; 0.7863 | 127 | 195/322; 0.5507 | 0.7977 | 0.3672 |
+
+D_false and D_true are in percentage points: paired HARP bootstrap, 2,000 resamples, seed 0. Δ log-loss = base − CV model: HARP bootstrap, 10,000 resamples, seed 20260921.
+
+| comparison | D_false [95% CI] | D_true [95% CI] | resamples_used | Δ log-loss [95% CI] | AUC base → CV |
+|---|---|---|---:|---|---|
+| **PRIMARY C vs C_CV** | **+24.05 [+14.63, +33.45]** | **−13.98 [−28.47, −4.42]** | 2000 | +0.0102 [−0.0170, +0.0371] | 0.7693 → 0.7977 |
+| SECONDARY A vs A_CV | +63.12 [+54.38, +71.83] | −21.37 [−40.33, −7.32] | 2000 | +0.0272 [−0.0010, +0.0568] | 0.7631 → 0.7993 |
+
+**PRE-STATED READING (mechanical; PRIMARY C vs C_CV):** D_false CI lower +14.63 > 0, but D_true point −13.98 < −10 → **"REMOVES FALSE ALARMS BUT LOSES TOO MANY TRUE ALARMS (point estimate)"**.
+
+STOP.
