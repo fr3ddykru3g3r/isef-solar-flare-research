@@ -1,0 +1,21 @@
+COMBO-T FREEZE (9a88d70) — dev 2010-2019 only; no 2021-2026 data read. SECONDARY prospective model; exploratory.
+checks: dev set = the frozen euv_extra dev rows (541, same order); prot12 = 1 only where a C1+ started in (t-12h, t); Model C (C = 1.0) reproduces euv_extra dev OOF log-loss and tau exactly
+dev set: 541 episodes (true 96, false 445, HARPs 179); prot12 = 1 in 166 (59 true / 107 false)
+
+COMBO-T cols ['score', 'n_C', 'n_M', 'n_X', 'logR', 'log10_CV_box', 'prot12']; LogisticRegression {'penalty': 'l2', 'C': 0.3, 'solver': 'lbfgs', 'max_iter': 10000}; Stage 4 folds, 1/n per HARP, training-fold StandardScaler
+  dev OOF: LL 0.3139, weighted AUC 0.7930; tau (>= 88% weighted true kept) 0.0792151183; true kept 84/96 (0.8840 w), false removed 255/445 (0.5735 w)
+  reference Model C (frozen euv_extra, dev OOF): LL 0.3223, weighted AUC 0.7720; tau 0.0625698316; true kept 88/96 (0.8807 w), false removed 154/445 (0.3579 w)
+  coefficients per fold (per 1 SD, training-fold StandardScaler):
+ fold   score     n_C     n_M     n_X    logR  log10_CV_box  prot12
+    0 +0.6619 +0.0394 +0.0451 +0.0618 +0.0107       +0.5279 -0.0716
+    1 +0.4637 -0.0059 +0.3150 +0.0339 -0.1210       +0.3124 +0.0663
+    2 +0.7408 +0.1327 +0.1415 -0.0852 +0.0775       +0.5162 +0.0837
+    3 +0.6744 -0.1714 +0.1885 -0.0281 +0.0246       +0.3325 +0.1563
+    4 +0.5366 +0.0112 +0.1915 +0.0560 -0.0013       +0.4863 +0.1515
+  sha256 1ea33fa1f3c3c9ae7bc1c961ce383fa2113802298e5420d966cdf76da723fa1d  data/combo_t/models/COMBO_T_fold0.joblib
+  sha256 a2b5d7f00305b526ba4e8598f71eb28296f01d47b950ddc4d61f67da945f9c9d  data/combo_t/models/COMBO_T_fold1.joblib
+  sha256 932a64ef52da65bba52af063769649de2eaa8a27e08e753a7f717d160043daab  data/combo_t/models/COMBO_T_fold2.joblib
+  sha256 faacdc412890565beace14e6f9ae13bf2634e1d881411d9962d8a711085d0ba3  data/combo_t/models/COMBO_T_fold3.joblib
+  sha256 76ac7ba6249d79359a964cc6b93f446f8957d7c5956e4469f8843ca051e9ede1  data/combo_t/models/COMBO_T_fold4.joblib
+  sha256 3b598cc79bbf3fda09ff27423c46e9fe79c648ad59b0c855d60999c4c7d58ea8  data/combo_t/thresholds.json
+  sha256 2717b304387f4861dbf4a4eb847ad1539ca76238fd79ea6f29ab6b3b84d931f9  data/combo_t/dev_rows.csv

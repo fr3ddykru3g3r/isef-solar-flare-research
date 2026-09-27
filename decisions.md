@@ -5451,3 +5451,41 @@ Fit on dev 2010–2019 only; save and hash the 5 fold models; τ at 88% dev OOF 
 PROSPECTIVE outputs for COMBO-T: (1) Δ log-loss = LL(Model C) − LL(COMBO-T), HARP bootstrap 10,000, seed 20260921, 95% CI (descriptive reading: "BETTER PROBABILITIES" if CI lower > 0, else "NOT SHOWN"); (2) reliability table for tiers <5%, 5–15%, 15–30%, >30% (n, true, mean predicted, observed rate); (3) at τ: D_true and D_false vs Model C (paired HARP bootstrap 2,000, seed 0).
 Disclosure (verbatim): a Claude AI exploratory check on 2021–2026 (not committed) gave LL 0.3657 vs Model C 0.3768, AUC 0.768 vs 0.750, and at τ 128/160 true kept, 477/831 false removed; the dev-88% cutoff kept only 80% of true alarms on 2021–2026 (cutoff drift).
 Commit. STOP.
+
+### 2026-09-27 — COMBO-T (9a88d70): implemented and FROZEN on dev 2010–2019 only; no 2021–2026 data read (recorded by: me)
+Recorded from `combo_t_freeze.log` (`combo_t.py freeze`).
+
+**Implementation:**
+- **prot12:** 1 if a region in noaa_ars had ≥ 1 flare with true flux ≥ 2.0e-6 (C2.0+) starting strictly inside (t − 12 h, t). The events are the joinable SWPC originals from `swpc.fetch` (K2 true scale), and the join is the same code as `euv_confirm_tests.log_r`.
+- **logR:** `log_r` over 2010-04-28 to 2019-12-31 23:59 (Step B).
+- **log10 CV_box:** the stored primary_CV_box.
+- **Fitting:** as `euv_heldout.fit_folds`, but with `LogisticRegression(penalty="l2", C=0.3, solver="lbfgs", max_iter=10000)`.
+- **Dev set:** the frozen `euv_extra` dev rows (541: primary fill ≥ 80%, CV_box > 0). The grid search that chose this configuration was not re-run here.
+
+**Checks (all passed):**
+- The dev set equals `data/euv_extra/dev_rows.csv` (541, same order).
+- prot12 = 1 only where a C1+ started in (t − 12 h, t).
+- Model C (C = 1.0) reproduces the frozen `euv_extra` dev OOF log-loss and τ exactly.
+
+**Dev set:** 541 episodes (96 true / 445 false; 179 HARPs). prot12 = 1 in 166 of them (59 true / 107 false).
+
+**COMBO-T, dev out-of-fold (exploratory):**
+- LL 0.3139; weighted AUC 0.7930.
+- **τ (≥ 88% weighted true kept) = 0.0792151183.**
+- True kept 84/96 (0.8840 w); false removed 255/445 (0.5735 w).
+
+**Reference, frozen Model C, dev out-of-fold:**
+- LL 0.3223; weighted AUC 0.7720.
+- τ 0.0625698316; true kept 88/96 (0.8807 w); false removed 154/445 (0.3579 w).
+
+**Coefficients per fold** (per 1 SD):
+- score: +0.4637 to +0.7408
+- log10 CV_box: +0.3124 to +0.5279
+- prot12: −0.0716, +0.0663, +0.0837, +0.1563, +0.1515
+- logR: −0.1210 to +0.0775
+- The full table is in the log.
+
+**SHA-256** (`data/combo_t/`; full hashes in the log and in `model_hashes.json`):
+- COMBO_T_fold0–4: 1ea33fa1…, a2b5d7f0…, 932a64ef…, faacdc41…, 76ac7ba6…
+- thresholds.json: 3b598cc7…
+- dev_rows.csv: 2717b304…
