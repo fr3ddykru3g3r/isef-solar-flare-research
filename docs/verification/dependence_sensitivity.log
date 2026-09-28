@@ -1,0 +1,11 @@
+pairs 50; ratio 3.262; true>false 39/50
+true HARPs 18, false HARPs 41
+pairs per true HARP: [7, 7, 5, 4, 4, 3, 3, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1]
+pairs per false HARP (max): 4 ; false HARPs used >1: 6
+HARPs on both sides: 8
+true HARPs with majority of pairs true>twin: 14 of 18; exactly half: 2; minority: 2
+true HARPs with median log-ratio > 0: 16 of 18
+seed 0: by true HARP [1.3  9.49]; by false HARP [1.48 8.94]
+seed 0: two-way (true AND false HARPs resampled independently) [ 0.86 12.23]; share of resamples <= 1: 0.038; n 2000; median pairs/resample 49.0
+seed 777: by true HARP [1.23 9.47]; by false HARP [1.52 8.99]
+seed 777: two-way (true AND false HARPs resampled independently) [ 0.81 12.56]; share of resamples <= 1: 0.043; n 2000; median pairs/resample 50.0
