@@ -5670,3 +5670,23 @@ C+ minus Model C (weighted points; paired HARP bootstrap 2,000, seed 0; post-hoc
 - **C-level sweep:** the dev choice is C2.0.
 - **Table-rule dev cutoffs:** 0.065, 0.081, 0.196, 0.085, 0.194.
 - **COMBO default:** dev τ 0.0642.
+
+## 2026-09-28 — POST-HOC REGION-REUSE CHECK OF TEST 1 and DOCUMENTATION PARTS 2–5 (recorded by: Claude AI, chat session, at the user's request after an external review; nothing pre-registered, nothing re-run)
+**Post-hoc check (NOT pre-registered; defined and computed in the same chat session, not recorded before computing).** `docs/verification/dependence_sensitivity.py` → `dependence_sensitivity.log` (f060c86). Read-only on `data/euv_confirm/twins_le2.csv` and `data/euv_confirm/results/*.json`. The reading of TEST 1 (749208e → ae1b174, "REPLICATED") is unchanged.
+- Structure of the 50 TEST 1 pairs: 18 true HARPs (pairs per HARP 7, 7, 5, 4, 4, 3, 3, 2 × 6, 1 × 5), 41 false HARPs (max 4 pairs; 6 used more than once), 8 HARPs on both sides; linked through shared HARPs, 47 pairs form one group (4 groups in total).
+- Ratio 3.262 (reproduced). 95% intervals, 2,000 resamples, seed 0:
+  - true HARPs resampled (the pre-registered method): [1.30, 9.49];
+  - false HARPs resampled: [1.48, 8.94];
+  - true and false HARPs resampled independently (two-way): **[0.86, 12.23]**, 3.8% of resamples ≤ 1 (seed 777: [0.81, 12.56]);
+  - 4 linked groups resampled: [0.68, 18.87] (unstable with 4 groups; from `verify_independent.log`).
+- Region level: 14 of 18 true HARPs have true > twin in most of their pairs (2 tied, 2 minority); median log-ratio > 0 for 16 of 18.
+
+**Documentation parts (instructions 8aa1797):**
+- PART 2 → `docs/file_inventory.md` (0117647): 46 figure files and 75,837 data files since 2026-09-26, in 50 groups; 13 underscore files marked "scratch — can be deleted by the user"; nothing deleted.
+- PART 3 → `docs/RESULTS_SUMMARY.md` (39a4f20): sections A–F. The region-reuse check is listed under C (post-hoc exploratory).
+- PART 4 → `docs/AI_USE_LOG.md` (a4fdb3a; one cell corrected in the PART 5 commit).
+- PART 5 final check:
+  - Hashes: euv_extra 22/22, combo_t 7/7, nb_r4a 17/17 files match their manifests. `frozen/frozen_spec.json` sha256 starts 1d205068 (as recorded); Stage 4 fold models 10/10 and Stage 2 gate fold models 5/5 match the hashes inside it.
+  - decisions.md: e17a8a3 (the commit before PART 0) → HEAD shows +181 / −0 lines (additions only). The working tree equals HEAD in content; git's "modified" status for many files is a file-mode change (100644 → 100755) from the external drive, not a content change.
+  - Commit hashes: PART 0 8aa1797 (clarification 784b1a8); PART 1 4a0eb43; PART 2 0117647; PART 3 39a4f20; PART 4 a4fdb3a; verification scripts f060c86; PART 5 = the commit containing this entry.
+- Reproducibility notes: `docs/verification/*.py` now use repo-relative paths. `stage3_cohort.py:47` and `diag_ablation.py:18` still point at a Claude scratch directory from the original machine, and were left unedited (they are records of what ran). The first affects only a printed diagnostic after its outputs are written; the second affects only ablation row D2 (needs `labelled_K.csv`, sha256 85b88518…, not in the repo). Neither affects any confirmed or robustness result.

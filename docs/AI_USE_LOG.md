@@ -91,7 +91,7 @@ Every other entry records who decided ("decided by: user" or "(me)" = Claude Cod
 | Alert tiers, noise check, calm-flarer profile | wording drafted by Claude AI, reviewed and adopted by Lokesh | 947e4c0 |
 | Bursty fraction BF and late-window CV6 (prospective) | wording drafted by Claude AI, reviewed and adopted by Lokesh | 2f62f88 |
 | COMBO-T secondary model | not recorded (decided by: user) | 9a88d70 |
-| HEK vs SWPC label comparison (Path A) | not recorded (decided by: user); prior work Hu et al. recorded | 2269 (entry), 50c5895 |
+| HEK vs SWPC label comparison (Path A) | not recorded (decided by: user); prior work Hu et al. recorded | 2306cb3, 50c5895 |
 | B&C reproduction diagnostics D1–D8, R1–R4 (reproduction) | not recorded (decided by: user) | e5305f7, 471021e, 3e04525 |
 | Independent verification script; region-reuse sensitivity (post-hoc) | Claude AI (chat), 2026-09-28 | f060c86 |
 
