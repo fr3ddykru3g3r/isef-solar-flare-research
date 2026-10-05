@@ -1,0 +1,25 @@
+period,model,real_kept,real_kept_pct,false_cut,false_cut_pct,precision_pct,TSS,AUC,status
+2010-19 (built on),Gate only,96/96,100.0,0/445,0.0,17.7,0.0,,baseline
+2010-19 (built on),Model A (gate + flare counts),87/96,90.6,70/445,15.7,18.8,0.064,0.728,baseline (pre-registered)
+2010-19 (built on),Model C (A + time since last flare),88/96,91.7,154/445,34.6,23.2,0.263,0.75,CONFIRMED forecast gain (2025-26)
+2010-19 (built on),A + restlessness,84/96,87.5,243/445,54.6,29.4,0.421,0.779,filter test: lost too many real
+2010-19 (built on),C + restlessness,84/96,87.5,218/445,49.0,27.0,0.365,0.766,filter test: lost too many real
+2010-19 (built on),C-flare rule alone,77/96,80.2,240/445,53.9,27.3,0.341,,post-hoc
+2010-19 (built on),Table rule (cutoff per C-count),87/96,90.6,188/445,42.2,25.3,0.329,,post-hoc; failed on new years
+2010-19 (built on),C+ protection rule,91/96,94.8,179/445,40.2,25.5,0.35,,post-hoc; pre-registered for Nov
+2021-26 (new years),Gate only,160/160,100.0,0/831,0.0,16.1,0.0,,baseline
+2021-26 (new years),Model A (gate + flare counts),160/160,100.0,0/831,0.0,16.1,0.0,0.744,baseline (pre-registered)
+2021-26 (new years),Model C (A + time since last flare),150/160,93.8,199/831,23.9,19.2,0.177,0.75,CONFIRMED forecast gain (2025-26)
+2021-26 (new years),A + restlessness,125/160,78.1,492/831,59.2,26.9,0.373,0.762,filter test: lost too many real
+2021-26 (new years),C + restlessness,128/160,80.0,444/831,53.4,24.9,0.334,0.76,filter test: lost too many real
+2021-26 (new years),C-flare rule alone,130/160,81.2,386/831,46.5,22.6,0.277,,post-hoc
+2021-26 (new years),Table rule (cutoff per C-count),109/160,68.1,404/831,48.6,20.3,0.167,,post-hoc; failed on new years
+2021-26 (new years),C+ protection rule,146/160,91.2,282/831,33.9,21.0,0.252,,post-hoc; pre-registered for Nov
+2025-26 only,Gate only,56/56,100.0,0/322,0.0,14.8,0.0,,baseline
+2025-26 only,Model A (gate + flare counts),56/56,100.0,0/322,0.0,14.8,0.0,0.756,baseline (pre-registered)
+2025-26 only,Model C (A + time since last flare),54/56,96.4,87/322,27.0,18.7,0.234,0.777,CONFIRMED forecast gain (2025-26)
+2025-26 only,A + restlessness,41/56,73.2,215/322,66.8,27.7,0.4,0.784,filter test: lost too many real
+2025-26 only,C + restlessness,41/56,73.2,195/322,60.6,24.4,0.338,0.781,filter test: lost too many real
+2025-26 only,C-flare rule alone,45/56,80.4,161/322,50.0,21.8,0.304,,post-hoc
+2025-26 only,Table rule (cutoff per C-count),35/56,62.5,192/322,59.6,21.2,0.221,,post-hoc; failed on new years
+2025-26 only,C+ protection rule,52/56,92.9,125/322,38.8,20.9,0.317,,post-hoc; pre-registered for Nov

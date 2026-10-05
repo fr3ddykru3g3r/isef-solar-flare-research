@@ -1,6 +1,6 @@
 # Decisions
 
-## 2026-09-21 — initial dataset build (January 2014)
+## 2026-09-19 — initial dataset build (January 2014)
 
 - **Hourly sampling via JSOC `@1h`**: the query `hmi.sharp_cea_720s[][...@1h]` returns records
   that exist at hourly slots. No interpolation. 10145 of 10268 expected hourly records present
