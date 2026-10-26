@@ -1,2 +1,29 @@
+# Python & environment
 .venv/
 __pycache__/
+*.pyc
+*.pyo
+
+# System & OS artifacts
+.DS_Store
+._*
+Desktop.ini
+
+# Data directory (80 GB of FITS cutouts, NetCDF, CSVs)
+data/
+data/**
+
+# Previous literature PDFs & research paper outputs
+output/
+archive/
+research_paper_outputs/
+paper/
+Claude outputs/
+video/
+docs/PAPER_WRITING_KIT.md
+
+# Scratch working files in figures
+figures/_*
+
+# Local verification artifacts
+verification/out/frozen.csv

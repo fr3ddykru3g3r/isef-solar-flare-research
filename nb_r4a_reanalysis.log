@@ -1,0 +1,99 @@
+POST-HOC RE-ANALYSIS (68e57b1) — NOT an untouched test. FREEZE: dev only; no test set is read in this step.
+
+DEFINITIONS (quoted; no changes)
+n_B — phase_f.item_F3 (B = K2 true flux in [1e-7, 1e-6), swpc.class_of; joinable events only; no transform):
+        fl, _ = swpc.fetch(pd.Timestamp("2010-04-28"), DEV_END, verbose=False)                     # joinable events, dev only
+        by_ar = {k: v[["start", "cls"]].sort_values("start") for k, v in fl.groupby("noaa_ar")}
+        cnt = []
+        for e in coh.itertuples():                                     # = build_dataset.label history join, [t-48h, t)
+            prev = [g[(g.start >= e.t - pd.Timedelta(hours=48)) & (g.start < e.t)] for ar in
+                    [int(a) for a in str(e.noaa_ars).split(",") if a.strip().isdigit()] if (g := by_ar.get(ar)) is not None]
+            p = pd.concat(prev).drop_duplicates() if prev else pd.DataFrame(columns=["start", "cls"])
+            cnt.append({k: int((p.cls == k).sum()) for k in "BCMX"})
+        cnt = pd.DataFrame(cnt)
+        ok = all((cnt[k].to_numpy() == coh[f"n_{k}"].to_numpy()).all() for k in "CMX")
+        print(f"\ncheck: the join reproduces the cohort n_C, n_M, n_X for all {len(coh)} episodes: {ok}"); assert ok
+        coh = coh.assign(n_B=cnt.B.to_numpy(), n_BC=cnt.B.to_numpy() + cnt.C.to_numpy())
+R4a — euv_spatial.spatial_episode (median over consecutive valid_primary frame pairs <= 24 min apart of the excess kurtosis of the whole-box running difference; no transform):
+    def _kurt_skew(x):
+        from scipy.stats import kurtosis, skew
+        x = x[np.isfinite(x)]
+        return (float(kurtosis(x, fisher=True, bias=True)), float(skew(x, bias=True))) if len(x) >= 4 else (np.nan, np.nan)
+                d = V[i] - V[i - 1]
+                p["kappa_box"], p["skew_box"] = _kurt_skew(d)
+        med = lambda c: float(np.nanmedian(P_[c])) if len(P_) and P_[c].notna().any() else np.nan
+                   R4a=med("kappa_box"), R4b=med("skew_box"), R4c=mf("frac_box"),
+models: A = ['score', 'n_C', 'n_M', 'n_X'], A_R4a = ['score', 'n_C', 'n_M', 'n_X', 'R4a'], COMBO = ['score', 'n_C', 'n_M', 'n_X', 'n_B', 'R4a']; euv_heldout.fit_folds (= euv_spatial.cv_fit, Step 6 settings: Stage 4 folds, 1/n per HARP weights, training-fold StandardScaler, LogisticRegression L2 C=1 lbfgs); new-set prediction = mean of 5 fold models; tau = phase_f.tau_keep (highest dev OOF threshold keeping >= 88% weighted true, as 04b6f4f)
+
+check: the join reproduces n_C, n_M, n_X for all 547 dev episodes and n_B equals data/phase_f/F3_n_B.csv for all 547
+dev set: 541 episodes (primary fill >= 80%, R4a defined), true 96, false 445, HARPs 179
+
+1a. DEV F3 REPRODUCED EXACTLY (|diff| < 1e-12; counts and tau identical); delta = LL(A) - LL(model), + = helps; OOF, >= 88% weighted true kept
+model    F3_row    delta  F3_delta      AUC   F3_AUC false_removed_n F3_false_removed_n true_kept_n F3_true_kept_n  false_removed_w  F3_false_removed_w      tau   F3_tau
+A_R4a       R4a 0.012353  0.012353 0.800327 0.800327         209/445            209/445       84/96          84/96         0.487080            0.487080 0.061222 0.061222
+COMBO n_B + R4a 0.009197  0.009197 0.794578 0.794578         233/445            233/445       81/96          81/96         0.529998            0.529998 0.064608 0.064608
+
+FROZEN (dev OOF):
+  A      cols ['score', 'n_C', 'n_M', 'n_X']: tau 0.0679701247; LL 0.3206, AUC 0.7422; true kept 87/96 (0.8815 w), false removed 70/445 (0.1804 w)
+  A_R4a  cols ['score', 'n_C', 'n_M', 'n_X', 'R4a']: tau 0.0612215400; LL 0.3082, AUC 0.8003; true kept 84/96 (0.8805 w), false removed 209/445 (0.4871 w)
+  COMBO  cols ['score', 'n_C', 'n_M', 'n_X', 'n_B', 'R4a']: tau 0.0646075144; LL 0.3114, AUC 0.7946; true kept 81/96 (0.8864 w), false removed 233/445 (0.5300 w)
+  sha256 547b5d2c622742693d412bbb2ef81f9316895dbb9a8d8eabd735a31a10238ae2  data/nb_r4a/models/A_fold0.joblib
+  sha256 bdc8f8595964134160f4c44baacdede873fe322e0a199a1566b77154ca652cb5  data/nb_r4a/models/A_fold1.joblib
+  sha256 4044fa9bc10e166913f7e40ccadae96b47b53f63f9aabbde94f1ee711d28f0ff  data/nb_r4a/models/A_fold2.joblib
+  sha256 11109aa5cc76e4e7106c5bcbef4b9e5ceb70695d38a35820c02e094405946086  data/nb_r4a/models/A_fold3.joblib
+  sha256 4ab93e1ebac4f8a90bed89bed1116f73cbfdc570a0b705869bd1c6c75587687b  data/nb_r4a/models/A_fold4.joblib
+  sha256 0a004dd349b77d44923bbe944ae270534bc8d3999b5e7c2da8fc5b7e80f7ee76  data/nb_r4a/models/A_R4a_fold0.joblib
+  sha256 78abaa09c047e0d2e7aefe7e788fe492ada7f36539fc3981af0706d4869456aa  data/nb_r4a/models/A_R4a_fold1.joblib
+  sha256 fdac72941dafdfb19b2da7a238b6636e26490d513c3575bbd3c46c59361b272c  data/nb_r4a/models/A_R4a_fold2.joblib
+  sha256 597e68cfa15804271507a10871326f4b7045db4b2d3be8239c268afa041d8205  data/nb_r4a/models/A_R4a_fold3.joblib
+  sha256 05091044f725a4bcb96b8bbe4048aa2f3474ba933ffcba089e73c708b0d997d0  data/nb_r4a/models/A_R4a_fold4.joblib
+  sha256 93da5cf3f6f4af783ecf134e0c38a7a7efc9b7527bbe065c0538a2cd2ec78544  data/nb_r4a/models/COMBO_fold0.joblib
+  sha256 18c60f7738b9dc49d3ec890dfd0bdf39e7c28b4138c2670e292244ac5491c456  data/nb_r4a/models/COMBO_fold1.joblib
+  sha256 65ea9adb06db8fdaadbc6f45e01dba13ed744350fbef03ef5deff3b65e15e500  data/nb_r4a/models/COMBO_fold2.joblib
+  sha256 ff66fcba6a7868a5c536f7838d8fb01aa0dce36c09b086c27c93640cd856779a  data/nb_r4a/models/COMBO_fold3.joblib
+  sha256 e5b3b52db6aca89dd177a26bf86a3bd30cac2fcfde87f032400a86732b3464ab  data/nb_r4a/models/COMBO_fold4.joblib
+  sha256 9abca2e63683eb44a04330001ef42e747ace08f7ce162914fa75b961362cdb00  data/nb_r4a/dev_rows.csv
+  sha256 7f658c2ddeb80409be49eed9e16a04bd106f04c224fc90c8da24ed3996ddede5  data/nb_r4a/thresholds.json
+wall 1.1 s
+
+==============================================================================================================
+STEP 1 — LABEL-BLIND CHECKS (true_alarm and delayed not read; no outcome printed)
+integrity: 17 frozen files hash-verified (models, thresholds.json, dev_rows.csv); tau_A 0.0679701247, tau_A_R4a 0.0612215400, tau_COMBO 0.0646075144
+
+1b. EPISODE COUNTS (weights 1/n per HARP within each set); n_B join reproduces the cohort n_C, n_M, n_X for every episode
+  PRIMARY 2021/23/24 single-region: 306 episodes, HARPs 98; R4a undefined among fill-eligible episodes: 0 []; n_B undefined: 0; n_B median 0.0, IQR [0.0, 0.0], max 16, zero 283
+  SECONDARY 2025-26 <=2-region: 378 episodes, HARPs 101; R4a undefined among fill-eligible episodes: 0 []; n_B undefined: 0; n_B median 0.0, IQR [0.0, 0.0], max 12, zero 326
+
+1c. B-CLASS ATTRIBUTION (phase_f.item_F3 code: swpc.load per calendar year, cls == 'B', fraction with a NOAA region number)
+ year  days_cached  B_events  with_region  frac_with_region
+ 2010          248       674          493            0.7315
+ 2011          365       582          427            0.7337
+ 2012          366       390          248            0.6359
+ 2013          365       327          260            0.7951
+ 2014          365       108           87            0.8056
+ 2015          365       268          230            0.8582
+ 2016          366       748          589            0.7874
+ 2017          365       709          559            0.7884
+ 2018          365       274          241            0.8796
+ 2019          365       184          161            0.8750
+ 2021          365      1609         1215            0.7551
+ 2022          365       825          524            0.6352
+ 2023          365        49           28            0.5714
+ 2024          366        35           25            0.7143
+ 2025          363       142          110            0.7746
+ 2026          230       336          265            0.7887
+  dev rows reproduce data/phase_f/F3_B_coverage.csv; dev average: mean of per-year fractions 0.7890, pooled 0.7727
+ year frac_with_region diff_vs_mean_pp diff_vs_pooled_pp
+ 2021           0.7551           -3.39             -1.76
+ 2022           0.6352          -15.39            -13.76
+ 2023           0.5714          -21.76            -20.13
+ 2024           0.7143           -7.47             -5.85
+ 2025           0.7746           -1.44             +0.19
+ 2026           0.7887           -0.03             +1.59
+  rule (> 20 pp vs either dev average in any test year): n_B NOT COMPARABLE ACROSS YEARS — TEST NOT RUN [2023]
+
+1d. BASELINE GUARD: weighted % of ALL episodes with p_A >= tau_A (frozen A; mean of 5 dev fold models)
+  PRIMARY 2021/23/24 single-region: A keeps 1.0000 weighted (306/306 episodes) -> PRIMARY comparison not interpretable (baseline does not filter); only matched retention reported
+  SECONDARY 2025-26 <=2-region: A keeps 1.0000 weighted (378/378 episodes) -> PRIMARY comparison not interpretable (baseline does not filter); only matched retention reported
+
+wall 1.2 s. STOP — evaluation only on 'run the n_B + R4a re-analysis once'.

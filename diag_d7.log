@@ -1,0 +1,14 @@
+raw rows 2010-05..2014-06: 379600; QUALITY<=65536: 343198; +|LON|<=68: 252052; +features present +NOAA mapped: 140847
+SWPC M1+ (K scale) with a region, 2010-05-01..2014-05-31+: 455
+positive examples: 272 (one per flare; 269 distinct records)
+  M1+ flares not used -- no peak time: 0
+  M1+ flares not used -- sample time outside period: 1
+  M1+ flares not used -- region in no patch: 0
+  M1+ flares not used -- no patch record within 30 min of peak-24h passing filters: 61
+  M1+ flares not used -- flare-location proxy: patch |LON|>68 or no record at peak: 121
+negative pool (eligible records, no M1+ in (t, t+24h]): 132939; drawn once: N = 4488 (N/P = 16.50)
+
+D7 over 1000 random 70/30 splits: TSS 0.5267 ± 0.0500 (min 0.3562, max 0.6969); TPR 0.5399 ± 0.0505; FPR 0.0132 ± 0.0032; P 272, N 4488; test set ~82 pos / 1346 neg
+distinct patches among positives: 90, among negatives: 761
+
+D7b our baseline, 2010-05-01..2014-05-31: TSS 0.5861 95% CI [0.4665, 0.6800] (HARP bootstrap, 1000 resamples); TPR 0.6318, FPR 0.0457; rows 71023, positive rows 1863, positive HARPs 57, HARPs 613; threshold -0.9918

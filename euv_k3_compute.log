@@ -1,0 +1,5 @@
+LABEL-BLIND REPORT (no labels read): 547 dev episodes, pairs files for 546
+K3 on the primary 80% set (541): defined 540, excluded 1 (LATE < 5 pairs: 1); LATE pairs median 16, min 4, max 16
+   K3 percentiles 0/5/25/50/75/95/100: -1.6132 / -0.6717 / -0.2131 / 0.0201 / 0.3443 / 1.1349 / 2.9062
+K3_nf on the flare-excluded 80% set (528): defined 526, excluded 2 (LATE < 5 pairs: 2); LATE pairs median 16, min 4, max 16
+   K3 percentiles 0/5/25/50/75/95/100: -1.6745 / -0.6648 / -0.2098 / 0.0217 / 0.3621 / 1.1475 / 2.9062

@@ -1,0 +1,22 @@
+1. SWPC M1+ events under K2, 2018-01-01 -> 2020-12-31: 5
+              start                peak reported  true_flux K2_class noaa_ar obs
+2018-02-07 13:31:00 2018-02-07 13:47:00     C8.1   0.000012        M   12699 G15
+2019-05-06 05:04:00 2019-05-06 05:10:00     C9.9   0.000014        M   12740 G15
+2019-05-06 13:35:00 2019-05-06 13:54:00     C7.3   0.000010        M   12740 G15
+2020-05-29 07:13:00 2020-05-29 07:24:00     M1.1   0.000011        M    <NA> G16
+2020-11-29 12:34:00 2020-11-29 13:11:00     M4.4   0.000044        M    <NA> G16
+
+2. GOES M1+ peaks (true flux >= 1.0e-05), 1096 days, coverage 99.5%: 6 peaks, 5 matched to SWPC within +-30 min
+   unmatched: 1
+          goes_peak true_flux true_class                                          nearest_swpc
+2019-05-09 05:51:00  1.03e-05       M1.0 C6.7 (G15) AR 12740 peak 05-09 05:51, 0 days 00:00:00
+
+3. per SWPC M1+ event: rows that should be positive, stage by stage
+              start class region harps  raw_rows_24h  after_quality  after_lon45                                                          reason
+2018-02-07 13:31:00  M1.2  12699  7237          24.0           21.0          0.0 HARP outside +-45 deg (all QUALITY==0 rows have |LON_FWT| > 45)
+2019-05-06 05:04:00  M1.4  12740  7357          24.0           22.0          0.0 HARP outside +-45 deg (all QUALITY==0 rows have |LON_FWT| > 45)
+2019-05-06 13:35:00  M1.0  12740  7357          24.0           22.0          0.0 HARP outside +-45 deg (all QUALITY==0 rows have |LON_FWT| > 45)
+2020-05-29 07:13:00  M1.1   <NA>   NaN           NaN            NaN          NaN                                     no region (SWPC Reg# blank)
+2020-11-29 12:34:00  M4.4   <NA>   NaN           NaN            NaN          NaN                                     no region (SWPC Reg# blank)
+
+BUG count: 0

@@ -1,0 +1,5 @@
+model,multiplicity,lead_time,total,check
+xgb_joint,0.018413,0.008938,0.02735,0.02735
+xgb_nohist,0.014042,-0.011905,0.002137,0.002137
+proxy_pastflare,0.063481,0.02904,0.092521,0.092521
+climatology,0.0,0.0,0.0,0.0

@@ -1,0 +1,39 @@
+  2010 done
+  2011 done
+  2012 done
+  2013 done
+  2014 done
+  2015 done
+  2016 done
+  2017 done
+  2018 done
+  2019 done
+  2020 done
+  2021 done
+  2022 done
+  2023 done
+  2024 done
+
+per-year M1+ flare join report (threshold: >= 90% usable region)
+M1+ only.  unknown = M1+ flares HEK gives no NOAA number for; never joined, so they
+are label noise (missed positives) even in passing years.
+joined = M1+ flares whose region appears in >= 1 HARP's NOAA_ARS that year.
+
+year   M1+  unknown  %usable  joined  %joined  pos_rows  pos_HARPs  verdict
+2010     8        0   100.0%       8   100.0%        81          4  USABLE
+2011   119        5    95.8%     114    95.8%       747         22  USABLE
+2012   136        5    96.3%     131    96.3%       770         20  USABLE
+2013   111        2    98.2%     109    98.2%       790         29  USABLE
+2014   224       15    93.3%     191    85.3%      1255         30  USABLE
+2015   132        2    98.5%     130    98.5%       739         18  USABLE
+2016    16        1    93.8%      15    93.8%        67          1  USABLE
+2017    43        2    95.3%      41    95.3%       124          3  USABLE
+2018     0        0      n/a       0      n/a         0          0  no M1+ flares
+2019     0        0      n/a       0      n/a         0          0  no M1+ flares
+2020     2        2     0.0%       0     0.0%         0          0  UNUSABLE
+2021    31       14    54.8%      17    54.8%       172          7  UNUSABLE
+2022   195      173    11.3%      22    11.3%       252         10  UNUSABLE
+2023   334      284    15.0%      50    15.0%       525         20  UNUSABLE
+2024   949       72    92.4%     875    92.2%      4596         72  USABLE
+
+years below threshold: [2020, 2021, 2022, 2023]

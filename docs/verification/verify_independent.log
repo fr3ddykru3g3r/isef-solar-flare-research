@@ -1,0 +1,69 @@
+== 0. FROZEN FILE HASHES
+  OK   data/labelled_20100501_20250101.csv
+  OK   frozen/split.csv
+  OK   cohort.py
+  OK   data/stage2/models/fold0.joblib
+  OK   data/stage2/models/fold1.joblib
+  OK   data/stage2/models/fold2.joblib
+  OK   data/stage2/models/fold3.joblib
+  OK   data/stage2/models/fold4.joblib
+  OK   data/stage4/models/A_fold0.joblib
+  OK   data/stage4/models/A_fold1.joblib
+  OK   data/stage4/models/A_fold2.joblib
+  OK   data/stage4/models/A_fold3.joblib
+  OK   data/stage4/models/A_fold4.joblib
+  OK   data/stage4/models/B_fold0.joblib
+  OK   data/stage4/models/B_fold1.joblib
+  OK   data/stage4/models/B_fold2.joblib
+  OK   data/stage4/models/B_fold3.joblib
+  OK   data/stage4/models/B_fold4.joblib
+  euv_extra model_hashes.json: 22 entries, mismatches: 0
+
+== 1. LABELS RE-DERIVED WITH AN INDEPENDENT SWPC PARSER
+  parsed 32439 unique XRA events; 27516 with a region
+  dev 2010-19: n=547 true=98 | true_alarm mismatches 0 | n_C/n_M/n_X mismatches 0/0/0
+  test 2021/23/24: n=313 true=45 | true_alarm mismatches 0 | n_C/n_M/n_X mismatches 0/0/0
+  2025-26 <=2: n=387 true=56 | true_alarm mismatches 0 | n_C/n_M/n_X mismatches 0/0/0
+  extra 2021/23/24: n=476 true=81 | true_alarm mismatches 0 | n_C/n_M/n_X mismatches 0/0/0
+  2022: n=152 true=28 | true_alarm mismatches 0 | n_C/n_M/n_X mismatches 0/0/0
+
+== 2. CV_box RECOMPUTED FROM THE PER-FRAME SERIES (own detrend)
+  euv_full: 546 episodes; max |stored - mine| ddof0 7.23e-03, ddof1 1.30e-13
+  euv_test: 313 episodes; max |stored - mine| ddof0 6.33e-03, ddof1 8.58e-14
+  euv_confirm: 387 episodes; max |stored - mine| ddof0 6.83e-03, ddof1 1.57e-13
+  euv_extra/primary: 158 episodes; max |stored - mine| ddof0 3.28e-03, ddof1 9.00e-14
+  euv_extra/s2022: 152 episodes; max |stored - mine| ddof0 3.94e-03, ddof1 7.06e-14
+
+== 3. MAGNETIC TWINS — independent matching and bootstraps
+  2025-26 evaluable set: 378 episodes, 56 true, 101 HARPs (claimed 378/56/101)
+  2025-26 (PRE-REGISTERED TEST 1): pairs 50 (identical to stored pairs: True); ratio 3.262; CI by true HARP [1.23, 9.47]; CI by linked-HARP clusters [0.68, 18.87]; true>false 39/50, sign p 9.0e-05; Wilcoxon(log ratio) p 1.5e-06; median pair log10 ratio 0.457
+     order sensitivity (300 random orders): ratio median 3.55, 5-95% [3.26, 3.98]; CI lower bound > 1 in 81% of 100 orders
+  2025-26 single-region only: pairs 16 (identical to stored pairs: None); ratio 3.443; CI by true HARP [1.36, 7.60]; CI by linked-HARP clusters [1.14, 9.92]; true>false 12/16, sign p 7.7e-02; Wilcoxon(log ratio) p 1.8e-02; median pair log10 ratio 0.501
+     order sensitivity (300 random orders): ratio median 3.44, 5-95% [3.44, 3.44]; CI lower bound > 1 in 100% of 100 orders
+  test 2021/23/24: pairs 40 (identical to stored pairs: True); ratio 1.306; CI by true HARP [0.93, 2.17]; CI by linked-HARP clusters [0.75, 2.77]; true>false 25/40, sign p 1.5e-01; Wilcoxon(log ratio) p 6.4e-02; median pair log10 ratio 0.117
+     order sensitivity (300 random orders): ratio median 1.31, 5-95% [1.31, 1.31]; CI lower bound > 1 in 0% of 100 orders
+  dev 2010-19: pairs 81 (identical to stored pairs: True); ratio 1.966; CI by true HARP [1.44, 3.08]; CI by linked-HARP clusters [0.40, 2.00]; true>false 57/81, sign p 3.2e-04; Wilcoxon(log ratio) p 5.3e-05; median pair log10 ratio 0.280
+     order sensitivity (300 random orders): ratio median 1.93, 5-95% [1.83, 2.00]; CI lower bound > 1 in 100% of 100 orders
+  extra 2021/23/24: pairs 23 (identical to stored pairs: None); ratio 1.629; CI by true HARP [0.79, 3.92]; CI by linked-HARP clusters [0.13, 2.17]; true>false 13/23, sign p 6.8e-01; Wilcoxon(log ratio) p 1.5e-01; median pair log10 ratio 0.122
+     order sensitivity (300 random orders): ratio median 1.61, 5-95% [1.51, 1.74]; CI lower bound > 1 in 1% of 100 orders
+  2022: pairs 25 (identical to stored pairs: None); ratio 3.235; CI by true HARP [1.30, 4.84]; CI by linked-HARP clusters [0.49, 10.14]; true>false 18/25, sign p 4.3e-02; Wilcoxon(log ratio) p 2.5e-03; median pair log10 ratio 0.378
+     order sensitivity (300 random orders): ratio median 3.24, 5-95% [3.15, 3.24]; CI lower bound > 1 in 100% of 100 orders
+
+== 4. STAGE 5 PRIMARY RESULT (magnetic trends) from stored test probabilities
+  delta LL(A)-LL(B) = -0.0051 [-0.0202, +0.0091] (claimed -0.0051 [-0.0201, 0.0094])
+
+== 5. TEST 2 / STEP B refit independently (own R, own fits)
+  dev OOF p_A reproduces stored p_A: max |diff| 1.1e-16
+  dev OOF delta LL(A)-LL(C) = -0.0020 (claimed -0.0020)
+  2025-26 (387): delta = +0.0173 [+0.0016, +0.0355] (claimed +0.0173 [0.0016, 0.0350]); AUC 0.749 -> 0.753
+  2025-26 single-region (165): delta = +0.0101 [-0.0095, +0.0335]
+  [descriptive] test 2021/23/24 (313): delta = +0.0128 [+0.0020, +0.0243]
+  [descriptive] extra 2021/23/24 (476): delta = +0.0087 [-0.0011, +0.0182]
+  [descriptive] 2022 (152): delta = +0.0149 [-0.0071, +0.0462]
+
+== 6. FILTER TESTS re-scored with the frozen euv_extra models (own features)
+  2025-26 re-test (C vs C_CV): n 378; D_false +24.05 [+14.30, +33.68]; D_true -13.98 [-27.72, -4.29]
+  extra 2021/23/24 (A vs A_CV): n 155; D_false +60.20 [+47.02, +72.51]; D_true -16.17 [-35.40, -1.59]
+
+== 7. GATE re-scored on 2021/2023/2024 test rows with the frozen fold models
+  rows 53356 (claimed 53,356); hour TSS 0.5467 (claimed 0.5467), hour FAR 0.702; region TSS 0.7284 over 450 HARPs (claimed 0.7284 over 450), region FAR 0.543

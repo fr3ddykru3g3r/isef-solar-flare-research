@@ -1,0 +1,10 @@
+STEP 2 (counts only): 313 test episodes, results for 313; frames 37370; QUALITY!=0 1127; exposure rule 351; flare frames (sens only) 1848; saturation-flagged 81
+frame-mean check spatial vs series: max |diff| 0.0e+00
+primary         fill >= 80%: 306/313  true 44/45  false 262/268
+flare-excluded  fill >= 80%: 294/313  true 39/45  false 255/268
+label-blind exclusion (fill ok, dCV primary undefined): 0 []
+label-blind exclusion (fill ok, dCV flare-excl undefined): 0 []
+label-blind exclusion (fill ok, R4a undefined): 0 []
+label-blind exclusion (fill ok, R4c undefined): 0 []
+label-blind exclusion (fill ok, R4a_nf undefined): 0 []
+coverage flag (HMI pixels outside the cutout on a valid frame), primary 80% set: 42

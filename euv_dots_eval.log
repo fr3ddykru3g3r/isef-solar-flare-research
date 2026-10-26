@@ -1,0 +1,15 @@
+EXPLORATORY (dev 2010-2019 only); check: A reproduces Stage 4 p_A (max |diff| < 1e-12)
+
+A vs A + log(1+N_dots), dev 547 (true 98, false 449, HARPs 180): LL(A) 0.3336, LL(A+dots) 0.3392, delta -0.0056 [-0.0218, +0.0083] (HARP bootstrap 10,000, seed 20260921); AUC 0.7432 -> 0.7469
+log(1+N_dots) coefficient per fold (per 1 SD): [np.float64(0.5872), np.float64(0.4165), np.float64(0.1971), np.float64(0.5331), np.float64(0.2432)]; signs [1, 1, 1, 1, 1]
+
+descriptive Spearman rho of log(1+N_dots):
+  score         rho +0.5634 (p 3.81e-47, n 547)
+  n_C           rho +0.5132 (p 4.39e-38, n 547)
+  n_M           rho +0.3831 (p 1.47e-20, n 547)
+  log10_CV_box  rho +0.3712 (p 2.81e-19, n 546)
+
+N_dots twins ratio (81 gate-score twins; F2 code; median true / median false; 2,000, seed 0): all 1.4643 [1.1429, 2.0769] (medians 20.5 / 14.0); twins 1.0526 [0.8049, 1.3715] (medians 20.0 / 19.0, 81 pairs)
+
+PRE-STATED READING (mechanical): delta -0.0056, CI lower -0.0218, AUC 0.7432 -> 0.7469 -> "NOT ELIGIBLE"
+wall 0.6 s, workers 4

@@ -1,0 +1,23 @@
+check: step 6 PRIMARY reproduced (delta -0.0043, CI [-0.0092, 0.0003])
+check: frame means reproduced in all 546 episodes (max |diff| 0.0e+00)
+check: frame-to-frame pointing shift of the patch centre (AIA px), 62781 pairs: median 0.307, 95th pct 0.949, max 9.539
+
+1. n valid per candidate (primary 80% set = 541; excluded = value undefined)
+candidate  episodes  true  false  HARPs  excluded_undefined      excluded_eids
+       R1       540    96    444    178                   1 4839_20141123T2259
+       R2       540    96    444    178                   1 4839_20141123T2259
+       R3       540    96    444    178                   1 4839_20141123T2259
+      R4a       541    96    445    179                   0                   
+      R4b       541    96    445    179                   0                   
+      R4c       541    96    445    179                   0                   
+
+2. delta = LL(A) - LL(A + Rk), + = candidate helps; HARP bootstrap 10,000, seed 20260921; weighted AUC (dev 2010-2019, internal 5-fold CV, EXPLORATORY)
+candidate  logloss_A  logloss_A_plus  delta_A_minus_Aplus   CI_lo  CI_hi  AUC_A  AUC_A_plus
+       R1     0.3220          0.3243              -0.0023 -0.0088 0.0023 0.7430      0.7406
+       R2     0.3220          0.3251              -0.0031 -0.0080 0.0013 0.7430      0.7440
+       R3     0.3220          0.3254              -0.0034 -0.0132 0.0041 0.7430      0.7454
+      R4a     0.3206          0.3082               0.0124 -0.0048 0.0294 0.7422      0.8003
+      R4b     0.3206          0.3257              -0.0051 -0.0177 0.0027 0.7422      0.7203
+      R4c     0.3206          0.3169               0.0037 -0.0058 0.0132 0.7422      0.8020
+
+3. selection rule (R1-R3): largest delta = R1 (-0.0023); qualifies (delta > 0): False

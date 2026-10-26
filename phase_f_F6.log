@@ -1,0 +1,49 @@
+PHASE F F6 -- EXPLORATORY / DESCRIPTIVE, dev 2010-2019 only; workers = os.cpu_count() - 1 = 9
+F6: primary set 540 (true 96), flare-excluded set 527 (true 89)
+ratio = true / false of medians ('log': 10^(median diff) on the linear scale; 'diff': median true - median false); CI HARP bootstrap 2000, seed 0; twins = step 6 PRIMARY pairs with both values defined, resampled by true HARP
+          measure mode   n  n_true  n_false  med_true  med_false  ratio_all            all_CI  pairs  twin_med_true  twin_med_false  ratio_twins          twins_CI  undefined_resamples
+B1 PIL/ctrl level  log 540      96      444    0.1598     0.1029       1.14  [1.0310, 1.2920]     81         0.1606         0.08511         1.19  [1.0658, 1.3333]                    0
+B2 PIL/ctrl slope diff 540      96      444  0.001472   0.000774  0.0006984 [-0.0008, 0.0026]     81       0.001677        0.001796   -0.0001193 [-0.0018, 0.0025]                    0
+            B1_nf  log 527      89      438    0.1539     0.1004      1.131  [1.0204, 1.2662]     77         0.1539         0.08553        1.171  [1.0283, 1.3062]                    0
+            B2_nf diff 527      89      438  0.001536  0.0007392  0.0007967 [-0.0008, 0.0026]     77       0.001843        0.001849   -6.239e-06 [-0.0022, 0.0022]                    0
+
+Spearman (primary set for B1/B2, flare-excluded set for B1_nf/B2_nf)
+measure variable   n     rho        p
+     B1      n_C 540  0.2807 3.11e-11
+     B1    score 540  0.1063 1.35e-02
+     B1      R4a 540  0.5187 1.63e-38
+     B2      n_C 540  0.0032 9.40e-01
+     B2    score 540 -0.0011 9.79e-01
+     B2      R4a 540  0.1531 3.56e-04
+measure variable   n    rho        p
+  B1_nf      n_C 527 0.2577 1.94e-09
+  B1_nf    score 527 0.0838 5.46e-02
+  B1_nf      R4a 527 0.5030 3.77e-35
+  B2_nf      n_C 527 0.0113 7.95e-01
+  B2_nf    score 527 0.0200 6.47e-01
+  B2_nf      R4a 527 0.1628 1.74e-04
+
+step 6 procedure
+(dev 2010-2019, internal 5-fold CV, EXPLORATORY; delta = LL(A) - LL(A+x), + = helps; HARP bootstrap 10000, seed 20260921)
+candidate   n  true  false  HARPs  logloss_A  logloss_Ax   delta   CI_lo  CI_hi  AUC_A  AUC_Ax
+       B1 540    96    444    178     0.3220      0.3170  0.0050 -0.0050 0.0149 0.7430  0.7720
+       B2 540    96    444    178     0.3220      0.3238 -0.0018 -0.0089 0.0056 0.7430  0.7510
+    B1_nf 527    89    438    178     0.3375      0.3328  0.0047 -0.0057 0.0150 0.7490  0.7694
+    B2_nf 527    89    438    178     0.3375      0.3398 -0.0023 -0.0087 0.0048 0.7490  0.7442
+operating point (>= 88% weighted true kept, tau in-sample; weighted %, counts; CI HARP bootstrap 2000, seed 0)
+              B1 A    tau 0.0687  true kept 87/96 0.8815 [0.7531, 0.9825]  false removed 83/444 0.2189 [0.1578, 0.2788]  precision 0.1427 [0.0994, 0.1910]  FAR 0.8573 [0.8090, 0.9006]
+              B1 A+x  tau 0.0597  true kept 89/96 0.9222 [0.8219, 0.9917]  false removed 107/444 0.2487 [0.1910, 0.3131]  precision 0.1533 [0.1085, 0.2053]  FAR 0.8467 [0.7947, 0.8915]
+              B1 false removed (A+x) - A: +0.0297 [-0.0351, +0.0988]
+              B2 A    tau 0.0687  true kept 87/96 0.8815 [0.7531, 0.9825]  false removed 83/444 0.2189 [0.1578, 0.2788]  precision 0.1427 [0.0994, 0.1910]  FAR 0.8573 [0.8090, 0.9006]
+              B2 A+x  tau 0.0649  true kept 85/96 0.8983 [0.8018, 0.9702]  false removed 105/444 0.2833 [0.2211, 0.3448]  precision 0.1560 [0.1096, 0.2072]  FAR 0.8440 [0.7928, 0.8904]
+              B2 false removed (A+x) - A: +0.0644 [+0.0052, +0.1275]
+           B1_nf A    tau 0.0718  true kept 80/89 0.8833 [0.7564, 0.9828]  false removed 83/438 0.2194 [0.1601, 0.2825]  precision 0.1452 [0.1009, 0.1949]  FAR 0.8548 [0.8051, 0.8991]
+           B1_nf A+x  tau 0.0680  true kept 81/89 0.8804 [0.7579, 0.9825]  false removed 147/438 0.3554 [0.2921, 0.4241]  precision 0.1702 [0.1189, 0.2263]  FAR 0.8298 [0.7737, 0.8811]
+           B1_nf false removed (A+x) - A: +0.1360 [+0.0649, +0.1991]
+           B2_nf A    tau 0.0718  true kept 80/89 0.8833 [0.7564, 0.9828]  false removed 83/438 0.2194 [0.1601, 0.2825]  precision 0.1452 [0.1009, 0.1949]  FAR 0.8548 [0.8051, 0.8991]
+           B2_nf A+x  tau 0.0657  true kept 79/89 0.9098 [0.8118, 0.9790]  false removed 98/438 0.2645 [0.2032, 0.3246]  precision 0.1567 [0.1089, 0.2087]  FAR 0.8433 [0.7913, 0.8911]
+           B2_nf false removed (A+x) - A: +0.0451 [-0.0124, +0.1010]
+
+context (user): Leka et al. 2023 found mean intensity "surprisingly poor" at whole-region level; the PIL-relative level was not tested there.
+
+F6 wall time 1.8 s on 9 worker processes (os.cpu_count() = 10)

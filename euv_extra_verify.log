@@ -1,0 +1,2 @@
+primary: HARPs 40, episodes 158; HMI pairs OK 158/158; AIA valid 17498 of expected 17645 (files 17498); 11.05 GB; short HARPs 22 (147 frames); < 97%: [[8923, 753, 790]]; no AIA []; failures file: False
+s2022: HARPs 44, episodes 152; HMI pairs OK 152/152; AIA valid 14742 of expected 14770 (files 14742); 6.35 GB; short HARPs 13 (28 frames); < 97%: []; no AIA []; failures file: False

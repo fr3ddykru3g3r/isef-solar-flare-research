@@ -1,0 +1,27 @@
+check: Phase X R4a row reproduced (delta 0.0124, CI [-0.0048, 0.0294])
+
+1. n valid: R4a_nf (sens fill >= 80%, defined) 528: true 89 / false 439 (excluded undefined: 0 []); Phase X R4a 541: 96 / 445
+
+2. same episodes; delta = LL(A) - LL(A + x), + = helps; HARP bootstrap 10,000, seed 20260921; weighted AUC
+                           candidate  episodes  true  false  HARPs  logloss_A  logloss_A_plus  delta_A_minus_Aplus   CI_lo  CI_hi  AUC_A  AUC_A_plus
+      A vs A+R4a (flare frames kept)       528    89    439    179     0.3359          0.3210               0.0149 -0.0069 0.0373 0.7480      0.8016
+A vs A+R4a_nf (flare frames removed)       528    89    439    179     0.3359          0.3226               0.0133 -0.0112 0.0374 0.7480      0.7990
+
+3. Spearman rho with flare history and gate score (same episodes)
+measure variable   n    rho        p
+    R4a      n_C 528 0.6901 7.05e-76
+    R4a      n_M 528 0.4321 1.97e-25
+    R4a      n_X 528 0.1862 1.65e-05
+    R4a    score 528 0.5304 1.20e-39
+ R4a_nf      n_C 528 0.6793 1.02e-72
+ R4a_nf      n_M 528 0.4268 8.78e-25
+ R4a_nf      n_X 528 0.1842 2.06e-05
+ R4a_nf    score 528 0.5277 3.39e-39
+
+4. episodes above the 99th percentile (same episodes; flare frame = valid_primary & flare, i.e. used by R4a)
+   R4a: p99 741.2483; above: 6; with >= 1 flare frame: 6 (flare frames per episode: [9.0, 8.0, 12.0, 15.0, 5.0, 2.0])
+   R4a_nf: p99 708.3088; above: 6; with >= 1 flare frame: 6 (flare frames per episode: [9.0, 8.0, 12.0, 15.0, 5.0, 2.0])
+
+5. Spearman rho(R4a, R4a_nf) = 0.9990 (p 0.00e+00, n 528)
+
+pre-stated reading (mechanical): delta(A - A+R4a_nf) = 0.0133, AUC(A+R4a_nf) > AUC(A): True -> "R4a survives flare removal"

@@ -1,0 +1,87 @@
+20 monthly chunks from 2025-01-01 to 2026-08-17
+
+[1/20] 2025-01-01 -> 2025-02-01  running...
+          SHARP rows retrieved: 11385 | positives: 201 / 2661  (7.55%)
+[2/20] 2025-02-01 -> 2025-03-01  running...
+          SHARP rows retrieved: 10727 | positives: 326 / 2512  (12.98%)
+[3/20] 2025-03-01 -> 2025-04-01  running...
+          SHARP rows retrieved: 12737 | positives: 160 / 3200  (5.00%)
+[4/20] 2025-04-01 -> 2025-05-01  running...
+          SHARP rows retrieved: 15025 | positives: 105 / 3220  (3.26%)
+[5/20] 2025-05-01 -> 2025-06-01  running...
+          SHARP rows retrieved: 12918 | positives: 105 / 2941  (3.57%)
+[6/20] 2025-06-01 -> 2025-07-01  running...
+          SHARP rows retrieved: 11785 | positives: 134 / 2306  (5.81%)
+[7/20] 2025-07-01 -> 2025-08-01  running...
+          SHARP rows retrieved: 10988 | positives: 0 / 2758  (0.00%)
+[8/20] 2025-08-01 -> 2025-09-01  running...
+          SHARP rows retrieved: 11693 | positives: 185 / 3042  (6.08%)
+[9/20] 2025-09-01 -> 2025-10-01  running...
+          SHARP rows retrieved: 10263 | positives: 237 / 2394  (9.90%)
+[10/20] 2025-10-01 -> 2025-11-01  running...
+          SHARP rows retrieved: 11995 | positives: 122 / 3296  (3.70%)
+[11/20] 2025-11-01 -> 2025-12-01  running...
+          SHARP rows retrieved: 11008 | positives: 98 / 2230  (4.39%)
+[12/20] 2025-12-01 -> 2026-01-01  running...
+          SHARP rows retrieved: 10236 | positives: 174 / 2326  (7.48%)
+[13/20] 2026-01-01 -> 2026-02-01  running...
+          SHARP rows retrieved: 7636 | positives: 64 / 2302  (2.78%)
+[14/20] 2026-02-01 -> 2026-03-01  running...
+          SHARP rows retrieved: 9857 | positives: 152 / 2120  (7.17%)
+[15/20] 2026-03-01 -> 2026-04-01  running...
+          SHARP rows retrieved: 9237 | positives: 81 / 2431  (3.33%)
+[16/20] 2026-04-01 -> 2026-05-01  running...
+          SHARP rows retrieved: 9244 | positives: 184 / 2206  (8.34%)
+[17/20] 2026-05-01 -> 2026-06-01  running...
+          SHARP rows retrieved: 9884 | positives: 22 / 2457  (0.90%)
+[18/20] 2026-06-01 -> 2026-07-01  running...
+          SHARP rows retrieved: 10203 | positives: 138 / 2747  (5.02%)
+[19/20] 2026-07-01 -> 2026-08-01  running...
+          SHARP rows retrieved: 9127 | positives: 208 / 1833  (11.35%)
+[20/20] 2026-08-01 -> 2026-08-17  running...
+          SHARP rows retrieved: 5390 | positives: 0 / 1029  (0.00%)
+raw: dropped 282 month-boundary duplicate rows (identical copies)
+labelled: dropped 76 month-boundary duplicate rows (identical copies)
+
+wrote data/raw_sharp_20250101_20260817.csv (211056) and data/labelled_20250101_20260817.csv (49935)
+
+==============================================================
+FULL SUMMARY  2025-01-01 .. 2026-08-17
+==============================================================
+raw SHARP rows retrieved : 211056
+mapping status           : {'missing': 105674, 'single': 69320, 'multiple': 36062}
+after QUALITY==0         : 187312
+after |LON_FWT|<=45      : 107328
+after mapping!=missing   : 50250   (labelled file: 49935)
+positives                : 2691 / 49935  (5.39%)
+distinct HARPNUMs        : 402
+rows per HARPNUM         : mean 124.2  median 136  min 3  max 209
+HARPNUMs with a positive : 68
+
+per-feature missingness (labelled file):
+  usflux      0.00%
+  totusjh     0.00%
+  totpot      0.00%
+  meanshr     0.11%
+  r_value     0.00%
+  absnjzh     0.00%
+  savncpp     0.00%
+  area_acr    0.00%
+  lat_fwt     0.00%
+  lon_fwt     0.00%
+
+positive rate per year:
+  2024  rows       6  pos      1   16.67%
+  2025  rows   32830  pos   1843    5.61%
+  2026  rows   17099  pos    847    4.95%
+
+per year by region subset (primary = single; fallback = <=2; robustness = all)
+year   | single: rows   pos  posHARPs | <=2: rows   pos  posHARPs | all: rows   pos  posHARPs
+2024   |       2     0        0 |       4     0        0 |       6     1        1
+2025   |   21303   390       12 |   27770  1073       28 |   32830  1843       46
+2026   |   12398   468       11 |   14930   636       17 |   17099   847       22
+
+per year: rows EXCLUDED (label window hits a label-missing day) | rows history_incomplete (kept)
+  2024   excluded      0   history_incomplete      0
+  2025   excluded    320   history_incomplete      0
+  2026   excluded      0   history_incomplete    237

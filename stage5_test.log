@@ -1,0 +1,72 @@
+integrity: all frozen hashes verified
+mode test: 101766 rows, 801 HARPs, years [np.int32(2021), np.int32(2022), np.int32(2023), np.int32(2024)]
+unscorable rows (missing gate feature): 34 (positive 0) -- excluded
+  done: primary (2021, 2023, 2024) / single
+  done: primary (2021, 2023, 2024) / <=2
+  done: primary (2021, 2023, 2024) / all
+  done: sensitivity (2021-2024, 2022 included) / single
+  done: sensitivity (2021-2024, 2022 included) / <=2
+  done: sensitivity (2021-2024, 2022 included) / all
+
+GATE
+                                period subset level_threshold  rows_or_HARPs  positives    TSS    HSS    FAR    TPR    FPR  TSS_CI_lo  TSS_CI_hi  boot_used
+            primary (2021, 2023, 2024) single     hour_frozen          53356       1976 0.5467 0.3670 0.7021 0.6012 0.0545     0.4120     0.6598       1000
+            primary (2021, 2023, 2024) single       hour_zero          53356       1976 0.3227 0.3536 0.5832 0.3411 0.0184     0.1994     0.4338       1000
+            primary (2021, 2023, 2024) single   region_frozen            450         55 0.7284 0.5236 0.5429 0.8727 0.1443     0.6301     0.8198       1000
+            primary (2021, 2023, 2024) single     region_zero            450         55 0.4757 0.5746 0.1818 0.4909 0.0152     0.3390     0.6101       1000
+            primary (2021, 2023, 2024)    <=2     hour_frozen          64642       3401 0.6089 0.4233 0.6483 0.6783 0.0694     0.5150     0.6945       1000
+            primary (2021, 2023, 2024)    <=2       hour_zero          64642       3401 0.3966 0.4267 0.5057 0.4205 0.0239     0.2806     0.4968       1000
+            primary (2021, 2023, 2024)    <=2   region_frozen            528         87 0.7288 0.5606 0.4868 0.8966 0.1678     0.6591     0.7950       1000
+            primary (2021, 2023, 2024)    <=2     region_zero            528         87 0.4876 0.5815 0.1538 0.5057 0.0181     0.3818     0.5932       1000
+            primary (2021, 2023, 2024)    all     hour_frozen          77085       6955 0.6452 0.4519 0.6087 0.7629 0.1177     0.5829     0.6986       1000
+            primary (2021, 2023, 2024)    all       hour_zero          77085       6955 0.4936 0.4912 0.4657 0.5403 0.0467     0.4066     0.5660       1000
+            primary (2021, 2023, 2024)    all   region_frozen            605        142 0.7266 0.6029 0.4159 0.9296 0.2030     0.6743     0.7800       1000
+            primary (2021, 2023, 2024)    all     region_zero            605        142 0.6063 0.6629 0.1495 0.6408 0.0346     0.5285     0.6873       1000
+sensitivity (2021-2024, 2022 included) single     hour_frozen          71862       2381 0.5224 0.3347 0.7331 0.5766 0.0543     0.4115     0.6256       1000
+sensitivity (2021-2024, 2022 included) single       hour_zero          71862       2381 0.2753 0.3089 0.6233 0.2919 0.0166     0.1582     0.3900       1000
+sensitivity (2021-2024, 2022 included) single   region_frozen            605         71 0.6812 0.4813 0.5755 0.8310 0.1498     0.5841     0.7621       1000
+sensitivity (2021-2024, 2022 included) single     region_zero            605         71 0.4179 0.5116 0.2439 0.4366 0.0187     0.3015     0.5368       1000
+sensitivity (2021-2024, 2022 included)    <=2     hour_frozen          86824       4034 0.5942 0.3916 0.6821 0.6636 0.0694     0.5091     0.6642       1000
+sensitivity (2021-2024, 2022 included)    <=2       hour_zero          86824       4034 0.3667 0.3979 0.5347 0.3884 0.0218     0.2669     0.4579       1000
+sensitivity (2021-2024, 2022 included)    <=2   region_frozen            709        110 0.7008 0.5268 0.5176 0.8727 0.1720     0.6330     0.7669       1000
+sensitivity (2021-2024, 2022 included)    <=2     region_zero            709        110 0.4783 0.5666 0.1912 0.5000 0.0217     0.3880     0.5717       1000
+sensitivity (2021-2024, 2022 included)    all     hour_frozen         101732       7972 0.6446 0.4335 0.6338 0.7559 0.1113     0.5875     0.6994       1000
+sensitivity (2021-2024, 2022 included)    all       hour_zero         101732       7972 0.4828 0.4776 0.4871 0.5252 0.0424     0.4009     0.5543       1000
+sensitivity (2021-2024, 2022 included)    all   region_frozen            801        172 0.7077 0.5704 0.4510 0.9128 0.2051     0.6555     0.7581       1000
+sensitivity (2021-2024, 2022 included)    all     region_zero            801        172 0.5913 0.6474 0.1756 0.6279 0.0366     0.5212     0.6615       1000
+
+COHORT SIZES
+                                period subset  episodes_T1  alarm_HARPs  excluded_episodes                                                              excl_reasons  eligible_episodes  true  false  delayed  regions  regions_with_true  weighted_true
+            primary (2021, 2023, 2024) single          367          105                 54  {'no evaluable hour (trend window < 18 points at every alarm hour)': 54}                313    45    268       26       98                 28        14.4637
+            primary (2021, 2023, 2024)    <=2          563          152                 87  {'no evaluable hour (trend window < 18 points at every alarm hour)': 87}                476    81    395       53      139                 43        22.4650
+            primary (2021, 2023, 2024)    all          971          226                126 {'no evaluable hour (trend window < 18 points at every alarm hour)': 126}                845   180    665       92      212                 86        45.8875
+sensitivity (2021-2024, 2022 included) single          486          139                 72  {'no evaluable hour (trend window < 18 points at every alarm hour)': 72}                414    62    352       36      128                 37        18.5129
+sensitivity (2021-2024, 2022 included)    <=2          745          199                117 {'no evaluable hour (trend window < 18 points at every alarm hour)': 117}                628   109    519       68      182                 56        28.8571
+sensitivity (2021-2024, 2022 included)    all         1197          286                162 {'no evaluable hour (trend window < 18 points at every alarm hour)': 162}               1035   215    820      113      267                102        54.2796
+
+MODELS A vs B
+                                period subset                            cohort  episodes  true  HARPs  true_HARPs  weighted_true  weight_sum  logloss_A  logloss_B  delta_A_minus_B  delta_CI_lo  delta_CI_hi  boot_used  AUC_A  AUC_B
+            primary (2021, 2023, 2024) single        all eligible episodes (T2)       313    45     98          28        14.4637     98.0000     0.3686     0.3737          -0.0051      -0.0201       0.0094      10000 0.8111 0.7974
+            primary (2021, 2023, 2024) single first eligible episode per region        98    13     98          13        13.0000     98.0000     0.4066     0.4091          -0.0025      -0.0265       0.0210      10000 0.7593 0.7330
+            primary (2021, 2023, 2024)    <=2        all eligible episodes (T2)       476    81    139          43        22.4650    139.0000     0.3747     0.3814          -0.0067      -0.0182       0.0049      10000 0.8089 0.7829
+            primary (2021, 2023, 2024)    <=2 first eligible episode per region       139    19    139          19        19.0000    139.0000     0.4022     0.4044          -0.0022      -0.0200       0.0152      10000 0.7618 0.7276
+            primary (2021, 2023, 2024)    all        all eligible episodes (T2)       845   180    212          86        45.8875    212.0000     0.4250     0.4260          -0.0010      -0.0101       0.0078      10000 0.8083 0.8103
+            primary (2021, 2023, 2024)    all first eligible episode per region       212    45    212          45        45.0000    212.0000     0.4841     0.4819           0.0022      -0.0118       0.0157      10000 0.7599 0.7561
+sensitivity (2021-2024, 2022 included) single        all eligible episodes (T2)       414    62    128          37        18.5129    128.0000     0.3726     0.3741          -0.0015      -0.0159       0.0133      10000 0.7994 0.7686
+sensitivity (2021-2024, 2022 included) single first eligible episode per region       128    18    128          18        18.0000    128.0000     0.4270     0.4216           0.0054      -0.0199       0.0336      10000 0.7247 0.6879
+sensitivity (2021-2024, 2022 included)    <=2        all eligible episodes (T2)       628   109    182          56        28.8571    182.0000     0.3864     0.3899          -0.0035      -0.0149       0.0079      10000 0.7986 0.7664
+sensitivity (2021-2024, 2022 included)    <=2 first eligible episode per region       182    27    182          27        27.0000    182.0000     0.4487     0.4462           0.0026      -0.0174       0.0244      10000 0.7075 0.6724
+sensitivity (2021-2024, 2022 included)    all        all eligible episodes (T2)      1035   215    267         102        54.2796    267.0000     0.4278     0.4277           0.0001      -0.0085       0.0088      10000 0.7981 0.7955
+sensitivity (2021-2024, 2022 included)    all first eligible episode per region       267    54    267          54        54.0000    267.0000     0.4992     0.4942           0.0050      -0.0102       0.0210      10000 0.7267 0.7239
+
+MATCHED PAIRS (primary, single-region)
+ caliper  pairs  true_episodes  unmatched  max_abs_score_diff  true_HARPs             slope  mean_diff  median_diff     CI_lo    CI_hi
+  0.0747     41             45          4             0.04687          26               NaN        NaN          NaN       NaN      NaN
+     NaN    NaN            NaN        NaN                 NaN         NaN  rel_slope_usflux   0.002191     0.002213 -0.003941 0.007951
+     NaN    NaN            NaN        NaN                 NaN         NaN rel_slope_totusjh   0.002309   -0.0006981 -0.003397  0.00864
+
+DELAYED vs TRUE (primary, single-region; descriptive)
+      group  episodes  HARPs  weight  score_wmean  n_C_wmean  n_M_wmean  n_X_wmean  rel_slope_usflux_wmean  rel_slope_totusjh_wmean  rel_slope_usflux_median  rel_slope_totusjh_median
+       true        45     28   14.46      -0.3425      5.222      0.613     0.2074                0.007702                  0.01141                 0.002593                  0.002053
+    delayed        26     20   8.113      -0.6613      2.471     0.4519    0.04109                 0.02433                  0.02829                  0.00867                  0.006655
+other false       242     87   75.42      -0.8752      1.969     0.2426    0.01547                 0.01194                  0.01296                 0.003114                  0.001989
